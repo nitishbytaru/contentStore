@@ -183,13 +183,8 @@ export function ArticleGenerator() {
 
   return (
     <div className="space-y-8">
-      <header className="text-center space-y-4">
-        <div className="flex justify-center mb-4">
-          <div className="p-3 bg-fuchsia-500/10 rounded-full text-fuchsia-500">
-            <Sparkles className="w-10 h-10" />
-          </div>
-        </div>
-        <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 to-violet-400">
+      <header className="text-center space-y-2 mb-6">
+        <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
           AI Content Hub
         </h2>
         <p className="text-lg text-muted-foreground font-medium max-w-2xl mx-auto">
@@ -197,7 +192,7 @@ export function ArticleGenerator() {
         </p>
       </header>
 
-      <Card className="border-fuchsia-500/20 shadow-lg bg-fuchsia-500/5">
+      <Card className="border-border shadow-lg bg-muted/5">
         <CardHeader>
           <CardTitle>Draft New Article</CardTitle>
         </CardHeader>
@@ -213,7 +208,7 @@ export function ArticleGenerator() {
             <Button 
               type="submit" 
               disabled={!topic.trim() || isGenerating || loading} 
-              className="w-full py-6 text-md bg-fuchsia-600 hover:bg-fuchsia-700"
+              className="w-full py-6 text-md bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {isGenerating ? 'Generating with AI...' : 'Generate Base Article'}
               {!isGenerating && <Sparkles className="ml-2 h-4 w-4" />}
@@ -237,7 +232,7 @@ export function ArticleGenerator() {
           </Card>
         ) : (
           articles.map((article) => (
-            <Card key={article.id} className="overflow-hidden border-border transition-all hover:border-fuchsia-500/30 shadow-md">
+            <Card key={article.id} className="overflow-hidden border-border transition-all hover:border-foreground/30 shadow-md">
               <CardHeader className="bg-muted/30 border-b border-border">
                 <CardTitle className="text-lg">
                   <div className="text-sm font-medium text-muted-foreground leading-relaxed line-clamp-2">
@@ -249,15 +244,15 @@ export function ArticleGenerator() {
               <Tabs defaultValue="article" className="w-full">
                 <div className="border-b border-border bg-muted/10 px-4 pt-2">
                   <TabsList className="bg-transparent space-x-2">
-                    <TabsTrigger value="article" className="data-[state=active]:bg-background data-[state=active]:border-b-2 data-[state=active]:border-fuchsia-500 rounded-none pb-3">
+                    <TabsTrigger value="article" className="data-[state=active]:bg-background data-[state=active]:border-b-2 data-[state=active]:border-foreground rounded-none pb-3">
                       <FileText className="w-4 h-4 mr-2" />
                       Article
                     </TabsTrigger>
-                    <TabsTrigger value="xpost" className="data-[state=active]:bg-background data-[state=active]:border-b-2 data-[state=active]:border-blue-500 rounded-none pb-3">
+                    <TabsTrigger value="xpost" className="data-[state=active]:bg-background data-[state=active]:border-b-2 data-[state=active]:border-foreground rounded-none pb-3">
                       <MessageCircle className="w-4 h-4 mr-2" />
                       X Thread
                     </TabsTrigger>
-                    <TabsTrigger value="video" className="data-[state=active]:bg-background data-[state=active]:border-b-2 data-[state=active]:border-red-500 rounded-none pb-3">
+                    <TabsTrigger value="video" className="data-[state=active]:bg-background data-[state=active]:border-b-2 data-[state=active]:border-foreground rounded-none pb-3">
                       <Video className="w-4 h-4 mr-2" />
                       Video Prompt
                     </TabsTrigger>
@@ -296,7 +291,7 @@ export function ArticleGenerator() {
                 <TabsContent value="xpost" className="m-0 border-0 outline-none">
                   {!article.xPostContent ? (
                     <div className="p-8 text-center space-y-4">
-                      <MessageCircle className="w-12 h-12 text-blue-500/50 mx-auto" />
+                      <MessageCircle className="w-12 h-12 text-foreground/50 mx-auto" />
                       <h4 className="text-lg font-medium">No X Thread Generated Yet</h4>
                       <p className="text-muted-foreground text-sm max-w-md mx-auto">
                         Turn this article into a viral X (Twitter) thread. Add an optional custom prompt to guide the AI style.
@@ -310,7 +305,7 @@ export function ArticleGenerator() {
                         <Button 
                           onClick={() => handleAction(article.id, 'generate_x_post', 'xpost')}
                           disabled={processingId === article.id + 'generate_x_post'}
-                          className="bg-blue-600 hover:bg-blue-700"
+                          className="bg-primary text-primary-foreground hover:bg-primary/90"
                         >
                           {processingId === article.id + 'generate_x_post' ? 'Generating...' : 'Generate Thread'}
                         </Button>
@@ -320,11 +315,11 @@ export function ArticleGenerator() {
                     <>
                       <div className="flex justify-end p-2 pb-0 bg-background/50">
                         <Button variant="ghost" size="sm" onClick={() => handleCopy(article.xPostContent)}>
-                          <Copy className="h-4 w-4 mr-1 text-blue-500" /> Copy Thread
+                          <Copy className="h-4 w-4 mr-1 text-foreground" /> Copy Thread
                         </Button>
                       </div>
                       {renderEditableContent(article, 'xPost', article.xPostContent)}
-                      <CardFooter className="bg-blue-950/10 border-t border-border p-4">
+                      <CardFooter className="bg-muted/10 border-t border-border p-4">
                         <div className="flex w-full gap-3">
                           <Input 
                             placeholder="Refine Thread with AI (e.g. 'Make the hook punchier')"
@@ -334,7 +329,7 @@ export function ArticleGenerator() {
                           />
                           <Button 
                             variant="secondary" 
-                            className="bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 hover:text-blue-300"
+                            className="bg-muted text-foreground hover:bg-muted/80"
                             onClick={() => handleAction(article.id, 'generate_x_post', 'xpost')}
                             disabled={processingId === article.id + 'generate_x_post'}
                           >
@@ -351,7 +346,7 @@ export function ArticleGenerator() {
                 <TabsContent value="video" className="m-0 border-0 outline-none">
                   {!article.videoPromptContent ? (
                     <div className="p-8 text-center space-y-4">
-                      <Video className="w-12 h-12 text-red-500/50 mx-auto" />
+                      <Video className="w-12 h-12 text-foreground/50 mx-auto" />
                       <h4 className="text-lg font-medium">No Video Prompt Generated Yet</h4>
                       <p className="text-muted-foreground text-sm max-w-md mx-auto">
                         Convert this article into a high-retention script and video prompt for Shorts/Reels/TikTok.
@@ -365,7 +360,7 @@ export function ArticleGenerator() {
                         <Button 
                           onClick={() => handleAction(article.id, 'generate_video_prompt', 'video')}
                           disabled={processingId === article.id + 'generate_video_prompt'}
-                          className="bg-red-600 hover:bg-red-700"
+                          className="bg-primary text-primary-foreground hover:bg-primary/90"
                         >
                           {processingId === article.id + 'generate_video_prompt' ? 'Generating...' : 'Generate Script'}
                         </Button>
@@ -375,11 +370,11 @@ export function ArticleGenerator() {
                     <>
                       <div className="flex justify-end p-2 pb-0 bg-background/50">
                         <Button variant="ghost" size="sm" onClick={() => handleCopy(article.videoPromptContent)}>
-                          <Copy className="h-4 w-4 mr-1 text-red-500" /> Copy Video Prompt
+                          <Copy className="h-4 w-4 mr-1 text-foreground" /> Copy Video Prompt
                         </Button>
                       </div>
                       {renderEditableContent(article, 'videoPrompt', article.videoPromptContent)}
-                      <CardFooter className="bg-red-950/10 border-t border-border p-4">
+                      <CardFooter className="bg-muted/10 border-t border-border p-4">
                         <div className="flex w-full gap-3">
                           <Input 
                             placeholder="Refine Script with AI (e.g. 'Make it under 60 seconds')"
@@ -389,7 +384,7 @@ export function ArticleGenerator() {
                           />
                           <Button 
                             variant="secondary" 
-                            className="bg-red-600/20 text-red-400 hover:bg-red-600/30 hover:text-red-300"
+                            className="bg-muted text-foreground hover:bg-muted/80"
                             onClick={() => handleAction(article.id, 'generate_video_prompt', 'video')}
                             disabled={processingId === article.id + 'generate_video_prompt'}
                           >

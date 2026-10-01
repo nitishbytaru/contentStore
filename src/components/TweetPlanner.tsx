@@ -108,13 +108,8 @@ export function TweetPlanner() {
 
   return (
     <div className="space-y-8">
-      <header className="text-center space-y-4">
-        <div className="flex justify-center mb-4">
-          <div className="p-3 bg-primary/10 rounded-full text-primary">
-            <MessageCircle className="w-10 h-10" />
-          </div>
-        </div>
-        <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight">
+      <header className="text-center space-y-2 mb-6">
+        <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
           Tweet Planner
         </h2>
         <p className="text-lg text-muted-foreground font-medium">
