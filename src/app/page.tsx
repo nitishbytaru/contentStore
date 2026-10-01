@@ -1,105 +1,235 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertCircle, Database } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AlertCircle, MessageCircle, CheckCircle2, Clock } from 'lucide-react';
 
-type ContentItem = Record<string, any>;
+interface Idea {
+  id: string;
+  idea: string;
+  status: 'pending' | 'posted';
+  datePosted: string;
+  createdAt: string;
+}
 
 export default function Home() {
-  const [data, setData] = useState<ContentItem[]>([]);
+  const [ideas, setIdeas] = useState<Idea[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [newIdea, setNewIdea] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetch('/api/content');
-        const json = await res.json();
-
-        if (!res.ok) {
-          throw new Error(json.error || 'Failed to fetch content');
-        }
-
-        setData(json.data || []);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    fetchIdeas();
   }, []);
 
+  const fetchIdeas = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/ideas');
+      const json = await res.json();
+
+      if (!res.ok) {
+        throw new Error(json.error || 'Failed to fetch ideas');
+      }
+
+      setIdeas(json.data || []);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddIdea = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newIdea.trim()) return;
+
+    try {
+      setIsSubmitting(true);
+      const res = await fetch('/api/ideas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idea: newIdea.trim() }),
+      });
+      const json = await res.json();
+
+      if (!res.ok) throw new Error(json.error);
+
+      setIdeas((prev) => [...prev, json.data]);
+      setNewIdea('');
+    } catch (err: any) {
+      console.error(err);
+      alert('Failed to add idea: ' + err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleMarkAsPosted = async (id: string) => {
+    try {
+      // Optimistic update
+      const originalIdeas = [...ideas];
+      setIdeas((prev) => 
+        prev.map((idea) => 
+          idea.id === id 
+            ? { ...idea, status: 'posted', datePosted: new Date().toISOString() } 
+            : idea
+        )
+      );
+
+      const res = await fetch('/api/ideas', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.error);
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert('Failed to update idea: ' + err.message);
+      // Revert on failure
+      fetchIdeas();
+    }
+  };
+
+  const pendingIdeas = ideas.filter(i => i.status !== 'posted');
+  const postedIdeas = ideas.filter(i => i.status === 'posted');
+
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-primary-foreground overflow-hidden relative">
-      <main className="relative z-10 container mx-auto px-6 py-20 max-w-7xl">
-        <header className="mb-16 text-center space-y-4">
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60">
-            Content Store
+    <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-primary-foreground py-12 px-6">
+      <main className="max-w-4xl mx-auto space-y-12">
+        <header className="text-center space-y-4">
+          <div className="flex justify-center mb-4">
+            <div className="p-3 bg-primary/10 rounded-full text-primary">
+              <MessageCircle className="w-10 h-10" />
+            </div>
+          </div>
+          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">
+            Tweet Planner
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto font-medium">
-            Your dynamic data, beautifully synced with Google Spreadsheets.
+          <p className="text-lg text-muted-foreground font-medium">
+            Jot down your single-liner ideas and track what you've posted.
           </p>
         </header>
 
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Card key={i} className="overflow-hidden">
-                <CardHeader className="space-y-2">
-                  <Skeleton className="h-4 w-1/2" />
-                  <Skeleton className="h-4 w-1/3" />
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-5/6" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : error ? (
-          <Alert variant="destructive" className="max-w-2xl mx-auto bg-destructive/10 border-destructive/20 text-destructive">
-            <AlertCircle className="h-5 w-5" />
-            <AlertTitle className="text-lg font-semibold">Connection Error</AlertTitle>
-            <AlertDescription className="mt-2 text-sm leading-relaxed space-y-4">
-              <p>{error}</p>
-              <div className="p-4 rounded-lg bg-background/50 border border-border/50 text-muted-foreground font-mono">
-                <p>1. Copy .env.example to .env.local</p>
-                <p>2. Fill in your Google Cloud service account details</p>
-                <p>3. Share your Google Sheet with the service account email</p>
-              </div>
-            </AlertDescription>
-          </Alert>
-        ) : data.length === 0 ? (
-          <Alert className="max-w-md mx-auto text-center border-dashed">
-            <Database className="h-5 w-5 mx-auto mb-2 text-muted-foreground" />
-            <AlertTitle className="text-xl">No Content Found</AlertTitle>
-            <AlertDescription className="text-muted-foreground">
-              Your Google Sheet is empty or hasn't been set up yet.
-            </AlertDescription>
+        {error ? (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error Loading Ideas</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
           </Alert>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {data.map((item, idx) => (
-              <Card key={idx} className="group hover:shadow-lg transition-all duration-300 hover:border-primary/50">
-                <CardContent className="pt-6 space-y-4">
-                  {Object.entries(item).map(([key, value]) => (
-                    <div key={key} className="flex flex-col space-y-1 border-b border-border pb-3 last:border-0 last:pb-0">
-                      <span className="text-xs font-semibold text-primary uppercase tracking-wider">
-                        {key}
-                      </span>
-                      <span className="text-sm text-foreground break-words">
-                        {value || <span className="text-muted-foreground italic">Empty</span>}
-                      </span>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            ))}
+          <div className="space-y-8">
+            <Card className="border-primary/20 shadow-lg">
+              <CardHeader>
+                <CardTitle>New Idea</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleAddIdea} className="flex space-x-3">
+                  <Input 
+                    value={newIdea} 
+                    onChange={(e) => setNewIdea(e.target.value)} 
+                    placeholder="e.g. Just deployed my first Next.js app! 🚀" 
+                    disabled={isSubmitting || loading}
+                    className="flex-1 text-lg py-6"
+                  />
+                  <Button type="submit" disabled={!newIdea.trim() || isSubmitting || loading} className="py-6 px-8 text-md">
+                    {isSubmitting ? 'Adding...' : 'Add Idea'}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            <Tabs defaultValue="pending" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-8">
+                <TabsTrigger value="pending">
+                  <Clock className="w-4 h-4 mr-2" />
+                  Pending Ideas ({pendingIdeas.length})
+                </TabsTrigger>
+                <TabsTrigger value="posted">
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  Posted ({postedIdeas.length})
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="pending" className="space-y-4">
+                {loading ? (
+                  <div className="space-y-4">
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-24 w-full" />
+                  </div>
+                ) : pendingIdeas.length === 0 ? (
+                  <Card className="border-dashed">
+                    <CardContent className="py-12 text-center text-muted-foreground">
+                      No pending ideas. Time to brainstorm!
+                    </CardContent>
+                  </Card>
+                ) : (
+                  pendingIdeas.map((idea) => (
+                    <Card key={idea.id} className="transition-all hover:border-primary/50">
+                      <CardContent className="flex items-center space-x-4 p-6">
+                        <Checkbox 
+                          id={`idea-${idea.id}`} 
+                          onCheckedChange={() => handleMarkAsPosted(idea.id)}
+                          className="h-6 w-6 rounded-full"
+                        />
+                        <div className="flex-1 space-y-1">
+                          <label 
+                            htmlFor={`idea-${idea.id}`}
+                            className="text-lg font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                          >
+                            {idea.idea}
+                          </label>
+                          <p className="text-xs text-muted-foreground">
+                            Added {new Date(idea.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </TabsContent>
+
+              <TabsContent value="posted" className="space-y-4">
+                {loading ? (
+                  <div className="space-y-4">
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-24 w-full" />
+                  </div>
+                ) : postedIdeas.length === 0 ? (
+                  <Card className="border-dashed">
+                    <CardContent className="py-12 text-center text-muted-foreground">
+                      You haven't posted any ideas yet.
+                    </CardContent>
+                  </Card>
+                ) : (
+                  postedIdeas.map((idea) => (
+                    <Card key={idea.id} className="opacity-75 bg-muted/30">
+                      <CardContent className="flex items-center p-6">
+                        <div className="flex-1 space-y-1">
+                          <p className="text-lg font-medium line-through text-muted-foreground">
+                            {idea.idea}
+                          </p>
+                          <p className="text-sm text-primary">
+                            Posted on {new Date(idea.datePosted).toLocaleDateString()} at {new Date(idea.datePosted).toLocaleTimeString()}
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </TabsContent>
+            </Tabs>
           </div>
         )}
       </main>
