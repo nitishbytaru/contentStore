@@ -1,68 +1,107 @@
-import Image from "next/image";
+'use client';
+
+import { useEffect, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
+import { AlertCircle, Database } from 'lucide-react';
+
+type ContentItem = Record<string, any>;
 
 export default function Home() {
+  const [data, setData] = useState<ContentItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch('/api/content');
+        const json = await res.json();
+
+        if (!res.ok) {
+          throw new Error(json.error || 'Failed to fetch content');
+        }
+
+        setData(json.data || []);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
+    <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-primary-foreground overflow-hidden relative">
+      <main className="relative z-10 container mx-auto px-6 py-20 max-w-7xl">
+        <header className="mb-16 text-center space-y-4">
+          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60">
+            Content Store
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto font-medium">
+            Your dynamic data, beautifully synced with Google Spreadsheets.
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+        </header>
+
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Card key={i} className="overflow-hidden">
+                <CardHeader className="space-y-2">
+                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-4 w-1/3" />
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-5/6" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : error ? (
+          <Alert variant="destructive" className="max-w-2xl mx-auto bg-destructive/10 border-destructive/20 text-destructive">
+            <AlertCircle className="h-5 w-5" />
+            <AlertTitle className="text-lg font-semibold">Connection Error</AlertTitle>
+            <AlertDescription className="mt-2 text-sm leading-relaxed space-y-4">
+              <p>{error}</p>
+              <div className="p-4 rounded-lg bg-background/50 border border-border/50 text-muted-foreground font-mono">
+                <p>1. Copy .env.example to .env.local</p>
+                <p>2. Fill in your Google Cloud service account details</p>
+                <p>3. Share your Google Sheet with the service account email</p>
+              </div>
+            </AlertDescription>
+          </Alert>
+        ) : data.length === 0 ? (
+          <Alert className="max-w-md mx-auto text-center border-dashed">
+            <Database className="h-5 w-5 mx-auto mb-2 text-muted-foreground" />
+            <AlertTitle className="text-xl">No Content Found</AlertTitle>
+            <AlertDescription className="text-muted-foreground">
+              Your Google Sheet is empty or hasn't been set up yet.
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {data.map((item, idx) => (
+              <Card key={idx} className="group hover:shadow-lg transition-all duration-300 hover:border-primary/50">
+                <CardContent className="pt-6 space-y-4">
+                  {Object.entries(item).map(([key, value]) => (
+                    <div key={key} className="flex flex-col space-y-1 border-b border-border pb-3 last:border-0 last:pb-0">
+                      <span className="text-xs font-semibold text-primary uppercase tracking-wider">
+                        {key}
+                      </span>
+                      <span className="text-sm text-foreground break-words">
+                        {value || <span className="text-muted-foreground italic">Empty</span>}
+                      </span>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );
