@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, MessageCircle, CheckCircle2, Clock } from 'lucide-react';
+import { AlertCircle, MessageCircle, CheckCircle2, Clock, Trash2, Edit, Save, X, Loader2 } from 'lucide-react';
 
 interface Idea {
   id: string;
@@ -24,6 +24,9 @@ export function TweetPlanner() {
   const [error, setError] = useState<string | null>(null);
   const [newIdea, setNewIdea] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editIdeaText, setEditIdeaText] = useState('');
+  const [actionItemId, setActionItemId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchIdeas();
@@ -71,12 +74,7 @@ export function TweetPlanner() {
 
   const handleMarkAsPosted = async (id: string) => {
     try {
-      setIdeas((prev) => 
-        prev.map((idea) => 
-          idea.id === id ? { ...idea, status: 'posted', datePosted: new Date().toISOString() } : idea
-        )
-      );
-
+      setActionItemId(id);
       const res = await fetch('/api/ideas', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -87,9 +85,50 @@ export function TweetPlanner() {
         const json = await res.json();
         throw new Error(json.error);
       }
+      
+      setIdeas((prev) => 
+        prev.map((idea) => 
+          idea.id === id ? { ...idea, status: 'posted', datePosted: new Date().toISOString() } : idea
+        )
+      );
     } catch (err: any) {
       alert('Failed to update idea: ' + err.message);
-      fetchIdeas();
+    } finally {
+      setActionItemId(null);
+    }
+  };
+
+  const handleDeleteIdea = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this idea?')) return;
+    try {
+      setActionItemId(id);
+      const res = await fetch(`/api/ideas?id=${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete idea');
+      setIdeas((prev) => prev.filter((idea) => idea.id !== id));
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setActionItemId(null);
+    }
+  };
+
+  const handleEditIdea = async (id: string) => {
+    if (!editIdeaText.trim()) return;
+    try {
+      setActionItemId(id);
+      const res = await fetch('/api/ideas', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, idea: editIdeaText.trim() }),
+      });
+      if (!res.ok) throw new Error('Failed to update idea');
+      const json = await res.json();
+      setIdeas((prev) => prev.map((idea) => idea.id === id ? { ...idea, idea: json.data.idea } : idea));
+      setEditingId(null);
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setActionItemId(null);
     }
   };
 
@@ -163,24 +202,59 @@ export function TweetPlanner() {
             </Card>
           ) : (
             pendingIdeas.map((idea) => (
-              <Card key={idea.id} className="transition-all hover:border-primary/50">
+              <Card key={idea.id} className="transition-all hover:border-primary/50 group">
                 <CardContent className="flex items-center space-x-4 p-6">
                   <Checkbox 
                     id={`idea-${idea.id}`} 
                     onCheckedChange={() => handleMarkAsPosted(idea.id)}
                     className="h-6 w-6 rounded-full"
+                    disabled={actionItemId === idea.id}
                   />
                   <div className="flex-1 space-y-1">
-                    <label 
-                      htmlFor={`idea-${idea.id}`}
-                      className="text-lg font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                    >
-                      {idea.idea}
-                    </label>
-                    <p className="text-xs text-muted-foreground">
-                      Added {new Date(idea.createdAt).toLocaleDateString()}
-                    </p>
+                    {editingId === idea.id ? (
+                      <div className="flex items-center space-x-2">
+                        <Input 
+                          value={editIdeaText} 
+                          onChange={(e) => setEditIdeaText(e.target.value)} 
+                          className="flex-1"
+                          autoFocus
+                          disabled={actionItemId === idea.id}
+                        />
+                        <Button size="icon" variant="ghost" onClick={() => handleEditIdea(idea.id)} disabled={actionItemId === idea.id}>
+                          {actionItemId === idea.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                        </Button>
+                        <Button size="icon" variant="ghost" onClick={() => setEditingId(null)} disabled={actionItemId === idea.id}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <label 
+                          htmlFor={`idea-${idea.id}`}
+                          className="text-lg font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        >
+                          {idea.idea}
+                        </label>
+                        <p className="text-xs text-muted-foreground">
+                          Added {new Date(idea.createdAt).toLocaleDateString()}
+                        </p>
+                      </>
+                    )}
                   </div>
+                  {actionItemId === idea.id && editingId !== idea.id ? (
+                    <div className="flex space-x-2 px-2">
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : editingId !== idea.id && (
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
+                      <Button size="icon" variant="ghost" onClick={() => { setEditingId(idea.id); setEditIdeaText(idea.idea); }}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="text-destructive" onClick={() => handleDeleteIdea(idea.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))
@@ -201,16 +275,50 @@ export function TweetPlanner() {
             </Card>
           ) : (
             postedIdeas.map((idea) => (
-              <Card key={idea.id} className="opacity-75 bg-muted/30">
+              <Card key={idea.id} className="opacity-75 bg-muted/30 group">
                 <CardContent className="flex items-center p-6">
                   <div className="flex-1 space-y-1">
-                    <p className="text-lg font-medium line-through text-muted-foreground">
-                      {idea.idea}
-                    </p>
-                    <p className="text-sm text-primary">
-                      Posted on {new Date(idea.datePosted).toLocaleDateString()} at {new Date(idea.datePosted).toLocaleTimeString()}
-                    </p>
+                    {editingId === idea.id ? (
+                      <div className="flex items-center space-x-2">
+                        <Input 
+                          value={editIdeaText} 
+                          onChange={(e) => setEditIdeaText(e.target.value)} 
+                          className="flex-1"
+                          autoFocus
+                          disabled={actionItemId === idea.id}
+                        />
+                        <Button size="icon" variant="ghost" onClick={() => handleEditIdea(idea.id)} disabled={actionItemId === idea.id}>
+                          {actionItemId === idea.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                        </Button>
+                        <Button size="icon" variant="ghost" onClick={() => setEditingId(null)} disabled={actionItemId === idea.id}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-lg font-medium line-through text-muted-foreground">
+                          {idea.idea}
+                        </p>
+                        <p className="text-sm text-primary">
+                          Posted on {new Date(idea.datePosted).toLocaleDateString()} at {new Date(idea.datePosted).toLocaleTimeString()}
+                        </p>
+                      </>
+                    )}
                   </div>
+                  {actionItemId === idea.id && editingId !== idea.id ? (
+                    <div className="flex space-x-2 px-2">
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : editingId !== idea.id && (
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
+                      <Button size="icon" variant="ghost" onClick={() => { setEditingId(idea.id); setEditIdeaText(idea.idea); }}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="text-destructive" onClick={() => handleDeleteIdea(idea.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))

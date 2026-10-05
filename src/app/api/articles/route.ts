@@ -67,7 +67,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'GEMINI_API_KEY is not configured' }, { status: 500 });
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.8-flash' });
     const prompt = `Convert the following rough description into a highly structured, engaging, and professional article. Use markdown formatting (headings, bullet points, etc.).\n\nDescription: ${topic}`;
     
     const result = await model.generateContent(prompt);
@@ -105,7 +105,7 @@ export async function PUT(request: Request) {
 
     if (!targetRow) return NextResponse.json({ error: 'Article not found' }, { status: 404 });
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.8-flash' });
     let updatedField = '';
     let updatedContent = '';
 

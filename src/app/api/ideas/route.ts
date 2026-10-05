@@ -67,7 +67,7 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const { id } = await request.json();
+    const { id, idea, status } = await request.json();
     
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
@@ -81,8 +81,23 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'Idea not found' }, { status: 404 });
     }
 
-    targetRow.set('status', 'posted');
-    targetRow.set('datePosted', new Date().toISOString());
+    if (idea !== undefined) {
+      targetRow.set('idea', idea);
+    }
+    
+    if (status !== undefined) {
+      targetRow.set('status', status);
+      if (status === 'posted') {
+        targetRow.set('datePosted', new Date().toISOString());
+      } else {
+        targetRow.set('datePosted', '');
+      }
+    } else if (idea === undefined) {
+      // Backward compatibility for mark as posted if no idea/status provided
+      targetRow.set('status', 'posted');
+      targetRow.set('datePosted', new Date().toISOString());
+    }
+
     await targetRow.save();
 
     return NextResponse.json({ 
@@ -96,6 +111,32 @@ export async function PUT(request: Request) {
     }, { status: 200 });
   } catch (error: any) {
     console.error('Error updating idea:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
+
+    const sheet = await getIdeasSheet();
+    const rows = await sheet.getRows();
+    const targetRow = rows.find(r => r.get('id') === id);
+
+    if (!targetRow) {
+      return NextResponse.json({ error: 'Idea not found' }, { status: 404 });
+    }
+
+    await targetRow.delete();
+
+    return NextResponse.json({ success: true }, { status: 200 });
+  } catch (error: any) {
+    console.error('Error deleting idea:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
