@@ -220,6 +220,7 @@ IMPORTANT RULES:
 1. Do NOT use any markdown formatting (no bolding, italics, or hashes). Return plain, copy-pasteable text only.
 2. Do NOT include any voiceover or spoken dialogue. The video should rely entirely on visuals and on-screen text.
 3. End the video normally. Do NOT include any calls to action, asking for likes, subscribes, or comments.
+4. Only use sound effects (SFX) for audio. Do NOT include or suggest any background music.
 
 Additional instructions from user (if any): ${customPrompt}
 
