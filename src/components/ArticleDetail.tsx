@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useArticle } from './ArticleContext';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,49 +15,6 @@ export function ArticleDetail({ activeTab }: { activeTab: 'article' | 'xPost' | 
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [customPrompt, setCustomPrompt] = useState<{ [key: string]: string }>({});
   const [editingContent, setEditingContent] = useState<{ id: string; type: 'article' | 'xPost' | 'videoPrompt'; content: string } | null>(null);
-  const autoGenId = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!article || autoGenId.current === article.id) return;
-    if (article.xPostContent && article.videoPromptContent) {
-      autoGenId.current = article.id;
-      return;
-    }
-
-    const autoGenerate = async () => {
-      autoGenId.current = article.id;
-      
-      try {
-        if (!article.xPostContent) {
-          setProcessingId(article.id + 'generate_x_post');
-          const resX = await fetch('/api/articles', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: article.id, action: 'generate_x_post', customPrompt: '' }),
-          });
-          const jsonX = await resX.json();
-          if (resX.ok) updateArticle(jsonX.data);
-        }
-      } catch (e) {}
-
-      try {
-        if (!article.videoPromptContent) {
-          setProcessingId(article.id + 'generate_video_prompt');
-          const resV = await fetch('/api/articles', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: article.id, action: 'generate_video_prompt', customPrompt: '' }),
-          });
-          const jsonV = await resV.json();
-          if (resV.ok) updateArticle(jsonV.data);
-        }
-      } catch (e) {}
-
-      setProcessingId(null);
-    };
-
-    autoGenerate();
-  }, [article, updateArticle]);
 
   if (loading) return <div className="space-y-4"><Skeleton className="h-64 w-full" /></div>;
   if (error || !article) return <div className="text-red-500">Failed to load article</div>;
@@ -186,14 +143,6 @@ export function ArticleDetail({ activeTab }: { activeTab: 'article' | 'xPost' | 
 
   return (
     <Card className="overflow-hidden shadow-md animate-in fade-in duration-500">
-      <CardHeader className="bg-muted/30 border-b border-border">
-        <CardTitle className="text-lg">
-          <div className="text-sm font-medium text-muted-foreground leading-relaxed">
-            <span className="font-bold text-foreground">Prompt:</span> {article.originalTopic}
-          </div>
-        </CardTitle>
-      </CardHeader>
-      
       {activeTab === 'article' && (
         <div className="flex flex-col">
           <div className="flex justify-end p-2 pb-0 bg-background/50 gap-2">

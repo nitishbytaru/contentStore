@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertCircle, Sparkles } from 'lucide-react';
+import { AlertCircle, Sparkles, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { Article } from './ArticleContext';
@@ -19,6 +19,7 @@ export function ArticleGenerator() {
   const [error, setError] = useState<string | null>(null);
   const [topic, setTopic] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generationStep, setGenerationStep] = useState('');
   const [selectedModel, setSelectedModel] = useState('gemini-3.8-flash');
 
   useEffect(() => {
@@ -45,6 +46,8 @@ export function ArticleGenerator() {
 
     try {
       setIsGenerating(true);
+      setGenerationStep('Generating base article...');
+      
       const res = await fetch('/api/articles', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -52,12 +55,29 @@ export function ArticleGenerator() {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error);
+      
+      const articleId = json.data.id;
 
-      router.push(`/articles/${json.data.id}/basearticle`);
+      setGenerationStep('Base article generated! Generating X thread...');
+      await fetch('/api/articles', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: articleId, action: 'generate_x_post', customPrompt: '' }),
+      });
+
+      setGenerationStep('X thread generated! Generating video prompt...');
+      await fetch('/api/articles', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: articleId, action: 'generate_video_prompt', customPrompt: '' }),
+      });
+
+      setGenerationStep('All done! Redirecting...');
+      router.push(`/articles/${articleId}/basearticle`);
     } catch (err: any) {
       alert('Failed to generate article: ' + err.message);
-    } finally {
       setIsGenerating(false);
+      setGenerationStep('');
     }
   };
 
@@ -112,7 +132,8 @@ export function ArticleGenerator() {
               disabled={!topic.trim() || isGenerating || loading} 
               className="w-full py-6 text-md bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              {isGenerating ? 'Generating with AI...' : 'Generate Base Article'}
+              {isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isGenerating ? generationStep : 'Generate Base Article'}
               {!isGenerating && <Sparkles className="ml-2 h-4 w-4" />}
             </Button>
           </form>

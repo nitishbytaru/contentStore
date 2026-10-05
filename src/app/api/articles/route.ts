@@ -10,7 +10,7 @@ export async function GET(request: Request) {
 
     const sheet = await getArticlesSheet();
     const rows = await sheet.getRows();
-    
+
     let data = rows.map((row) => ({
       id: row.get('id'),
       originalTopic: row.get('originalTopic'),
@@ -106,7 +106,7 @@ export async function PUT(request: Request) {
     targetRow.set('updatedAt', new Date().toISOString());
     await targetRow.save();
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       data: {
         id: targetRow.get('id'),
         originalTopic: targetRow.get('originalTopic'),
