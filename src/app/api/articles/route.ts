@@ -197,7 +197,30 @@ export async function PUT(request: Request) {
       updatedContent = content;
     } else if (action === 'generate_video_prompt') {
       const prompt = `Based on the following article, generate a detailed video prompt and script outline for a short-form video (TikTok, Reels, Shorts) or a YouTube video. Include visual cues and voiceover lines. \n\nAdditional instructions from user (if any): ${customPrompt || 'None'}\n\nArticle Data:\n${articleContent}`;
-      updatedContent = await generateWithFallback(prompt, 'generate_video_prompt');
+      const generatedContent = await generateWithFallback(prompt, 'generate_video_prompt');
+      
+      const appendString = `\n\nFormat: 9:16 vertical animated video, 15–20 seconds duration.
+Style: Clean flat-design 2.5D vector illustration, modern tech aesthetic, vibrant minimalist color palette on a neutral dark/light slate background. Bold outlines, smooth motion graphics, isometric perspective.
+
+Subject / Scene Breakdown:
+- 00:00–00:04 (The Trigger): Large, distinct isometric graphic representing [Client Device / Incoming Request]. [Action: emits a glowing data packet moving along an animated pathway].
+- 00:04–00:10 (The Core Mechanism): The packet enters [Central Component: e.g., Middleware / Rate Limiter / Gateway]. Visual mechanism activates [e.g., counter increments / security shield scans / token bucket fills or drops]. Clear, prominent visual cue: [e.g., green checkmark for pass, smooth red deflection for block].
+- 00:10–00:15 (The Destination): Allowed packet flows seamlessly into [Target: e.g., Backend Server Cluster / Database node]. The target component pulses with a gentle glow and returns an instant response payload back along the line.
+
+Text & UI Constraints:
+- Minimal text. Max 1–2 bold floating labels (e.g., "[LABEL 1]", "[LABEL 2]").
+- No complex terminal dumps or paragraphs; rely entirely on visual metaphors and motion flow.
+
+Camera & Motion:
+- Fixed isometric angle with a subtle push-in toward the central component during the evaluation phase.
+- Snappy, high-frame-rate easing curves (ease-in-out) for all component movements.
+
+Audio & SFX Cues:
+- Soft digital whoosh on packet dispatch.
+- Crisp UI click / chime during component processing.
+- Low resonant hum for server/database acknowledgment.`;
+
+      updatedContent = generatedContent + appendString;
       updatedField = 'videoPromptContent';
     } else if (action === 'edit_video_prompt') {
       updatedField = 'videoPromptContent';
