@@ -184,23 +184,22 @@ IMPORTANT RULES
 OUTPUT FORMAT
 ━━━━━━━━━━━━━━━━━━━━
 
-Return only this structure:
+Return only this structure in plain text (DO NOT use any markdown formatting like asterisks or hashes):
 
-### Hook
-
+Hook:
 [Hook tweet]
 
-### Thread
+Thread:
 
-**1/N**
+1/N
 [Tweet]
 
-**2/N**
+2/N
 [Tweet]
 
 ...
 
-**N/N**
+N/N
 [Final tweet]
 
 Do not provide explanations, analysis, character counts, or alternative versions unless the user asks for them.
@@ -216,6 +215,8 @@ ${articleContent}`;
 
 export function buildVideoPrompt(articleContent: string, customPrompt = 'None') {
   return `Based on the following article, generate a detailed video prompt and script outline for a short-form video (TikTok, Reels, Shorts) or a YouTube video. Include visual cues and voiceover lines. 
+
+IMPORTANT: Do NOT use any markdown formatting (no bolding, italics, or hashes). Return plain, copy-pasteable text only.
 
 Additional instructions from user (if any): ${customPrompt}
 

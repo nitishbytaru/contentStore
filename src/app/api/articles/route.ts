@@ -38,21 +38,16 @@ export async function POST(request: Request) {
     const { topic } = await request.json();
     if (!topic) return NextResponse.json({ error: 'Topic is required' }, { status: 400 });
 
-    const prompt = `Convert the following rough description into a highly structured, engaging, and professional article. Use markdown formatting (headings, bullet points, etc.).\n\nDescription: ${topic}`;
+    const prompt = `Convert the following rough description into a highly structured, engaging, and professional article. Do NOT use any markdown formatting. Provide plain, copy-pasteable text only (no asterisks, hashes, bolding, or italics).\n\nDescription: ${topic}`;
     const articleContent = await generateWithFallback(prompt, 'article');
-
-    const [xPostContentRaw, videoContentRaw] = await Promise.all([
-      generateWithFallback(buildXPostPrompt(articleContent), 'generate_x_post'),
-      generateWithFallback(buildVideoPrompt(articleContent), 'generate_video_prompt')
-    ]);
 
     const sheet = await getArticlesSheet();
     const newArticle = {
       id: crypto.randomUUID(),
       originalTopic: topic,
       articleContent,
-      xPostContent: xPostContentRaw,
-      videoPromptContent: videoContentRaw + VIDEO_APPEND_STRING,
+      xPostContent: '',
+      videoPromptContent: '',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -87,7 +82,7 @@ export async function PUT(request: Request) {
       updatedField = 'articleContent';
       updatedContent = content;
     } else if (action === 'iterate_article') {
-      const prompt = `Here is an existing article:\n\n${articleContent}\n\nUser request for changes: ${customPrompt}\n\nPlease rewrite the article incorporating the requested changes. Keep it in markdown format.`;
+      const prompt = `Here is an existing article:\n\n${articleContent}\n\nUser request for changes: ${customPrompt}\n\nPlease rewrite the article incorporating the requested changes. Do NOT use any markdown formatting. Provide plain, copy-pasteable text only.`;
       updatedContent = await generateWithFallback(prompt, 'iterate_article');
       updatedField = 'articleContent';
     } else if (action === 'generate_x_post') {
