@@ -179,21 +179,23 @@ export function TweetPlanner() {
       <Tabs defaultValue="pending" className="w-full">
         <TabsList className="grid w-full grid-cols-2 mb-8">
           <TabsTrigger value="pending">
-            <Clock className="w-4 h-4 mr-2" />
-            Pending Ideas ({pendingIdeas.length})
+            {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Clock className="w-4 h-4 mr-2" />}
+            Pending Ideas ({loading ? '...' : pendingIdeas.length})
           </TabsTrigger>
           <TabsTrigger value="posted">
-            <CheckCircle2 className="w-4 h-4 mr-2" />
-            Posted ({postedIdeas.length})
+            {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+            Posted ({loading ? '...' : postedIdeas.length})
           </TabsTrigger>
         </TabsList>
         
         <TabsContent value="pending" className="space-y-4">
           {loading ? (
-            <div className="space-y-4">
-              <Skeleton className="h-24 w-full" />
-              <Skeleton className="h-24 w-full" />
-            </div>
+            <Card className="border-dashed bg-muted/5">
+              <CardContent className="py-12 flex flex-col items-center justify-center space-y-4 text-muted-foreground">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-lg font-medium">Loading tweets...</p>
+              </CardContent>
+            </Card>
           ) : pendingIdeas.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="py-12 text-center text-muted-foreground">
@@ -263,10 +265,12 @@ export function TweetPlanner() {
 
         <TabsContent value="posted" className="space-y-4">
           {loading ? (
-            <div className="space-y-4">
-              <Skeleton className="h-24 w-full" />
-              <Skeleton className="h-24 w-full" />
-            </div>
+            <Card className="border-dashed bg-muted/5">
+              <CardContent className="py-12 flex flex-col items-center justify-center space-y-4 text-muted-foreground">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-lg font-medium">Loading posted tweets...</p>
+              </CardContent>
+            </Card>
           ) : postedIdeas.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="py-12 text-center text-muted-foreground">
