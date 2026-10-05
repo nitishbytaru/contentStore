@@ -11,6 +11,14 @@ import { AlertCircle, Sparkles, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { Article } from './ArticleContext';
+import { AIProcessingLoader, AIProcessingStep } from './ai/AIProcessingLoader';
+
+const PROCESS_STEPS: AIProcessingStep[] = [
+  { id: 'base', title: 'Drafting Base Article', description: 'Analyzing your topic and writing core content...' },
+  { id: 'xpost', title: 'Generating X Thread', description: 'Crafting viral social media hooks...' },
+  { id: 'video', title: 'Writing Video Script', description: 'Structuring for engagement and retention...' },
+  { id: 'done', title: 'Finalizing Output', description: 'Preparing your AI content hub...' },
+];
 
 export function ArticleGenerator() {
   const router = useRouter();
@@ -19,7 +27,7 @@ export function ArticleGenerator() {
   const [error, setError] = useState<string | null>(null);
   const [topic, setTopic] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generationStep, setGenerationStep] = useState('');
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [selectedModel, setSelectedModel] = useState('gemini-3.8-flash');
 
   useEffect(() => {
@@ -46,7 +54,7 @@ export function ArticleGenerator() {
 
     try {
       setIsGenerating(true);
-      setGenerationStep('Generating base article...');
+      setCurrentStepIndex(0);
       
       const res = await fetch('/api/articles', {
         method: 'POST',
@@ -58,26 +66,26 @@ export function ArticleGenerator() {
       
       const articleId = json.data.id;
 
-      setGenerationStep('Base article generated! Generating X thread...');
+      setCurrentStepIndex(1);
       await fetch('/api/articles', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: articleId, action: 'generate_x_post', customPrompt: '' }),
       });
 
-      setGenerationStep('X thread generated! Generating video prompt...');
+      setCurrentStepIndex(2);
       await fetch('/api/articles', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: articleId, action: 'generate_video_prompt', customPrompt: '' }),
       });
 
-      setGenerationStep('All done! Redirecting...');
+      setCurrentStepIndex(3);
       router.push(`/articles/${articleId}/basearticle`);
     } catch (err: any) {
       alert('Failed to generate article: ' + err.message);
       setIsGenerating(false);
-      setGenerationStep('');
+      setCurrentStepIndex(0);
     }
   };
 
@@ -132,13 +140,18 @@ export function ArticleGenerator() {
               disabled={!topic.trim() || isGenerating || loading} 
               className="w-full py-6 text-md bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              {isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isGenerating ? generationStep : 'Generate Base Article'}
+              {isGenerating ? 'Processing...' : 'Generate Base Article'}
               {!isGenerating && <Sparkles className="ml-2 h-4 w-4" />}
             </Button>
           </form>
         </CardContent>
       </Card>
+
+      <AIProcessingLoader 
+        isProcessing={isGenerating} 
+        steps={PROCESS_STEPS} 
+        currentStepIndex={currentStepIndex} 
+      />
 
       <div className="space-y-6">
         <h3 className="text-2xl font-bold tracking-tight">Your AI Content</h3>

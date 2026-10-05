@@ -214,9 +214,12 @@ ${articleContent}`;
 }
 
 export function buildVideoPrompt(articleContent: string, customPrompt = 'None') {
-  return `Based on the following article, generate a detailed video prompt and script outline for a short-form video (TikTok, Reels, Shorts) or a YouTube video. Include visual cues and voiceover lines. 
+  return `Based on the following article, generate a detailed video prompt and script outline for a short-form video (TikTok, Reels, Shorts) or a YouTube video. Include visual cues and on-screen text instructions. 
 
-IMPORTANT: Do NOT use any markdown formatting (no bolding, italics, or hashes). Return plain, copy-pasteable text only.
+IMPORTANT RULES:
+1. Do NOT use any markdown formatting (no bolding, italics, or hashes). Return plain, copy-pasteable text only.
+2. Do NOT include any voiceover or spoken dialogue. The video should rely entirely on visuals and on-screen text.
+3. End the video normally. Do NOT include any calls to action, asking for likes, subscribes, or comments.
 
 Additional instructions from user (if any): ${customPrompt}
 
