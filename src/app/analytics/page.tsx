@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { TrendingUp, CheckCircle, FileText, BarChart3 } from 'lucide-react';
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend,
   PieChart, Pie, Cell
 } from 'recharts';
 import { useDispatch, useSelector } from 'react-redux';
@@ -58,6 +58,13 @@ export default function AnalyticsDashboard() {
     'YouTube': 0,
     'Instagram': 0,
   };
+  let ineligibleCounts = {
+    'X (Twitter)': 0,
+    'Medium': 0,
+    'Substack': 0,
+    'YouTube': 0,
+    'Instagram': 0,
+  };
 
   ideas.forEach(idea => {
     // Treat legacy "posted" as published on X
@@ -67,6 +74,12 @@ export default function AnalyticsDashboard() {
     if (idea.publishedSubstack) platformCounts['Substack']++;
     if (idea.publishedYoutube) platformCounts['YouTube']++;
     if (idea.publishedInstagram) platformCounts['Instagram']++;
+
+    if (idea.ineligibleX) ineligibleCounts['X (Twitter)']++;
+    if (idea.ineligibleMedium) ineligibleCounts['Medium']++;
+    if (idea.ineligibleSubstack) ineligibleCounts['Substack']++;
+    if (idea.ineligibleYoutube) ineligibleCounts['YouTube']++;
+    if (idea.ineligibleInstagram) ineligibleCounts['Instagram']++;
 
     const totalPlatforms = [
       isX || idea.ineligibleX, 
@@ -86,7 +99,11 @@ export default function AnalyticsDashboard() {
 
   const activeIdeas = totalIdeas - totallyUnpublished;
 
-  const barChartData = Object.entries(platformCounts).map(([name, value]) => ({ name, Published: value }));
+  const barChartData = Object.entries(platformCounts).map(([name, value]) => ({ 
+    name, 
+    Published: value,
+    Skipped: ineligibleCounts[name as keyof typeof ineligibleCounts]
+  }));
 
   const pieChartData = [
     { name: 'Unpublished', value: totallyUnpublished },
@@ -132,7 +149,7 @@ export default function AnalyticsDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-foreground">{fullyPublished}</div>
-            <p className="text-xs text-muted-foreground mt-1">published everywhere (all 5)</p>
+            <p className="text-xs text-muted-foreground mt-1">published or skipped on all 5</p>
           </CardContent>
         </Card>
       </div>
@@ -153,7 +170,9 @@ export default function AnalyticsDashboard() {
                   cursor={{fill: '#222'}} 
                   contentStyle={{ backgroundColor: '#111', borderColor: '#333', borderRadius: '8px' }} 
                 />
-                <Bar dataKey="Published" fill="url(#colorGradient)" radius={[4, 4, 0, 0]} />
+                <Legend wrapperStyle={{ paddingTop: '10px' }} />
+                <Bar dataKey="Published" fill="url(#colorGradient)" radius={[4, 4, 0, 0]} stackId="a" />
+                <Bar dataKey="Skipped" fill="#ef4444" radius={[4, 4, 0, 0]} opacity={0.5} stackId="a" />
                 <defs>
                   <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8}/>

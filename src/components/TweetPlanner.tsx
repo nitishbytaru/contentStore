@@ -58,7 +58,18 @@ export function TweetPlanner() {
   };
 
   const filteredIdeas = ideas.filter(i => i.idea.toLowerCase().includes(searchQuery.toLowerCase()));
-  const pendingIdeas = filteredIdeas.filter(i => i.status !== 'posted');
+  
+  const isIdeaPending = (i: Idea) => {
+    if (i.status === 'posted') return false;
+    const isDone = (i.publishedX || i.ineligibleX) && 
+                   (i.publishedMedium || i.ineligibleMedium) &&
+                   (i.publishedSubstack || i.ineligibleSubstack) &&
+                   (i.publishedYoutube || i.ineligibleYoutube) &&
+                   (i.publishedInstagram || i.ineligibleInstagram);
+    return !isDone;
+  };
+  
+  const pendingIdeas = filteredIdeas.filter(isIdeaPending);
   const eligibleForMedium = filteredIdeas.filter(i => i.eligibleMedium && !i.publishedMedium);
   const eligibleForYoutube = filteredIdeas.filter(i => i.eligibleYoutube && !i.publishedYoutube);
 
