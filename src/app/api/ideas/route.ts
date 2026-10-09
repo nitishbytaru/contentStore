@@ -59,7 +59,7 @@ export async function GET(request: Request) {
       }, {} as any);
       // parse booleans
       BOOLEAN_FIELDS.forEach(key => {
-        data[key] = data[key] === 'true';
+        data[key] = String(data[key]).toLowerCase() === 'true';
       });
       return NextResponse.json({ data }, { status: 200 });
     }
@@ -71,7 +71,7 @@ export async function GET(request: Request) {
       }, {} as any);
       // parse booleans
       BOOLEAN_FIELDS.forEach(key => {
-        rowData[key] = rowData[key] === 'true';
+        rowData[key] = String(rowData[key]).toLowerCase() === 'true';
       });
       return rowData;
     });
@@ -164,7 +164,7 @@ export async function PUT(request: Request) {
     }, {} as any);
     
     BOOLEAN_FIELDS.forEach(key => {
-      updatedData[key] = updatedData[key] === 'true';
+      updatedData[key] = String(updatedData[key]).toLowerCase() === 'true';
     });
 
     return NextResponse.json({ data: updatedData }, { status: 200 });
