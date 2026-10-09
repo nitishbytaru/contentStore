@@ -3,7 +3,7 @@ import { getGoogleSheet } from '@/lib/google-sheets';
 
 const HEADERS = [
   'id', 'idea', 'status', 'datePosted', 'createdAt',
-  'baseArticle', 'tweets', 'videoScript', 'mediumArticle', 'youtubeScript',
+  'baseArticle', 'mediumArticle', 'youtubeScript',
   'publishedMedium', 'publishedSubstack', 'publishedX', 'publishedYoutube', 'publishedInstagram'
 ];
 
@@ -93,8 +93,6 @@ export async function POST(request: Request) {
       datePosted: '',
       createdAt: new Date().toISOString(),
       baseArticle: '',
-      tweets: '',
-      videoScript: '',
       mediumArticle: '',
       youtubeScript: '',
       publishedMedium: 'false',

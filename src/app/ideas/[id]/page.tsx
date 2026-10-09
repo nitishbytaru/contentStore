@@ -3,7 +3,7 @@
 import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -20,8 +20,6 @@ interface IdeaDetails {
   id: string;
   idea: string;
   baseArticle: string;
-  tweets: string;
-  videoScript: string;
   mediumArticle: string;
   youtubeScript: string;
   publishedMedium: boolean;
@@ -84,6 +82,15 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
     setIdea(prev => prev ? { ...prev, [field]: value } : prev);
   };
 
+  const handleCopyContent = (text: string) => {
+    if (!text) {
+      toast.error('Nothing to copy!');
+      return;
+    }
+    navigator.clipboard.writeText(text);
+    toast.success('Copied to clipboard!');
+  };
+
   const handleCheckboxChange = (field: keyof IdeaDetails, checked: boolean) => {
     setIdea(prev => prev ? { ...prev, [field]: checked } : prev);
   };
@@ -132,30 +139,37 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
               <Tabs defaultValue="baseArticle" className="w-full">
                 <TabsList className="w-full justify-start overflow-x-auto flex-nowrap rounded-lg p-1 bg-muted/50 mb-6 border">
                   <TabsTrigger value="baseArticle" className="flex-1">Base Article</TabsTrigger>
-                  <TabsTrigger value="tweets" className="flex-1">Tweets / Threads</TabsTrigger>
                   <TabsTrigger value="mediumArticle" className="flex-1">Medium Article</TabsTrigger>
-                  <TabsTrigger value="videoScript" className="flex-1">Video Gen Script</TabsTrigger>
                   <TabsTrigger value="youtubeScript" className="flex-1">YouTube Script</TabsTrigger>
                 </TabsList>
 
                 {([
                   { value: 'baseArticle', label: 'Base Article', placeholder: 'Draft your core article here...' },
-                  { value: 'tweets', label: 'Tweets & Threads', placeholder: 'Draft your X threads here...' },
                   { value: 'mediumArticle', label: 'Medium Article', placeholder: 'Draft the Medium-optimized version here...' },
-                  { value: 'videoScript', label: 'Video Gen Script', placeholder: 'Script for short-form AI video generation...' },
                   { value: 'youtubeScript', label: 'YouTube Script', placeholder: 'Long-form YouTube video script...' },
                 ] as const).map(tab => (
                   <TabsContent key={tab.value} value={tab.value} className="focus-visible:outline-none focus-visible:ring-0 mt-0">
                     <div className="space-y-4">
-                      <div className="flex justify-between items-center">
+                      <div className="flex justify-between items-center mb-2">
                         <h3 className="text-lg font-semibold">{tab.label}</h3>
                       </div>
-                      <Textarea 
-                        placeholder={tab.placeholder}
-                        value={idea[tab.value as keyof IdeaDetails] as string}
-                        onChange={(e) => handleTextChange(tab.value as keyof IdeaDetails, e.target.value)}
-                        className="min-h-[500px] resize-y text-base p-4 bg-background/50 focus:bg-background transition-colors leading-relaxed"
-                      />
+                      <div className="relative group">
+                        <Textarea 
+                          placeholder={tab.placeholder}
+                          value={idea[tab.value as keyof IdeaDetails] as string}
+                          onChange={(e) => handleTextChange(tab.value as keyof IdeaDetails, e.target.value)}
+                          className="min-h-[500px] resize-y text-base p-4 pr-12 bg-background/50 focus:bg-background transition-colors leading-relaxed"
+                        />
+                        <Button 
+                          size="icon" 
+                          variant="secondary" 
+                          className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 shadow-sm"
+                          onClick={() => handleCopyContent(idea[tab.value as keyof IdeaDetails] as string)}
+                          title="Copy content"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </TabsContent>
                 ))}

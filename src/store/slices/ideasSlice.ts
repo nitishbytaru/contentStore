@@ -12,8 +12,6 @@ export interface Idea {
   publishedYoutube: boolean;
   publishedInstagram: boolean;
   baseArticle: string;
-  tweets: string;
-  videoScript: string;
   mediumArticle: string;
   youtubeScript: string;
 }
