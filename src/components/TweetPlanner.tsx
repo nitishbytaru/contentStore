@@ -1,12 +1,12 @@
 'use client';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, Clock, Trash2, Edit, Save, X, Loader2, Copy, FileText, Video, List } from 'lucide-react';
+import { AlertCircle, Clock, Trash2, Edit, Save, X, Loader2, Copy, FileText, Video, List, Plus } from 'lucide-react';
 import { toast } from "sonner";
 
 interface Idea {
@@ -31,8 +31,6 @@ export function TweetPlanner() {
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [newIdea, setNewIdea] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editIdeaText, setEditIdeaText] = useState('');
   const [actionItemId, setActionItemId] = useState<string | null>(null);
@@ -54,30 +52,6 @@ export function TweetPlanner() {
       setError(err.message);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleAddIdea = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newIdea.trim()) return;
-
-    try {
-      setIsSubmitting(true);
-      const res = await fetch('/api/ideas', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idea: newIdea.trim() }),
-      });
-      const json = await res.json();
-
-      if (!res.ok) throw new Error(json.error);
-
-      setIdeas((prev) => [...prev, json.data]);
-      setNewIdea('');
-    } catch (err: any) {
-      toast.error('Failed to add idea: ' + err.message);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -135,8 +109,8 @@ export function TweetPlanner() {
   }
 
   const renderIdeaCard = (idea: Idea) => (
-    <Card key={idea.id} className="transition-all hover:border-primary/50 group">
-      <CardContent className="flex items-center space-x-4 p-6">
+    <Card key={idea.id} className="transition-all hover:shadow-md hover:border-primary/50 group bg-card">
+      <CardContent className="flex items-center space-x-4 p-5">
         <div className="flex-1 space-y-1">
           {editingId === idea.id ? (
             <div className="flex items-center space-x-2">
@@ -148,22 +122,22 @@ export function TweetPlanner() {
                 disabled={actionItemId === idea.id}
               />
               <Button size="icon" variant="ghost" onClick={() => handleEditIdea(idea.id)} disabled={actionItemId === idea.id}>
-                {actionItemId === idea.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                {actionItemId === idea.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4 text-primary" />}
               </Button>
               <Button size="icon" variant="ghost" onClick={() => setEditingId(null)} disabled={actionItemId === idea.id}>
-                <X className="h-4 w-4" />
+                <X className="h-4 w-4 text-muted-foreground" />
               </Button>
             </div>
           ) : (
             <>
               <Link 
                 href={`/ideas/${idea.id}`}
-                className="text-lg font-medium leading-none hover:underline cursor-pointer transition-all hover:text-primary block"
+                className="text-lg font-semibold leading-none hover:underline cursor-pointer transition-all hover:text-primary block"
               >
                 {idea.idea}
               </Link>
-              <p className="text-xs text-muted-foreground">
-                Added {new Date(idea.createdAt).toLocaleDateString()}
+              <p className="text-xs text-muted-foreground/80 font-medium">
+                Created {new Date(idea.createdAt).toLocaleDateString()}
               </p>
             </>
           )}
@@ -173,14 +147,14 @@ export function TweetPlanner() {
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           </div>
         ) : editingId !== idea.id && (
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1">
             <Button size="icon" variant="ghost" onClick={() => handleCopyIdea(idea.idea)}>
-              <Copy className="h-4 w-4" />
+              <Copy className="h-4 w-4 text-muted-foreground hover:text-foreground" />
             </Button>
             <Button size="icon" variant="ghost" onClick={() => { setEditingId(idea.id); setEditIdeaText(idea.idea); }}>
-              <Edit className="h-4 w-4" />
+              <Edit className="h-4 w-4 text-muted-foreground hover:text-foreground" />
             </Button>
-            <Button size="icon" variant="ghost" className="text-destructive" onClick={() => handleDeleteIdea(idea.id)}>
+            <Button size="icon" variant="ghost" className="hover:bg-destructive/10 hover:text-destructive" onClick={() => handleDeleteIdea(idea.id)}>
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
@@ -190,51 +164,43 @@ export function TweetPlanner() {
   );
 
   return (
-    <div className="space-y-8">
-      <header className="text-center space-y-2 mb-6">
-        <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
-          Content Hub
-        </h2>
-        <p className="text-lg text-muted-foreground font-medium">
-          Jot down your single-liner ideas and build them out into full content.
-        </p>
-      </header>
-
-      <Card className="border-primary/20 shadow-lg">
-        <CardHeader>
-          <CardTitle>New Idea</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleAddIdea} className="flex space-x-3">
-            <Input 
-              value={newIdea} 
-              onChange={(e) => setNewIdea(e.target.value)} 
-              placeholder="e.g. Just deployed my first Next.js app! 🚀" 
-              disabled={isSubmitting || loading}
-              className="flex-1 text-lg py-6"
-            />
-            <Button type="submit" disabled={!newIdea.trim() || isSubmitting || loading} className="py-6 px-8 text-md">
-              {isSubmitting ? 'Adding...' : 'Add Idea'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+    <div className="space-y-6">
+      <div className="flex justify-end mb-4">
+        <Button asChild size="lg" className="shadow-md hover:shadow-primary/30 transition-all rounded-full px-6">
+          <Link href="/ideas/new">
+            <Plus className="mr-2 h-5 w-5" />
+            Create New Todo
+          </Link>
+        </Button>
+      </div>
 
       <Tabs defaultValue="pending" className="w-full">
-        <TabsList className="grid w-full grid-cols-1 md:grid-cols-4 mb-8 h-auto">
-          <TabsTrigger value="pending" className="py-3">
+        <TabsList className="inline-flex w-full sm:w-auto h-auto bg-muted/30 p-1.5 rounded-full mb-8 flex-wrap justify-center sm:justify-start gap-1 border border-border/50">
+          <TabsTrigger 
+            value="pending" 
+            className="rounded-full px-5 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all font-medium text-sm"
+          >
             {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Clock className="w-4 h-4 mr-2" />}
             Pending ({loading ? '...' : pendingIdeas.length})
           </TabsTrigger>
-          <TabsTrigger value="medium" className="py-3">
+          <TabsTrigger 
+            value="medium" 
+            className="rounded-full px-5 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all font-medium text-sm"
+          >
             {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
             Medium Eligible ({loading ? '...' : eligibleForMedium.length})
           </TabsTrigger>
-          <TabsTrigger value="youtube" className="py-3">
+          <TabsTrigger 
+            value="youtube" 
+            className="rounded-full px-5 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all font-medium text-sm"
+          >
             {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Video className="w-4 h-4 mr-2" />}
             YouTube Eligible ({loading ? '...' : eligibleForYoutube.length})
           </TabsTrigger>
-          <TabsTrigger value="all" className="py-3">
+          <TabsTrigger 
+            value="all" 
+            className="rounded-full px-5 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all font-medium text-sm"
+          >
             {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <List className="w-4 h-4 mr-2" />}
             All ({loading ? '...' : ideas.length})
           </TabsTrigger>
