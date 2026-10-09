@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -28,6 +29,7 @@ interface Idea {
 }
 
 export function TweetPlanner() {
+  const router = useRouter();
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -166,11 +168,9 @@ export function TweetPlanner() {
   return (
     <div className="space-y-6">
       <div className="flex justify-end mb-4">
-        <Button asChild size="lg" className="shadow-md hover:shadow-primary/30 transition-all rounded-full px-6">
-          <Link href="/ideas/new">
-            <Plus className="mr-2 h-5 w-5" />
-            Create New Todo
-          </Link>
+        <Button onClick={() => router.push('/ideas/new')} size="lg" className="shadow-md hover:shadow-primary/30 transition-all rounded-full px-6">
+          <Plus className="mr-2 h-5 w-5" />
+          Create New Todo
         </Button>
       </div>
 
