@@ -35,7 +35,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
   const { id } = use(params);
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const { items: ideas, loading: storeLoading } = useSelector((state: RootState) => state.ideas);
+  const { items: ideas, loading: storeLoading, hasFetched } = useSelector((state: RootState) => state.ideas);
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -47,7 +47,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
     if (existingIdea) {
       setIdea(existingIdea as IdeaDetails);
       setLoading(false);
-    } else if (!storeLoading) {
+    } else if (!hasFetched && !storeLoading) {
       // Not in store, fetch it all or just the one. The slice fetchIdeas gets all.
       const loadData = async () => {
         setLoading(true);
@@ -62,7 +62,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
       };
       loadData();
     }
-  }, [id, dispatch, ideas, storeLoading]);
+  }, [id, dispatch, ideas, storeLoading, hasFetched]);
 
   const handleSave = async () => {
     if (!idea) return;

@@ -16,11 +16,13 @@ const COLORS = ['#8b5cf6', '#d946ef', '#f43f5e', '#0ea5e9', '#10b981'];
 
 export default function AnalyticsDashboard() {
   const dispatch = useDispatch<AppDispatch>();
-  const { items: ideas, loading, error } = useSelector((state: RootState) => state.ideas);
+  const { items: ideas, loading, error, hasFetched } = useSelector((state: RootState) => state.ideas);
 
   useEffect(() => {
-    dispatch(fetchIdeas());
-  }, [dispatch]);
+    if (!hasFetched) {
+      dispatch(fetchIdeas());
+    }
+  }, [dispatch, hasFetched]);
 
   if (error) {
     return (

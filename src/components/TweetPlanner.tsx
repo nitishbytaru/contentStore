@@ -17,15 +17,17 @@ import { RootState, AppDispatch } from '@/store';
 export function TweetPlanner() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const { items: ideas, loading, error, actionLoading } = useSelector((state: RootState) => state.ideas);
+  const { items: ideas, loading, error, actionLoading, hasFetched } = useSelector((state: RootState) => state.ideas);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editIdeaText, setEditIdeaText] = useState('');
   const [actionItemId, setActionItemId] = useState<string | null>(null);
 
   useEffect(() => {
-    dispatch(fetchIdeas());
-  }, [dispatch]);
+    if (!hasFetched) {
+      dispatch(fetchIdeas());
+    }
+  }, [dispatch, hasFetched]);
 
   const handleDeleteIdea = async (id: string) => {
     if (!confirm('Are you sure you want to delete this idea?')) return;

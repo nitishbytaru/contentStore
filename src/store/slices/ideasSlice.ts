@@ -23,6 +23,7 @@ interface IdeasState {
   loading: boolean;
   error: string | null;
   actionLoading: boolean; // For create/update/delete specific actions
+  hasFetched: boolean;
 }
 
 const initialState: IdeasState = {
@@ -30,6 +31,7 @@ const initialState: IdeasState = {
   loading: false,
   error: null,
   actionLoading: false,
+  hasFetched: false,
 };
 
 export const fetchIdeas = createAsyncThunk('ideas/fetchIdeas', async (_, { rejectWithValue }) => {
@@ -97,6 +99,7 @@ const ideasSlice = createSlice({
     builder.addCase(fetchIdeas.fulfilled, (state, action) => {
       state.loading = false;
       state.items = action.payload;
+      state.hasFetched = true;
     });
     builder.addCase(fetchIdeas.rejected, (state, action) => {
       state.loading = false;
