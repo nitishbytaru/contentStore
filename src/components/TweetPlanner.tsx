@@ -7,7 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, Clock, Trash2, Edit, Save, X, Copy, FileText, Video, List, Plus } from 'lucide-react';
+import { AlertCircle, Clock, Trash2, Edit, Save, X, Copy, FileText, Video, List, Plus, Search } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from "sonner";
 import { useDispatch, useSelector } from 'react-redux';
@@ -22,6 +22,7 @@ export function TweetPlanner() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editIdeaText, setEditIdeaText] = useState('');
   const [actionItemId, setActionItemId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (!hasFetched) {
@@ -56,9 +57,10 @@ export function TweetPlanner() {
     toast.success('Copied to clipboard!');
   };
 
-  const pendingIdeas = ideas.filter(i => i.status !== 'posted');
-  const eligibleForMedium = ideas.filter(i => i.eligibleMedium && !i.publishedMedium);
-  const eligibleForYoutube = ideas.filter(i => i.eligibleYoutube && !i.publishedYoutube);
+  const filteredIdeas = ideas.filter(i => i.idea.toLowerCase().includes(searchQuery.toLowerCase()));
+  const pendingIdeas = filteredIdeas.filter(i => i.status !== 'posted');
+  const eligibleForMedium = filteredIdeas.filter(i => i.eligibleMedium && !i.publishedMedium);
+  const eligibleForYoutube = filteredIdeas.filter(i => i.eligibleYoutube && !i.publishedYoutube);
 
   if (error) {
     return (
@@ -135,8 +137,17 @@ export function TweetPlanner() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end mb-4">
-        <Button onClick={() => router.push('/ideas/new')} size="lg" className="shadow-md hover:shadow-primary/30 transition-all rounded-full px-6">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-4 sm:space-y-0 sm:space-x-4">
+        <div className="relative w-full sm:max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input 
+            placeholder="Search ideas..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 w-full bg-background"
+          />
+        </div>
+        <Button onClick={() => router.push('/ideas/new')} size="lg" className="shadow-md hover:shadow-primary/30 transition-all rounded-full px-6 w-full sm:w-auto">
           <Plus className="mr-2 h-5 w-5" />
           Create New Todo
         </Button>
@@ -170,7 +181,7 @@ export function TweetPlanner() {
             className="rounded-full px-5 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all font-medium text-sm"
           >
             {loading ? <Skeleton className="h-4 w-4 rounded-full mr-2" /> : <List className="w-4 h-4 mr-2" />}
-            All ({loading ? '...' : ideas.length})
+            All ({loading ? '...' : filteredIdeas.length})
           </TabsTrigger>
         </TabsList>
         
@@ -180,7 +191,7 @@ export function TweetPlanner() {
           ) : pendingIdeas.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="py-12 text-center text-muted-foreground">
-                No pending ideas. Time to brainstorm!
+                {searchQuery ? 'No ideas match your search.' : 'No pending ideas. Time to brainstorm!'}
               </CardContent>
             </Card>
           ) : (
@@ -194,7 +205,7 @@ export function TweetPlanner() {
           ) : eligibleForMedium.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="py-12 text-center text-muted-foreground">
-                Everything is published on Medium!
+                {searchQuery ? 'No ideas match your search.' : 'Everything is published on Medium!'}
               </CardContent>
             </Card>
           ) : (
@@ -208,7 +219,7 @@ export function TweetPlanner() {
           ) : eligibleForYoutube.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="py-12 text-center text-muted-foreground">
-                Everything is published on YouTube!
+                {searchQuery ? 'No ideas match your search.' : 'Everything is published on YouTube!'}
               </CardContent>
             </Card>
           ) : (
@@ -219,14 +230,14 @@ export function TweetPlanner() {
         <TabsContent value="all" className="space-y-4">
           {loading ? (
             renderSkeletons()
-          ) : ideas.length === 0 ? (
+          ) : filteredIdeas.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="py-12 text-center text-muted-foreground">
-                No ideas yet. Time to brainstorm!
+                {searchQuery ? 'No ideas match your search.' : 'No ideas yet. Time to brainstorm!'}
               </CardContent>
             </Card>
           ) : (
-            ideas.map(renderIdeaCard)
+            filteredIdeas.map(renderIdeaCard)
           )}
         </TabsContent>
       </Tabs>

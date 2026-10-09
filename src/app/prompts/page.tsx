@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Copy, Plus, Trash2, Edit, Save, X, Lightbulb } from 'lucide-react';
+import { Copy, Plus, Trash2, Edit, Save, X, Lightbulb, Search } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function PromptsPage() {
@@ -25,6 +25,8 @@ export default function PromptsPage() {
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
   const [editCategory, setEditCategory] = useState('');
+
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (!hasFetched) {
@@ -95,20 +97,39 @@ export default function PromptsPage() {
     return <div className="p-8 text-center text-red-500">Error loading prompts: {error}</div>;
   }
 
+  const filteredPrompts = prompts.filter(p => 
+    p.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    p.category.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    p.content.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-primary flex items-center">
             <Lightbulb className="w-8 h-8 mr-3" /> Prompt Library
           </h1>
           <p className="text-muted-foreground mt-1">Manage your reusable prompts for tweets, video generation, and more.</p>
         </div>
-        {!isCreating && (
-          <Button onClick={() => setIsCreating(true)} className="shadow-lg hover:shadow-primary/25 transition-all">
-            <Plus className="w-4 h-4 mr-2" /> Add Prompt
-          </Button>
-        )}
+        <div className="flex w-full sm:w-auto items-center space-x-2">
+          {!isCreating && (
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="Search prompts..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 bg-background"
+              />
+            </div>
+          )}
+          {!isCreating && (
+            <Button onClick={() => setIsCreating(true)} className="shrink-0 shadow-lg hover:shadow-primary/25 transition-all">
+              <Plus className="w-4 h-4 mr-2" /> Add Prompt
+            </Button>
+          )}
+        </div>
       </div>
 
       {isCreating && (
@@ -167,14 +188,16 @@ export default function PromptsPage() {
             <Skeleton key={i} className="h-64 rounded-xl" />
           ))}
         </div>
-      ) : prompts.length === 0 && !isCreating ? (
+      ) : filteredPrompts.length === 0 && !isCreating ? (
         <div className="text-center p-12 border border-dashed rounded-xl border-border bg-muted/20">
-          <p className="text-muted-foreground text-lg mb-4">No prompts yet. Start building your library!</p>
-          <Button onClick={() => setIsCreating(true)} variant="outline">Create your first prompt</Button>
+          <p className="text-muted-foreground text-lg mb-4">
+            {searchQuery ? 'No prompts match your search.' : 'No prompts yet. Start building your library!'}
+          </p>
+          {!searchQuery && <Button onClick={() => setIsCreating(true)} variant="outline">Create your first prompt</Button>}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {prompts.map(p => (
+          {filteredPrompts.map(p => (
             <Card key={p.id} className="flex flex-col border-primary/10 hover:border-primary/30 transition-colors shadow-sm hover:shadow-md">
               {editingId === p.id ? (
                 <CardContent className="p-4 space-y-3 flex-1 flex flex-col">
