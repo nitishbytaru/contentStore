@@ -7,88 +7,46 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, Clock, Trash2, Edit, Save, X, Loader2, Copy, FileText, Video, List, Plus } from 'lucide-react';
+import { AlertCircle, Clock, Trash2, Edit, Save, X, Copy, FileText, Video, List, Plus } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from "sonner";
-
-interface Idea {
-  id: string;
-  idea: string;
-  status: 'pending' | 'posted';
-  datePosted: string;
-  createdAt: string;
-  publishedMedium: boolean;
-  publishedSubstack: boolean;
-  publishedX: boolean;
-  publishedYoutube: boolean;
-  publishedInstagram: boolean;
-  baseArticle: string;
-  tweets: string;
-  videoScript: string;
-  mediumArticle: string;
-  youtubeScript: string;
-}
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchIdeas, deleteIdea, updateIdea, Idea } from '@/store/slices/ideasSlice';
+import { RootState, AppDispatch } from '@/store';
 
 export function TweetPlanner() {
   const router = useRouter();
-  const [ideas, setIdeas] = useState<Idea[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const dispatch = useDispatch<AppDispatch>();
+  const { items: ideas, loading, error, actionLoading } = useSelector((state: RootState) => state.ideas);
+
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editIdeaText, setEditIdeaText] = useState('');
   const [actionItemId, setActionItemId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchIdeas();
-  }, []);
-
-  const fetchIdeas = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch('/api/ideas');
-      const json = await res.json();
-
-      if (!res.ok) throw new Error(json.error || 'Failed to fetch ideas');
-
-      setIdeas(json.data || []);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    dispatch(fetchIdeas());
+  }, [dispatch]);
 
   const handleDeleteIdea = async (id: string) => {
     if (!confirm('Are you sure you want to delete this idea?')) return;
-    try {
-      setActionItemId(id);
-      const res = await fetch(`/api/ideas?id=${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to delete idea');
-      setIdeas((prev) => prev.filter((idea) => idea.id !== id));
-    } catch (err: any) {
-      toast.error(err.message);
-    } finally {
-      setActionItemId(null);
+    setActionItemId(id);
+    const result = await dispatch(deleteIdea(id));
+    if (deleteIdea.rejected.match(result)) {
+      toast.error(result.payload as string);
     }
+    setActionItemId(null);
   };
 
   const handleEditIdea = async (id: string) => {
     if (!editIdeaText.trim()) return;
-    try {
-      setActionItemId(id);
-      const res = await fetch('/api/ideas', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, idea: editIdeaText.trim() }),
-      });
-      if (!res.ok) throw new Error('Failed to update idea');
-      const json = await res.json();
-      setIdeas((prev) => prev.map((idea) => idea.id === id ? { ...idea, idea: json.data.idea } : idea));
+    setActionItemId(id);
+    const result = await dispatch(updateIdea({ id, idea: editIdeaText.trim() }));
+    if (updateIdea.rejected.match(result)) {
+      toast.error(result.payload as string);
+    } else {
       setEditingId(null);
-    } catch (err: any) {
-      toast.error(err.message);
-    } finally {
-      setActionItemId(null);
     }
+    setActionItemId(null);
   };
 
   const handleCopyIdea = (text: string) => {
@@ -121,12 +79,12 @@ export function TweetPlanner() {
                 onChange={(e) => setEditIdeaText(e.target.value)} 
                 className="flex-1"
                 autoFocus
-                disabled={actionItemId === idea.id}
+                disabled={actionLoading && actionItemId === idea.id}
               />
-              <Button size="icon" variant="ghost" onClick={() => handleEditIdea(idea.id)} disabled={actionItemId === idea.id}>
-                {actionItemId === idea.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4 text-primary" />}
+              <Button size="icon" variant="ghost" onClick={() => handleEditIdea(idea.id)} disabled={actionLoading && actionItemId === idea.id}>
+                {actionLoading && actionItemId === idea.id ? <Skeleton className="h-4 w-4 rounded-full" /> : <Save className="h-4 w-4 text-primary" />}
               </Button>
-              <Button size="icon" variant="ghost" onClick={() => setEditingId(null)} disabled={actionItemId === idea.id}>
+              <Button size="icon" variant="ghost" onClick={() => setEditingId(null)} disabled={actionLoading && actionItemId === idea.id}>
                 <X className="h-4 w-4 text-muted-foreground" />
               </Button>
             </div>
@@ -144,9 +102,9 @@ export function TweetPlanner() {
             </>
           )}
         </div>
-        {actionItemId === idea.id && editingId !== idea.id ? (
+        {actionLoading && actionItemId === idea.id && editingId !== idea.id ? (
           <div className="flex space-x-2 px-2">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            <Skeleton className="h-5 w-5 rounded-full" />
           </div>
         ) : editingId !== idea.id && (
           <div className="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1">
@@ -165,6 +123,14 @@ export function TweetPlanner() {
     </Card>
   );
 
+  const renderSkeletons = () => (
+    <div className="space-y-4">
+      <Skeleton className="h-[90px] w-full rounded-xl" />
+      <Skeleton className="h-[90px] w-full rounded-xl" />
+      <Skeleton className="h-[90px] w-full rounded-xl" />
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex justify-end mb-4">
@@ -180,40 +146,35 @@ export function TweetPlanner() {
             value="pending" 
             className="rounded-full px-5 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all font-medium text-sm"
           >
-            {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Clock className="w-4 h-4 mr-2" />}
+            {loading ? <Skeleton className="h-4 w-4 rounded-full mr-2" /> : <Clock className="w-4 h-4 mr-2" />}
             Pending ({loading ? '...' : pendingIdeas.length})
           </TabsTrigger>
           <TabsTrigger 
             value="medium" 
             className="rounded-full px-5 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all font-medium text-sm"
           >
-            {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
+            {loading ? <Skeleton className="h-4 w-4 rounded-full mr-2" /> : <FileText className="w-4 h-4 mr-2" />}
             Medium Eligible ({loading ? '...' : eligibleForMedium.length})
           </TabsTrigger>
           <TabsTrigger 
             value="youtube" 
             className="rounded-full px-5 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all font-medium text-sm"
           >
-            {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Video className="w-4 h-4 mr-2" />}
+            {loading ? <Skeleton className="h-4 w-4 rounded-full mr-2" /> : <Video className="w-4 h-4 mr-2" />}
             YouTube Eligible ({loading ? '...' : eligibleForYoutube.length})
           </TabsTrigger>
           <TabsTrigger 
             value="all" 
             className="rounded-full px-5 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all font-medium text-sm"
           >
-            {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <List className="w-4 h-4 mr-2" />}
+            {loading ? <Skeleton className="h-4 w-4 rounded-full mr-2" /> : <List className="w-4 h-4 mr-2" />}
             All ({loading ? '...' : ideas.length})
           </TabsTrigger>
         </TabsList>
         
         <TabsContent value="pending" className="space-y-4">
           {loading ? (
-            <Card className="border-dashed bg-muted/5">
-              <CardContent className="py-12 flex flex-col items-center justify-center space-y-4 text-muted-foreground">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-lg font-medium">Loading...</p>
-              </CardContent>
-            </Card>
+            renderSkeletons()
           ) : pendingIdeas.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="py-12 text-center text-muted-foreground">
@@ -227,12 +188,7 @@ export function TweetPlanner() {
 
         <TabsContent value="medium" className="space-y-4">
           {loading ? (
-            <Card className="border-dashed bg-muted/5">
-              <CardContent className="py-12 flex flex-col items-center justify-center space-y-4 text-muted-foreground">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-lg font-medium">Loading...</p>
-              </CardContent>
-            </Card>
+            renderSkeletons()
           ) : eligibleForMedium.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="py-12 text-center text-muted-foreground">
@@ -246,12 +202,7 @@ export function TweetPlanner() {
 
         <TabsContent value="youtube" className="space-y-4">
           {loading ? (
-            <Card className="border-dashed bg-muted/5">
-              <CardContent className="py-12 flex flex-col items-center justify-center space-y-4 text-muted-foreground">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-lg font-medium">Loading...</p>
-              </CardContent>
-            </Card>
+            renderSkeletons()
           ) : eligibleForYoutube.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="py-12 text-center text-muted-foreground">
@@ -265,12 +216,7 @@ export function TweetPlanner() {
 
         <TabsContent value="all" className="space-y-4">
           {loading ? (
-            <Card className="border-dashed bg-muted/5">
-              <CardContent className="py-12 flex flex-col items-center justify-center space-y-4 text-muted-foreground">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-lg font-medium">Loading...</p>
-              </CardContent>
-            </Card>
+            renderSkeletons()
           ) : ideas.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="py-12 text-center text-muted-foreground">

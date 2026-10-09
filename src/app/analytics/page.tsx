@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TrendingUp, CheckCircle, FileText, BarChart3 } from 'lucide-react';
@@ -8,40 +8,19 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
   PieChart, Pie, Cell
 } from 'recharts';
-
-interface Idea {
-  id: string;
-  idea: string;
-  status: string;
-  publishedMedium: boolean;
-  publishedSubstack: boolean;
-  publishedX: boolean;
-  publishedYoutube: boolean;
-  publishedInstagram: boolean;
-}
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchIdeas } from '@/store/slices/ideasSlice';
+import { AppDispatch, RootState } from '@/store';
 
 const COLORS = ['#8b5cf6', '#d946ef', '#f43f5e', '#0ea5e9', '#10b981'];
 
 export default function AnalyticsDashboard() {
-  const [ideas, setIdeas] = useState<Idea[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const dispatch = useDispatch<AppDispatch>();
+  const { items: ideas, loading, error } = useSelector((state: RootState) => state.ideas);
 
   useEffect(() => {
-    const fetchIdeas = async () => {
-      try {
-        const res = await fetch('/api/ideas');
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error || 'Failed to fetch');
-        setIdeas(json.data || []);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchIdeas();
-  }, []);
+    dispatch(fetchIdeas());
+  }, [dispatch]);
 
   if (error) {
     return (

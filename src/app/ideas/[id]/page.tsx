@@ -3,7 +3,7 @@
 import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchIdeas, updateIdea } from '@/store/slices/ideasSlice';
+import { AppDispatch, RootState } from '@/store';
 
 interface IdeaDetails {
   id: string;
@@ -31,40 +34,45 @@ interface IdeaDetails {
 export default function IdeaEditor({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-
+  const dispatch = useDispatch<AppDispatch>();
+  const { items: ideas, loading: storeLoading } = useSelector((state: RootState) => state.ideas);
+  
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [idea, setIdea] = useState<IdeaDetails | null>(null);
 
+  // Initialize and fetch from store if needed
   useEffect(() => {
-    const fetchIdea = async () => {
-      try {
-        const res = await fetch(`/api/ideas?id=${id}`);
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error || 'Failed to fetch');
-        setIdea(json.data);
-      } catch (err: any) {
-        toast.error(err.message);
-      } finally {
+    const existingIdea = ideas.find(i => i.id === id);
+    if (existingIdea) {
+      setIdea(existingIdea as IdeaDetails);
+      setLoading(false);
+    } else if (!storeLoading) {
+      // Not in store, fetch it all or just the one. The slice fetchIdeas gets all.
+      const loadData = async () => {
+        setLoading(true);
+        const result = await dispatch(fetchIdeas());
+        if (fetchIdeas.fulfilled.match(result)) {
+          const found = result.payload.find((i: any) => i.id === id);
+          if (found) {
+            setIdea(found as IdeaDetails);
+          }
+        }
         setLoading(false);
-      }
-    };
-    fetchIdea();
-  }, [id]);
+      };
+      loadData();
+    }
+  }, [id, dispatch, ideas, storeLoading]);
 
   const handleSave = async () => {
     if (!idea) return;
     try {
       setSaving(true);
-      const res = await fetch('/api/ideas', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(idea),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error);
+      const result = await dispatch(updateIdea(idea));
+      if (updateIdea.rejected.match(result)) {
+        throw new Error(result.payload as string);
+      }
       toast.success('Changes saved successfully!');
-      setIdea(json.data);
     } catch (err: any) {
       toast.error('Failed to save: ' + err.message);
     } finally {
@@ -80,7 +88,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
     setIdea(prev => prev ? { ...prev, [field]: checked } : prev);
   };
 
-  if (loading) {
+  if (loading || storeLoading) {
     return (
       <div className="p-8 max-w-6xl mx-auto space-y-6">
         <Skeleton className="h-8 w-64" />
@@ -111,7 +119,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
           <p className="text-muted-foreground mt-1 text-lg">Working on: <span className="text-foreground font-medium">{idea.idea}</span></p>
         </div>
         <Button onClick={handleSave} disabled={saving} size="lg" className="w-full sm:w-auto shadow-lg hover:shadow-primary/25 transition-all">
-          {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+          {saving ? <Skeleton className="w-4 h-4 mr-2 rounded-full" /> : <Save className="w-4 h-4 mr-2" />}
           {saving ? 'Saving...' : 'Save All Changes'}
         </Button>
       </div>

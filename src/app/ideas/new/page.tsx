@@ -4,34 +4,30 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from "sonner";
 import Link from 'next/link';
+import { useDispatch, useSelector } from 'react-redux';
+import { addIdea } from '@/store/slices/ideasSlice';
+import { AppDispatch, RootState } from '@/store';
 
 export default function NewIdeaPage() {
   const [idea, setIdea] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
+  const isSubmitting = useSelector((state: RootState) => state.ideas.actionLoading);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!idea.trim()) return;
 
-    try {
-      setIsSubmitting(true);
-      const res = await fetch('/api/ideas', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idea: idea.trim() }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error);
-      
+    const result = await dispatch(addIdea(idea.trim()));
+    if (addIdea.rejected.match(result)) {
+      toast.error('Failed to create idea: ' + (result.payload as string));
+    } else {
       toast.success('Idea created successfully!');
-      router.push(`/ideas/${json.data.id}`);
-    } catch (err: any) {
-      toast.error('Failed to create idea: ' + err.message);
-      setIsSubmitting(false);
+      router.push(`/ideas/${result.payload.id}`);
     }
   };
 
@@ -63,7 +59,7 @@ export default function NewIdeaPage() {
               disabled={!idea.trim() || isSubmitting} 
               className="w-full py-6 text-lg shadow-lg hover:shadow-primary/25 transition-all"
             >
-              {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
+              {isSubmitting ? <Skeleton className="h-5 w-5 rounded-full mr-2" /> : null}
               {isSubmitting ? 'Creating...' : 'Create Idea & Open Planner'}
             </Button>
           </form>
