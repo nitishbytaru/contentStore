@@ -10,6 +10,7 @@ import { AlertCircle, Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { Article } from './ArticleContext';
+import { toast } from "sonner";
 
 export function ArticleGenerator() {
   const router = useRouter();
@@ -55,7 +56,7 @@ export function ArticleGenerator() {
       const articleId = json.data.id;
       router.push(`/articles/${articleId}/basearticle`);
     } catch (err: any) {
-      alert('Failed to create content: ' + err.message);
+      toast.error('Failed to create content: ' + err.message);
       setIsCreating(false);
     }
   };

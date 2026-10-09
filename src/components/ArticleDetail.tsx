@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Copy, Save, MessageCircle, Video, Trash2, Edit2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { toast } from "sonner";
 
 export function ArticleDetail({ activeTab }: { activeTab: 'article' | 'xPost' | 'videoPrompt' }) {
   const { article, loading, error, updateArticle } = useArticle();
@@ -35,7 +36,7 @@ export function ArticleDetail({ activeTab }: { activeTab: 'article' | 'xPost' | 
       updateArticle(json.data);
       setEditingContent(null);
     } catch (err: any) {
-      alert('Failed to save edit: ' + err.message);
+      toast.error('Failed to save edit: ' + err.message);
     } finally {
       setProcessingId(null);
     }
@@ -43,7 +44,7 @@ export function ArticleDetail({ activeTab }: { activeTab: 'article' | 'xPost' | 
 
   const handleCopy = (content: string) => {
     navigator.clipboard.writeText(content || '');
-    alert('Copied to clipboard!');
+    toast.success('Copied to clipboard!');
   };
 
   const handleDeleteArticle = async () => {
@@ -59,7 +60,7 @@ export function ArticleDetail({ activeTab }: { activeTab: 'article' | 'xPost' | 
       if (!res.ok) throw new Error(json.error);
       router.push('/articles');
     } catch (err: any) {
-      alert('Failed to delete: ' + err.message);
+      toast.error('Failed to delete: ' + err.message);
     } finally {
       setProcessingId(null);
     }
@@ -78,7 +79,7 @@ export function ArticleDetail({ activeTab }: { activeTab: 'article' | 'xPost' | 
       if (!res.ok) throw new Error(json.error);
       updateArticle(json.data);
     } catch (err: any) {
-      alert('Failed to clear content: ' + err.message);
+      toast.error('Failed to clear content: ' + err.message);
     } finally {
       setProcessingId(null);
     }

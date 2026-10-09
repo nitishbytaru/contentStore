@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, MessageCircle, CheckCircle2, Clock, Trash2, Edit, Save, X, Loader2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Clock, Trash2, Edit, Save, X, Loader2, Copy } from 'lucide-react';
+import { toast } from "sonner";
 
 interface Idea {
   id: string;
@@ -66,7 +66,7 @@ export function TweetPlanner() {
       setIdeas((prev) => [...prev, json.data]);
       setNewIdea('');
     } catch (err: any) {
-      alert('Failed to add idea: ' + err.message);
+      toast.error('Failed to add idea: ' + err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -92,7 +92,7 @@ export function TweetPlanner() {
         )
       );
     } catch (err: any) {
-      alert('Failed to update idea: ' + err.message);
+      toast.error('Failed to update idea: ' + err.message);
     } finally {
       setActionItemId(null);
     }
@@ -106,7 +106,7 @@ export function TweetPlanner() {
       if (!res.ok) throw new Error('Failed to delete idea');
       setIdeas((prev) => prev.filter((idea) => idea.id !== id));
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message);
     } finally {
       setActionItemId(null);
     }
@@ -126,10 +126,15 @@ export function TweetPlanner() {
       setIdeas((prev) => prev.map((idea) => idea.id === id ? { ...idea, idea: json.data.idea } : idea));
       setEditingId(null);
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message);
     } finally {
       setActionItemId(null);
     }
+  };
+
+  const handleCopyIdea = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success('Copied to clipboard!');
   };
 
   const pendingIdeas = ideas.filter(i => i.status !== 'posted');
@@ -249,6 +254,9 @@ export function TweetPlanner() {
                     </div>
                   ) : editingId !== idea.id && (
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
+                      <Button size="icon" variant="ghost" onClick={() => handleCopyIdea(idea.idea)}>
+                        <Copy className="h-4 w-4" />
+                      </Button>
                       <Button size="icon" variant="ghost" onClick={() => { setEditingId(idea.id); setEditIdeaText(idea.idea); }}>
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -315,6 +323,9 @@ export function TweetPlanner() {
                     </div>
                   ) : editingId !== idea.id && (
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
+                      <Button size="icon" variant="ghost" onClick={() => handleCopyIdea(idea.idea)}>
+                        <Copy className="h-4 w-4" />
+                      </Button>
                       <Button size="icon" variant="ghost" onClick={() => { setEditingId(idea.id); setEditIdeaText(idea.idea); }}>
                         <Edit className="h-4 w-4" />
                       </Button>
