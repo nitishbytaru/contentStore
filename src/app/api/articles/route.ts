@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { generateWithFallback } from '@/lib/ai';
 import { getArticlesSheet } from '@/lib/articles-db';
-import { buildXPostPrompt, buildVideoPrompt, VIDEO_APPEND_STRING } from '@/lib/prompts';
 
 export async function GET(request: Request) {
   try {
@@ -35,17 +33,14 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { topic } = await request.json();
+    const { topic, articleContent } = await request.json();
     if (!topic) return NextResponse.json({ error: 'Topic is required' }, { status: 400 });
-
-    const prompt = `Convert the following rough description into a highly structured, engaging, and professional article. Do NOT use any markdown formatting. Provide plain, copy-pasteable text only (no asterisks, hashes, bolding, or italics).\n\nDescription: ${topic}`;
-    const articleContent = await generateWithFallback(prompt, 'article');
 
     const sheet = await getArticlesSheet();
     const newArticle = {
       id: crypto.randomUUID(),
       originalTopic: topic,
-      articleContent,
+      articleContent: articleContent || '',
       xPostContent: '',
       videoPromptContent: '',
       createdAt: new Date().toISOString(),
@@ -62,7 +57,7 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const { id, action, customPrompt, content } = await request.json();
+    const { id, action, content } = await request.json();
     if (!id || !action) {
       return NextResponse.json({ error: 'Missing id or action' }, { status: 400 });
     }
@@ -74,35 +69,18 @@ export async function PUT(request: Request) {
     if (!targetRow) return NextResponse.json({ error: 'Article not found' }, { status: 404 });
 
     let updatedField = '';
-    let updatedContent = '';
-
-    const articleContent = targetRow.get('articleContent');
 
     if (action === 'edit_article') {
       updatedField = 'articleContent';
-      updatedContent = content;
-    } else if (action === 'iterate_article') {
-      const prompt = `Here is an existing article:\n\n${articleContent}\n\nUser request for changes: ${customPrompt}\n\nPlease rewrite the article incorporating the requested changes. Do NOT use any markdown formatting. Provide plain, copy-pasteable text only.`;
-      updatedContent = await generateWithFallback(prompt, 'iterate_article');
-      updatedField = 'articleContent';
-    } else if (action === 'generate_x_post') {
-      updatedContent = await generateWithFallback(buildXPostPrompt(articleContent, customPrompt), 'generate_x_post');
-      updatedField = 'xPostContent';
     } else if (action === 'edit_x_post') {
       updatedField = 'xPostContent';
-      updatedContent = content;
-    } else if (action === 'generate_video_prompt') {
-      const generatedContent = await generateWithFallback(buildVideoPrompt(articleContent, customPrompt), 'generate_video_prompt');
-      updatedContent = generatedContent + VIDEO_APPEND_STRING;
-      updatedField = 'videoPromptContent';
     } else if (action === 'edit_video_prompt') {
       updatedField = 'videoPromptContent';
-      updatedContent = content;
     } else {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
 
-    targetRow.set(updatedField, updatedContent);
+    targetRow.set(updatedField, content);
     targetRow.set('updatedAt', new Date().toISOString());
     await targetRow.save();
 
