@@ -1,9 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit';
 import ideasReducer from './slices/ideasSlice';
+import promptsReducer from './slices/promptsSlice';
 
 export const store = configureStore({
   reducer: {
     ideas: ideasReducer,
+    prompts: promptsReducer,
   },
 });
 

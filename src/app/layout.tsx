@@ -37,6 +37,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               <Link href="/" className="transition-colors hover:text-foreground/80 text-foreground/60">
                 Ideas
               </Link>
+              <Link href="/prompts" className="transition-colors hover:text-foreground/80 text-foreground/60">
+                Prompts
+              </Link>
               <Link href="/analytics" className="transition-colors hover:text-foreground/80 text-foreground/60">
                 Analytics
               </Link>
