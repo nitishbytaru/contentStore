@@ -27,6 +27,11 @@ interface IdeaDetails {
   eligibleX: boolean;
   eligibleYoutube: boolean;
   eligibleInstagram: boolean;
+  ineligibleMedium: boolean;
+  ineligibleSubstack: boolean;
+  ineligibleX: boolean;
+  ineligibleYoutube: boolean;
+  ineligibleInstagram: boolean;
   publishedMedium: boolean;
   publishedSubstack: boolean;
   publishedX: boolean;
@@ -192,25 +197,50 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
             </CardHeader>
             <CardContent className="space-y-5">
               {[
-                { eligibleId: 'eligibleX', publishedId: 'publishedX', label: 'X (Twitter)' },
-                { eligibleId: 'eligibleMedium', publishedId: 'publishedMedium', label: 'Medium' },
-                { eligibleId: 'eligibleSubstack', publishedId: 'publishedSubstack', label: 'Substack' },
-                { eligibleId: 'eligibleYoutube', publishedId: 'publishedYoutube', label: 'YouTube' },
-                { eligibleId: 'eligibleInstagram', publishedId: 'publishedInstagram', label: 'Instagram' },
+                { eligibleId: 'eligibleX', publishedId: 'publishedX', ineligibleId: 'ineligibleX', label: 'X (Twitter)' },
+                { eligibleId: 'eligibleMedium', publishedId: 'publishedMedium', ineligibleId: 'ineligibleMedium', label: 'Medium' },
+                { eligibleId: 'eligibleSubstack', publishedId: 'publishedSubstack', ineligibleId: 'ineligibleSubstack', label: 'Substack' },
+                { eligibleId: 'eligibleYoutube', publishedId: 'publishedYoutube', ineligibleId: 'ineligibleYoutube', label: 'YouTube' },
+                { eligibleId: 'eligibleInstagram', publishedId: 'publishedInstagram', ineligibleId: 'ineligibleInstagram', label: 'Instagram' },
               ].map(platform => {
                 const isEligible = idea[platform.eligibleId as keyof IdeaDetails] as boolean;
                 const isPublished = idea[platform.publishedId as keyof IdeaDetails] as boolean;
+                const isIneligible = idea[platform.ineligibleId as keyof IdeaDetails] as boolean;
                 return (
-                  <div key={platform.eligibleId} className="rounded-lg border border-border/50 p-3 space-y-3 transition-colors hover:border-primary/20">
-                    <p className="text-sm font-semibold text-foreground">{platform.label}</p>
+                  <div key={platform.eligibleId} className={`rounded-lg border border-border/50 p-3 space-y-3 transition-colors hover:border-primary/20 ${isIneligible ? 'bg-muted/30 border-muted' : ''}`}>
+                    <p className={`text-sm font-semibold ${isIneligible ? 'text-muted-foreground line-through' : 'text-foreground'}`}>{platform.label}</p>
+                    
                     <div className="flex items-center space-x-3 group">
+                      <Checkbox
+                        id={platform.ineligibleId}
+                        checked={isIneligible}
+                        onCheckedChange={(checked) => {
+                          handleCheckboxChange(platform.ineligibleId as keyof IdeaDetails, checked as boolean);
+                          if (checked) {
+                            handleCheckboxChange(platform.eligibleId as keyof IdeaDetails, false);
+                            handleCheckboxChange(platform.publishedId as keyof IdeaDetails, false);
+                          }
+                        }}
+                        className="h-4 w-4 data-[state=checked]:bg-destructive data-[state=checked]:border-destructive"
+                      />
+                      <label
+                        htmlFor={platform.ineligibleId}
+                        className="text-sm font-medium cursor-pointer group-hover:text-destructive transition-colors"
+                      >
+                        Ineligible (Skip)
+                      </label>
+                    </div>
+
+                    <div className={`flex items-center space-x-3 group ${isIneligible ? 'opacity-40 pointer-events-none' : ''}`}>
                       <Checkbox
                         id={platform.eligibleId}
                         checked={isEligible}
+                        disabled={isIneligible}
                         onCheckedChange={(checked) => {
                           handleCheckboxChange(platform.eligibleId as keyof IdeaDetails, checked as boolean);
-                          // If unchecking eligible, also uncheck published
-                          if (!checked) {
+                          if (checked) {
+                            handleCheckboxChange(platform.ineligibleId as keyof IdeaDetails, false);
+                          } else {
                             handleCheckboxChange(platform.publishedId as keyof IdeaDetails, false);
                           }
                         }}
@@ -223,13 +253,14 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
                         Eligible
                       </label>
                     </div>
-                    <div className={`flex items-center space-x-3 group ${!isEligible ? 'opacity-40 pointer-events-none' : ''}`}>
+
+                    <div className={`flex items-center space-x-3 group ${!isEligible || isIneligible ? 'opacity-40 pointer-events-none' : ''}`}>
                       <Checkbox
                         id={platform.publishedId}
                         checked={isPublished}
-                        disabled={!isEligible}
+                        disabled={!isEligible || isIneligible}
                         onCheckedChange={(checked) => handleCheckboxChange(platform.publishedId as keyof IdeaDetails, checked as boolean)}
-                        className="h-4 w-4 data-[state=checked]:bg-green-500"
+                        className="h-4 w-4 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
                       />
                       <label
                         htmlFor={platform.publishedId}

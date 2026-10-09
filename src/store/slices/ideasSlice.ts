@@ -11,6 +11,11 @@ export interface Idea {
   eligibleX: boolean;
   eligibleYoutube: boolean;
   eligibleInstagram: boolean;
+  ineligibleMedium: boolean;
+  ineligibleSubstack: boolean;
+  ineligibleX: boolean;
+  ineligibleYoutube: boolean;
+  ineligibleInstagram: boolean;
   publishedMedium: boolean;
   publishedSubstack: boolean;
   publishedX: boolean;

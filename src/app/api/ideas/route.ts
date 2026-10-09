@@ -5,11 +5,13 @@ const HEADERS = [
   'id', 'idea', 'status', 'datePosted', 'createdAt',
   'baseArticle', 'mediumArticle', 'youtubeScript',
   'eligibleMedium', 'eligibleSubstack', 'eligibleX', 'eligibleYoutube', 'eligibleInstagram',
+  'ineligibleMedium', 'ineligibleSubstack', 'ineligibleX', 'ineligibleYoutube', 'ineligibleInstagram',
   'publishedMedium', 'publishedSubstack', 'publishedX', 'publishedYoutube', 'publishedInstagram'
 ];
 
 const BOOLEAN_FIELDS = [
   'eligibleMedium', 'eligibleSubstack', 'eligibleX', 'eligibleYoutube', 'eligibleInstagram',
+  'ineligibleMedium', 'ineligibleSubstack', 'ineligibleX', 'ineligibleYoutube', 'ineligibleInstagram',
   'publishedMedium', 'publishedSubstack', 'publishedX', 'publishedYoutube', 'publishedInstagram'
 ];
 
@@ -106,6 +108,11 @@ export async function POST(request: Request) {
       eligibleX: 'false',
       eligibleYoutube: 'false',
       eligibleInstagram: 'false',
+      ineligibleMedium: 'false',
+      ineligibleSubstack: 'false',
+      ineligibleX: 'false',
+      ineligibleYoutube: 'false',
+      ineligibleInstagram: 'false',
       publishedMedium: 'false',
       publishedSubstack: 'false',
       publishedX: 'false',

@@ -68,7 +68,13 @@ export default function AnalyticsDashboard() {
     if (idea.publishedYoutube) platformCounts['YouTube']++;
     if (idea.publishedInstagram) platformCounts['Instagram']++;
 
-    const totalPlatforms = [isX, idea.publishedMedium, idea.publishedSubstack, idea.publishedYoutube, idea.publishedInstagram].filter(Boolean).length;
+    const totalPlatforms = [
+      isX || idea.ineligibleX, 
+      idea.publishedMedium || idea.ineligibleMedium, 
+      idea.publishedSubstack || idea.ineligibleSubstack, 
+      idea.publishedYoutube || idea.ineligibleYoutube, 
+      idea.publishedInstagram || idea.ineligibleInstagram
+    ].filter(Boolean).length;
     
     if (totalPlatforms === 0) {
       totallyUnpublished++;
