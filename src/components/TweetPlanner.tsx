@@ -5,9 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, CheckCircle2, Clock, Trash2, Edit, Save, X, Loader2, Copy } from 'lucide-react';
+import { AlertCircle, Clock, Trash2, Edit, Save, X, Loader2, Copy, FileText, Video } from 'lucide-react';
 import { toast } from "sonner";
 
 interface Idea {
@@ -16,6 +15,16 @@ interface Idea {
   status: 'pending' | 'posted';
   datePosted: string;
   createdAt: string;
+  publishedMedium: boolean;
+  publishedSubstack: boolean;
+  publishedX: boolean;
+  publishedYoutube: boolean;
+  publishedInstagram: boolean;
+  baseArticle: string;
+  tweets: string;
+  videoScript: string;
+  mediumArticle: string;
+  youtubeScript: string;
 }
 
 export function TweetPlanner() {
@@ -72,32 +81,6 @@ export function TweetPlanner() {
     }
   };
 
-  const handleMarkAsPosted = async (id: string) => {
-    try {
-      setActionItemId(id);
-      const res = await fetch('/api/ideas', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status: 'posted' }),
-      });
-      
-      if (!res.ok) {
-        const json = await res.json();
-        throw new Error(json.error);
-      }
-      
-      setIdeas((prev) => 
-        prev.map((idea) => 
-          idea.id === id ? { ...idea, status: 'posted', datePosted: new Date().toISOString() } : idea
-        )
-      );
-    } catch (err: any) {
-      toast.error('Failed to update idea: ' + err.message);
-    } finally {
-      setActionItemId(null);
-    }
-  };
-
   const handleDeleteIdea = async (id: string) => {
     if (!confirm('Are you sure you want to delete this idea?')) return;
     try {
@@ -138,7 +121,8 @@ export function TweetPlanner() {
   };
 
   const pendingIdeas = ideas.filter(i => i.status !== 'posted');
-  const postedIdeas = ideas.filter(i => i.status === 'posted');
+  const eligibleForMedium = ideas.filter(i => !i.publishedMedium);
+  const eligibleForYoutube = ideas.filter(i => !i.publishedYoutube);
 
   if (error) {
     return (
@@ -150,14 +134,69 @@ export function TweetPlanner() {
     );
   }
 
+  const renderIdeaCard = (idea: Idea) => (
+    <Card key={idea.id} className="transition-all hover:border-primary/50 group">
+      <CardContent className="flex items-center space-x-4 p-6">
+        <div className="flex-1 space-y-1">
+          {editingId === idea.id ? (
+            <div className="flex items-center space-x-2">
+              <Input 
+                value={editIdeaText} 
+                onChange={(e) => setEditIdeaText(e.target.value)} 
+                className="flex-1"
+                autoFocus
+                disabled={actionItemId === idea.id}
+              />
+              <Button size="icon" variant="ghost" onClick={() => handleEditIdea(idea.id)} disabled={actionItemId === idea.id}>
+                {actionItemId === idea.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              </Button>
+              <Button size="icon" variant="ghost" onClick={() => setEditingId(null)} disabled={actionItemId === idea.id}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <>
+              <Link 
+                href={`/ideas/${idea.id}`}
+                className="text-lg font-medium leading-none hover:underline cursor-pointer transition-all hover:text-primary block"
+              >
+                {idea.idea}
+              </Link>
+              <p className="text-xs text-muted-foreground">
+                Added {new Date(idea.createdAt).toLocaleDateString()}
+              </p>
+            </>
+          )}
+        </div>
+        {actionItemId === idea.id && editingId !== idea.id ? (
+          <div className="flex space-x-2 px-2">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : editingId !== idea.id && (
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
+            <Button size="icon" variant="ghost" onClick={() => handleCopyIdea(idea.idea)}>
+              <Copy className="h-4 w-4" />
+            </Button>
+            <Button size="icon" variant="ghost" onClick={() => { setEditingId(idea.id); setEditIdeaText(idea.idea); }}>
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button size="icon" variant="ghost" className="text-destructive" onClick={() => handleDeleteIdea(idea.id)}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="space-y-8">
       <header className="text-center space-y-2 mb-6">
         <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
-          Tweet Planner
+          Content Hub
         </h2>
         <p className="text-lg text-muted-foreground font-medium">
-          Jot down your single-liner ideas and track what you've posted.
+          Jot down your single-liner ideas and build them out into full content.
         </p>
       </header>
 
@@ -182,14 +221,18 @@ export function TweetPlanner() {
       </Card>
 
       <Tabs defaultValue="pending" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-8">
-          <TabsTrigger value="pending">
+        <TabsList className="grid w-full grid-cols-1 md:grid-cols-3 mb-8 h-auto">
+          <TabsTrigger value="pending" className="py-3">
             {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Clock className="w-4 h-4 mr-2" />}
-            Pending Ideas ({loading ? '...' : pendingIdeas.length})
+            Pending ({loading ? '...' : pendingIdeas.length})
           </TabsTrigger>
-          <TabsTrigger value="posted">
-            {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-            Posted ({loading ? '...' : postedIdeas.length})
+          <TabsTrigger value="medium" className="py-3">
+            {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
+            Medium Eligible ({loading ? '...' : eligibleForMedium.length})
+          </TabsTrigger>
+          <TabsTrigger value="youtube" className="py-3">
+            {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Video className="w-4 h-4 mr-2" />}
+            YouTube Eligible ({loading ? '...' : eligibleForYoutube.length})
           </TabsTrigger>
         </TabsList>
         
@@ -198,7 +241,7 @@ export function TweetPlanner() {
             <Card className="border-dashed bg-muted/5">
               <CardContent className="py-12 flex flex-col items-center justify-center space-y-4 text-muted-foreground">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-lg font-medium">Loading tweets...</p>
+                <p className="text-lg font-medium">Loading...</p>
               </CardContent>
             </Card>
           ) : pendingIdeas.length === 0 ? (
@@ -208,138 +251,45 @@ export function TweetPlanner() {
               </CardContent>
             </Card>
           ) : (
-            pendingIdeas.map((idea) => (
-              <Card key={idea.id} className="transition-all hover:border-primary/50 group">
-                <CardContent className="flex items-center space-x-4 p-6">
-                  <Checkbox 
-                    id={`idea-${idea.id}`} 
-                    onCheckedChange={() => handleMarkAsPosted(idea.id)}
-                    className="h-6 w-6 rounded-full"
-                    disabled={actionItemId === idea.id}
-                  />
-                  <div className="flex-1 space-y-1">
-                    {editingId === idea.id ? (
-                      <div className="flex items-center space-x-2">
-                        <Input 
-                          value={editIdeaText} 
-                          onChange={(e) => setEditIdeaText(e.target.value)} 
-                          className="flex-1"
-                          autoFocus
-                          disabled={actionItemId === idea.id}
-                        />
-                        <Button size="icon" variant="ghost" onClick={() => handleEditIdea(idea.id)} disabled={actionItemId === idea.id}>
-                          {actionItemId === idea.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                        </Button>
-                        <Button size="icon" variant="ghost" onClick={() => setEditingId(null)} disabled={actionItemId === idea.id}>
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <>
-                        <Link 
-                          href={`/ideas/${idea.id}`}
-                          className="text-lg font-medium leading-none hover:underline cursor-pointer transition-all hover:text-primary block"
-                        >
-                          {idea.idea}
-                        </Link>
-                        <p className="text-xs text-muted-foreground">
-                          Added {new Date(idea.createdAt).toLocaleDateString()}
-                        </p>
-                      </>
-                    )}
-                  </div>
-                  {actionItemId === idea.id && editingId !== idea.id ? (
-                    <div className="flex space-x-2 px-2">
-                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                    </div>
-                  ) : editingId !== idea.id && (
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
-                      <Button size="icon" variant="ghost" onClick={() => handleCopyIdea(idea.idea)}>
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                      <Button size="icon" variant="ghost" onClick={() => { setEditingId(idea.id); setEditIdeaText(idea.idea); }}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="text-destructive" onClick={() => handleDeleteIdea(idea.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))
+            pendingIdeas.map(renderIdeaCard)
           )}
         </TabsContent>
 
-        <TabsContent value="posted" className="space-y-4">
+        <TabsContent value="medium" className="space-y-4">
           {loading ? (
             <Card className="border-dashed bg-muted/5">
               <CardContent className="py-12 flex flex-col items-center justify-center space-y-4 text-muted-foreground">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-lg font-medium">Loading posted tweets...</p>
+                <p className="text-lg font-medium">Loading...</p>
               </CardContent>
             </Card>
-          ) : postedIdeas.length === 0 ? (
+          ) : eligibleForMedium.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="py-12 text-center text-muted-foreground">
-                You haven't posted any ideas yet.
+                Everything is published on Medium!
               </CardContent>
             </Card>
           ) : (
-            postedIdeas.map((idea) => (
-              <Card key={idea.id} className="opacity-75 bg-muted/30 group">
-                <CardContent className="flex items-center p-6">
-                  <div className="flex-1 space-y-1">
-                    {editingId === idea.id ? (
-                      <div className="flex items-center space-x-2">
-                        <Input 
-                          value={editIdeaText} 
-                          onChange={(e) => setEditIdeaText(e.target.value)} 
-                          className="flex-1"
-                          autoFocus
-                          disabled={actionItemId === idea.id}
-                        />
-                        <Button size="icon" variant="ghost" onClick={() => handleEditIdea(idea.id)} disabled={actionItemId === idea.id}>
-                          {actionItemId === idea.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                        </Button>
-                        <Button size="icon" variant="ghost" onClick={() => setEditingId(null)} disabled={actionItemId === idea.id}>
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <>
-                        <Link 
-                          href={`/ideas/${idea.id}`}
-                          className="text-lg font-medium line-through text-muted-foreground hover:underline cursor-pointer transition-all hover:text-foreground block"
-                        >
-                          {idea.idea}
-                        </Link>
-                        <p className="text-sm text-primary">
-                          Posted on {new Date(idea.datePosted).toLocaleDateString()} at {new Date(idea.datePosted).toLocaleTimeString()}
-                        </p>
-                      </>
-                    )}
-                  </div>
-                  {actionItemId === idea.id && editingId !== idea.id ? (
-                    <div className="flex space-x-2 px-2">
-                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                    </div>
-                  ) : editingId !== idea.id && (
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
-                      <Button size="icon" variant="ghost" onClick={() => handleCopyIdea(idea.idea)}>
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                      <Button size="icon" variant="ghost" onClick={() => { setEditingId(idea.id); setEditIdeaText(idea.idea); }}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="text-destructive" onClick={() => handleDeleteIdea(idea.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))
+            eligibleForMedium.map(renderIdeaCard)
+          )}
+        </TabsContent>
+
+        <TabsContent value="youtube" className="space-y-4">
+          {loading ? (
+            <Card className="border-dashed bg-muted/5">
+              <CardContent className="py-12 flex flex-col items-center justify-center space-y-4 text-muted-foreground">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-lg font-medium">Loading...</p>
+              </CardContent>
+            </Card>
+          ) : eligibleForYoutube.length === 0 ? (
+            <Card className="border-dashed">
+              <CardContent className="py-12 text-center text-muted-foreground">
+                Everything is published on YouTube!
+              </CardContent>
+            </Card>
+          ) : (
+            eligibleForYoutube.map(renderIdeaCard)
           )}
         </TabsContent>
       </Tabs>
