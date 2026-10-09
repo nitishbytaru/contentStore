@@ -1,36 +1,74 @@
 import { NextResponse } from 'next/server';
 import { getGoogleSheet } from '@/lib/google-sheets';
 
+const HEADERS = [
+  'id', 'idea', 'status', 'datePosted', 'createdAt',
+  'baseArticle', 'tweets', 'videoScript', 'mediumArticle', 'youtubeScript',
+  'publishedMedium', 'publishedSubstack', 'publishedX', 'publishedYoutube', 'publishedInstagram'
+];
+
 // Helper to get the correct sheet and ensure headers exist
 async function getIdeasSheet() {
   const doc = await getGoogleSheet();
   const sheet = doc.sheetsByIndex[0];
   
-  // We expect headers: id, idea, status, datePosted, createdAt
   try {
     await sheet.loadHeaderRow();
-    if (!sheet.headerValues.includes('id')) {
-      await sheet.setHeaderRow(['id', 'idea', 'status', 'datePosted', 'createdAt']);
+    
+    // Check if all headers exist, if not, append them
+    let currentHeaders = [...sheet.headerValues];
+    let headersModified = false;
+    for (const header of HEADERS) {
+      if (!currentHeaders.includes(header)) {
+        currentHeaders.push(header);
+        headersModified = true;
+      }
+    }
+    if (headersModified) {
+      await sheet.setHeaderRow(currentHeaders);
     }
   } catch (e) {
     // If headers don't exist, set them
-    await sheet.setHeaderRow(['id', 'idea', 'status', 'datePosted', 'createdAt']);
+    await sheet.setHeaderRow(HEADERS);
   }
   return sheet;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
     const sheet = await getIdeasSheet();
     const rows = await sheet.getRows();
     
-    const data = rows.map((row) => ({
-      id: row.get('id'),
-      idea: row.get('idea'),
-      status: row.get('status'),
-      datePosted: row.get('datePosted'),
-      createdAt: row.get('createdAt'),
-    }));
+    if (id) {
+      const targetRow = rows.find(r => r.get('id') === id);
+      if (!targetRow) {
+        return NextResponse.json({ error: 'Idea not found' }, { status: 404 });
+      }
+      const data = HEADERS.reduce((acc, header) => {
+        acc[header] = targetRow.get(header) || '';
+        return acc;
+      }, {} as any);
+      // parse booleans
+      ['publishedMedium', 'publishedSubstack', 'publishedX', 'publishedYoutube', 'publishedInstagram'].forEach(key => {
+        data[key] = data[key] === 'true';
+      });
+      return NextResponse.json({ data }, { status: 200 });
+    }
+
+    const data = rows.map((row) => {
+      const rowData = HEADERS.reduce((acc, header) => {
+        acc[header] = row.get(header) || '';
+        return acc;
+      }, {} as any);
+      // parse booleans
+      ['publishedMedium', 'publishedSubstack', 'publishedX', 'publishedYoutube', 'publishedInstagram'].forEach(key => {
+        rowData[key] = rowData[key] === 'true';
+      });
+      return rowData;
+    });
 
     return NextResponse.json({ data }, { status: 200 });
   } catch (error: any) {
@@ -54,6 +92,16 @@ export async function POST(request: Request) {
       status: 'pending',
       datePosted: '',
       createdAt: new Date().toISOString(),
+      baseArticle: '',
+      tweets: '',
+      videoScript: '',
+      mediumArticle: '',
+      youtubeScript: '',
+      publishedMedium: 'false',
+      publishedSubstack: 'false',
+      publishedX: 'false',
+      publishedYoutube: 'false',
+      publishedInstagram: 'false'
     };
 
     await sheet.addRow(newIdea);
@@ -67,7 +115,8 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const { id, idea, status } = await request.json();
+    const payload = await request.json();
+    const { id } = payload;
     
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
@@ -81,34 +130,35 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'Idea not found' }, { status: 404 });
     }
 
-    if (idea !== undefined) {
-      targetRow.set('idea', idea);
-    }
-    
-    if (status !== undefined) {
-      targetRow.set('status', status);
-      if (status === 'posted') {
-        targetRow.set('datePosted', new Date().toISOString());
-      } else {
-        targetRow.set('datePosted', '');
+    HEADERS.forEach(header => {
+      if (payload[header] !== undefined) {
+        if (typeof payload[header] === 'boolean') {
+          targetRow.set(header, payload[header] ? 'true' : 'false');
+        } else {
+          targetRow.set(header, payload[header]);
+        }
       }
-    } else if (idea === undefined) {
-      // Backward compatibility for mark as posted if no idea/status provided
-      targetRow.set('status', 'posted');
+    });
+
+    // Handle posted status logic explicitly if passed, or just update the date if status changed
+    if (payload.status === 'posted') {
       targetRow.set('datePosted', new Date().toISOString());
+    } else if (payload.status === 'pending') {
+      targetRow.set('datePosted', '');
     }
 
     await targetRow.save();
 
-    return NextResponse.json({ 
-      data: {
-        id: targetRow.get('id'),
-        idea: targetRow.get('idea'),
-        status: targetRow.get('status'),
-        datePosted: targetRow.get('datePosted'),
-        createdAt: targetRow.get('createdAt'),
-      }
-    }, { status: 200 });
+    const updatedData = HEADERS.reduce((acc, header) => {
+      acc[header] = targetRow.get(header) || '';
+      return acc;
+    }, {} as any);
+    
+    ['publishedMedium', 'publishedSubstack', 'publishedX', 'publishedYoutube', 'publishedInstagram'].forEach(key => {
+      updatedData[key] = updatedData[key] === 'true';
+    });
+
+    return NextResponse.json({ data: updatedData }, { status: 200 });
   } catch (error: any) {
     console.error('Error updating idea:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });

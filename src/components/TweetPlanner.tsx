@@ -1,5 +1,5 @@
 'use client';
-
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -78,7 +78,7 @@ export function TweetPlanner() {
       const res = await fetch('/api/ideas', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id }),
+        body: JSON.stringify({ id, status: 'posted' }),
       });
       
       if (!res.ok) {
@@ -236,12 +236,12 @@ export function TweetPlanner() {
                       </div>
                     ) : (
                       <>
-                        <label 
-                          htmlFor={`idea-${idea.id}`}
-                          className="text-lg font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        <Link 
+                          href={`/ideas/${idea.id}`}
+                          className="text-lg font-medium leading-none hover:underline cursor-pointer transition-all hover:text-primary block"
                         >
                           {idea.idea}
-                        </label>
+                        </Link>
                         <p className="text-xs text-muted-foreground">
                           Added {new Date(idea.createdAt).toLocaleDateString()}
                         </p>
@@ -308,9 +308,12 @@ export function TweetPlanner() {
                       </div>
                     ) : (
                       <>
-                        <p className="text-lg font-medium line-through text-muted-foreground">
+                        <Link 
+                          href={`/ideas/${idea.id}`}
+                          className="text-lg font-medium line-through text-muted-foreground hover:underline cursor-pointer transition-all hover:text-foreground block"
+                        >
                           {idea.idea}
-                        </p>
+                        </Link>
                         <p className="text-sm text-primary">
                           Posted on {new Date(idea.datePosted).toLocaleDateString()} at {new Date(idea.datePosted).toLocaleTimeString()}
                         </p>

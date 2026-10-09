@@ -33,10 +33,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </Link>
             <nav className="flex items-center space-x-6 text-sm font-medium">
               <Link href="/" className="transition-colors hover:text-foreground/80 text-foreground/60">
-                Tweets
+                Ideas
               </Link>
-              <Link href="/articles" className="transition-colors hover:text-foreground/80 text-foreground/60">
-                Articles
+              <Link href="/analytics" className="transition-colors hover:text-foreground/80 text-foreground/60">
+                Analytics
               </Link>
             </nav>
           </div>
