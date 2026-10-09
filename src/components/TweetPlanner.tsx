@@ -6,7 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, Clock, Trash2, Edit, Save, X, Loader2, Copy, FileText, Video } from 'lucide-react';
+import { AlertCircle, Clock, Trash2, Edit, Save, X, Loader2, Copy, FileText, Video, List } from 'lucide-react';
 import { toast } from "sonner";
 
 interface Idea {
@@ -221,7 +221,7 @@ export function TweetPlanner() {
       </Card>
 
       <Tabs defaultValue="pending" className="w-full">
-        <TabsList className="grid w-full grid-cols-1 md:grid-cols-3 mb-8 h-auto">
+        <TabsList className="grid w-full grid-cols-1 md:grid-cols-4 mb-8 h-auto">
           <TabsTrigger value="pending" className="py-3">
             {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Clock className="w-4 h-4 mr-2" />}
             Pending ({loading ? '...' : pendingIdeas.length})
@@ -233,6 +233,10 @@ export function TweetPlanner() {
           <TabsTrigger value="youtube" className="py-3">
             {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Video className="w-4 h-4 mr-2" />}
             YouTube Eligible ({loading ? '...' : eligibleForYoutube.length})
+          </TabsTrigger>
+          <TabsTrigger value="all" className="py-3">
+            {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <List className="w-4 h-4 mr-2" />}
+            All ({loading ? '...' : ideas.length})
           </TabsTrigger>
         </TabsList>
         
@@ -290,6 +294,25 @@ export function TweetPlanner() {
             </Card>
           ) : (
             eligibleForYoutube.map(renderIdeaCard)
+          )}
+        </TabsContent>
+
+        <TabsContent value="all" className="space-y-4">
+          {loading ? (
+            <Card className="border-dashed bg-muted/5">
+              <CardContent className="py-12 flex flex-col items-center justify-center space-y-4 text-muted-foreground">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-lg font-medium">Loading...</p>
+              </CardContent>
+            </Card>
+          ) : ideas.length === 0 ? (
+            <Card className="border-dashed">
+              <CardContent className="py-12 text-center text-muted-foreground">
+                No ideas yet. Time to brainstorm!
+              </CardContent>
+            </Card>
+          ) : (
+            ideas.map(renderIdeaCard)
           )}
         </TabsContent>
       </Tabs>
