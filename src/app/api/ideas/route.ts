@@ -4,6 +4,12 @@ import { getGoogleSheet } from '@/lib/google-sheets';
 const HEADERS = [
   'id', 'idea', 'status', 'datePosted', 'createdAt',
   'baseArticle', 'mediumArticle', 'youtubeScript',
+  'eligibleMedium', 'eligibleSubstack', 'eligibleX', 'eligibleYoutube', 'eligibleInstagram',
+  'publishedMedium', 'publishedSubstack', 'publishedX', 'publishedYoutube', 'publishedInstagram'
+];
+
+const BOOLEAN_FIELDS = [
+  'eligibleMedium', 'eligibleSubstack', 'eligibleX', 'eligibleYoutube', 'eligibleInstagram',
   'publishedMedium', 'publishedSubstack', 'publishedX', 'publishedYoutube', 'publishedInstagram'
 ];
 
@@ -52,7 +58,7 @@ export async function GET(request: Request) {
         return acc;
       }, {} as any);
       // parse booleans
-      ['publishedMedium', 'publishedSubstack', 'publishedX', 'publishedYoutube', 'publishedInstagram'].forEach(key => {
+      BOOLEAN_FIELDS.forEach(key => {
         data[key] = data[key] === 'true';
       });
       return NextResponse.json({ data }, { status: 200 });
@@ -64,7 +70,7 @@ export async function GET(request: Request) {
         return acc;
       }, {} as any);
       // parse booleans
-      ['publishedMedium', 'publishedSubstack', 'publishedX', 'publishedYoutube', 'publishedInstagram'].forEach(key => {
+      BOOLEAN_FIELDS.forEach(key => {
         rowData[key] = rowData[key] === 'true';
       });
       return rowData;
@@ -95,6 +101,11 @@ export async function POST(request: Request) {
       baseArticle: '',
       mediumArticle: '',
       youtubeScript: '',
+      eligibleMedium: 'false',
+      eligibleSubstack: 'false',
+      eligibleX: 'false',
+      eligibleYoutube: 'false',
+      eligibleInstagram: 'false',
       publishedMedium: 'false',
       publishedSubstack: 'false',
       publishedX: 'false',
@@ -152,7 +163,7 @@ export async function PUT(request: Request) {
       return acc;
     }, {} as any);
     
-    ['publishedMedium', 'publishedSubstack', 'publishedX', 'publishedYoutube', 'publishedInstagram'].forEach(key => {
+    BOOLEAN_FIELDS.forEach(key => {
       updatedData[key] = updatedData[key] === 'true';
     });
 

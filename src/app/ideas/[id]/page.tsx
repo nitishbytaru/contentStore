@@ -22,6 +22,11 @@ interface IdeaDetails {
   baseArticle: string;
   mediumArticle: string;
   youtubeScript: string;
+  eligibleMedium: boolean;
+  eligibleSubstack: boolean;
+  eligibleX: boolean;
+  eligibleYoutube: boolean;
+  eligibleInstagram: boolean;
   publishedMedium: boolean;
   publishedSubstack: boolean;
   publishedX: boolean;
@@ -185,31 +190,57 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
               <CardTitle>Publishing Checklist</CardTitle>
               <CardDescription>Track where this content is live</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-5">
               {[
-                { id: 'publishedX', label: 'Published on X (Twitter)' },
-                { id: 'publishedMedium', label: 'Published on Medium' },
-                { id: 'publishedSubstack', label: 'Published on Substack' },
-                { id: 'publishedYoutube', label: 'Published on YouTube' },
-                { id: 'publishedInstagram', label: 'Published on Instagram' },
-              ].map(platform => (
-                <div key={platform.id} className="flex items-start space-x-3 group">
-                  <Checkbox 
-                    id={platform.id}
-                    checked={idea[platform.id as keyof IdeaDetails] as boolean}
-                    onCheckedChange={(checked) => handleCheckboxChange(platform.id as keyof IdeaDetails, checked as boolean)}
-                    className="mt-1 h-5 w-5 data-[state=checked]:bg-primary"
-                  />
-                  <div className="space-y-1 leading-none flex-1">
-                    <label 
-                      htmlFor={platform.id}
-                      className="text-base font-medium cursor-pointer group-hover:text-primary transition-colors"
-                    >
-                      {platform.label}
-                    </label>
+                { eligibleId: 'eligibleX', publishedId: 'publishedX', label: 'X (Twitter)' },
+                { eligibleId: 'eligibleMedium', publishedId: 'publishedMedium', label: 'Medium' },
+                { eligibleId: 'eligibleSubstack', publishedId: 'publishedSubstack', label: 'Substack' },
+                { eligibleId: 'eligibleYoutube', publishedId: 'publishedYoutube', label: 'YouTube' },
+                { eligibleId: 'eligibleInstagram', publishedId: 'publishedInstagram', label: 'Instagram' },
+              ].map(platform => {
+                const isEligible = idea[platform.eligibleId as keyof IdeaDetails] as boolean;
+                const isPublished = idea[platform.publishedId as keyof IdeaDetails] as boolean;
+                return (
+                  <div key={platform.eligibleId} className="rounded-lg border border-border/50 p-3 space-y-3 transition-colors hover:border-primary/20">
+                    <p className="text-sm font-semibold text-foreground">{platform.label}</p>
+                    <div className="flex items-center space-x-3 group">
+                      <Checkbox
+                        id={platform.eligibleId}
+                        checked={isEligible}
+                        onCheckedChange={(checked) => {
+                          handleCheckboxChange(platform.eligibleId as keyof IdeaDetails, checked as boolean);
+                          // If unchecking eligible, also uncheck published
+                          if (!checked) {
+                            handleCheckboxChange(platform.publishedId as keyof IdeaDetails, false);
+                          }
+                        }}
+                        className="h-4 w-4 data-[state=checked]:bg-primary"
+                      />
+                      <label
+                        htmlFor={platform.eligibleId}
+                        className="text-sm font-medium cursor-pointer group-hover:text-primary transition-colors"
+                      >
+                        Eligible
+                      </label>
+                    </div>
+                    <div className={`flex items-center space-x-3 group ${!isEligible ? 'opacity-40 pointer-events-none' : ''}`}>
+                      <Checkbox
+                        id={platform.publishedId}
+                        checked={isPublished}
+                        disabled={!isEligible}
+                        onCheckedChange={(checked) => handleCheckboxChange(platform.publishedId as keyof IdeaDetails, checked as boolean)}
+                        className="h-4 w-4 data-[state=checked]:bg-green-500"
+                      />
+                      <label
+                        htmlFor={platform.publishedId}
+                        className="text-sm font-medium cursor-pointer group-hover:text-green-500 transition-colors"
+                      >
+                        Published
+                      </label>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </CardContent>
           </Card>
         </div>

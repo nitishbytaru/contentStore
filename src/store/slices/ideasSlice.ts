@@ -6,6 +6,11 @@ export interface Idea {
   status: 'pending' | 'posted';
   datePosted: string;
   createdAt: string;
+  eligibleMedium: boolean;
+  eligibleSubstack: boolean;
+  eligibleX: boolean;
+  eligibleYoutube: boolean;
+  eligibleInstagram: boolean;
   publishedMedium: boolean;
   publishedSubstack: boolean;
   publishedX: boolean;

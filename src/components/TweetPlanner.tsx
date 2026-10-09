@@ -57,8 +57,8 @@ export function TweetPlanner() {
   };
 
   const pendingIdeas = ideas.filter(i => i.status !== 'posted');
-  const eligibleForMedium = ideas.filter(i => !i.publishedMedium);
-  const eligibleForYoutube = ideas.filter(i => !i.publishedYoutube);
+  const eligibleForMedium = ideas.filter(i => i.eligibleMedium && !i.publishedMedium);
+  const eligibleForYoutube = ideas.filter(i => i.eligibleYoutube && !i.publishedYoutube);
 
   if (error) {
     return (
