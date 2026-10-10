@@ -29,11 +29,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <ReduxProvider>
         <header className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-          <div className="flex h-14 items-center px-4 md:px-8 max-w-7xl mx-auto w-full space-x-6">
-            <Link href="/" className="font-bold text-lg tracking-tight mr-6">
+          <div className="flex h-14 items-center px-4 md:px-8 max-w-7xl mx-auto w-full overflow-x-auto no-scrollbar">
+            <Link href="/" className="font-bold text-lg tracking-tight mr-4 md:mr-6 shrink-0">
               ContentStore
             </Link>
-            <nav className="flex items-center space-x-6 text-sm font-medium">
+            <nav className="flex items-center space-x-4 md:space-x-6 text-sm font-medium shrink-0">
               <Link href="/" className="transition-colors hover:text-foreground/80 text-foreground/60">
                 Ideas
               </Link>

@@ -147,8 +147,8 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
           <Link href="/" className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors mb-4 text-sm font-medium">
             <ArrowLeft className="w-4 h-4 mr-2" /> Back to Dashboard
           </Link>
-          <h1 className="text-3xl font-bold tracking-tight text-primary">Content Editor</h1>
-          <p className="text-muted-foreground mt-1 text-lg">Working on: <span className="text-foreground font-medium">{idea.idea}</span></p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-primary">Content Editor</h1>
+          <p className="text-muted-foreground mt-1 text-base md:text-lg line-clamp-2">Working on: <span className="text-foreground font-medium">{idea.idea}</span></p>
         </div>
         <Button onClick={handleSave} disabled={saving} size="lg" className="w-full sm:w-auto shadow-lg hover:shadow-primary/25 transition-all">
           {saving ? <Skeleton className="w-4 h-4 mr-2 rounded-full" /> : <Save className="w-4 h-4 mr-2" />}
@@ -183,7 +183,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
                           placeholder={tab.placeholder}
                           value={(idea[tab.value as keyof IdeaDetails] as string) || ''}
                           onChange={(e) => handleTextChange(tab.value as keyof IdeaDetails, e.target.value)}
-                          className="h-[500px] overflow-y-auto resize-y text-base p-4 pr-12 bg-background/50 focus:bg-background transition-colors leading-relaxed"
+                          className="h-[350px] md:h-[500px] overflow-y-auto resize-y text-sm md:text-base p-4 pr-12 bg-background/50 focus:bg-background transition-colors leading-relaxed"
                           style={{ fieldSizing: 'fixed' } as any}
                         />
                         <Button 

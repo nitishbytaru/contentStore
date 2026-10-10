@@ -107,10 +107,10 @@ export default function PromptsPage() {
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-primary flex items-center">
-            <Lightbulb className="w-8 h-8 mr-3" /> Prompt Library
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-primary flex items-center">
+            <Lightbulb className="w-6 h-6 md:w-8 md:h-8 mr-2 md:mr-3" /> Prompt Library
           </h1>
-          <p className="text-muted-foreground mt-1">Manage your reusable prompts for tweets, video generation, and more.</p>
+          <p className="text-sm md:text-base text-muted-foreground mt-1">Manage your reusable prompts for tweets, video generation, and more.</p>
         </div>
         <div className="flex w-full sm:w-auto items-center space-x-2">
           {!isCreating && (
@@ -189,8 +189,8 @@ export default function PromptsPage() {
           ))}
         </div>
       ) : filteredPrompts.length === 0 && !isCreating ? (
-        <div className="text-center p-12 border border-dashed rounded-xl border-border bg-muted/20">
-          <p className="text-muted-foreground text-lg mb-4">
+        <div className="text-center p-6 md:p-12 border border-dashed rounded-xl border-border bg-muted/20">
+          <p className="text-muted-foreground text-base md:text-lg mb-4">
             {searchQuery ? 'No prompts match your search.' : 'No prompts yet. Start building your library!'}
           </p>
           {!searchQuery && <Button onClick={() => setIsCreating(true)} variant="outline">Create your first prompt</Button>}

@@ -114,8 +114,8 @@ export default function AnalyticsDashboard() {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight text-primary flex items-center">
-          <BarChart3 className="w-8 h-8 mr-3" /> Analytics Dashboard
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-primary flex items-center">
+          <BarChart3 className="w-6 h-6 md:w-8 md:h-8 mr-2 md:mr-3" /> Analytics Dashboard
         </h1>
       </div>
 
@@ -160,7 +160,7 @@ export default function AnalyticsDashboard() {
             <CardTitle>Platform Distribution</CardTitle>
             <CardDescription>Number of articles/posts published per platform</CardDescription>
           </CardHeader>
-          <CardContent className="h-[400px] mt-4">
+          <CardContent className="h-[300px] md:h-[400px] mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={barChartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
@@ -189,7 +189,7 @@ export default function AnalyticsDashboard() {
             <CardTitle>Idea Completion Status</CardTitle>
             <CardDescription>Breakdown of how far along your ideas are</CardDescription>
           </CardHeader>
-          <CardContent className="h-[400px] flex items-center justify-center">
+          <CardContent className="h-[300px] md:h-[400px] flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie

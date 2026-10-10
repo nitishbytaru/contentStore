@@ -84,7 +84,7 @@ export function TweetPlanner() {
 
   const renderIdeaCard = (idea: Idea) => (
     <Card key={idea.id} className="transition-all hover:shadow-md hover:border-primary/50 group bg-card">
-      <CardContent className="flex items-center space-x-4 p-5">
+      <CardContent className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 p-4 sm:p-5">
         <div className="flex-1 space-y-1">
           {editingId === idea.id ? (
             <div className="flex items-center space-x-2">
@@ -106,7 +106,7 @@ export function TweetPlanner() {
             <>
               <Link 
                 href={`/ideas/${idea.id}`}
-                className="text-lg font-semibold leading-none hover:underline cursor-pointer transition-all hover:text-primary block"
+                className="text-base sm:text-lg font-semibold leading-tight hover:underline cursor-pointer transition-all hover:text-primary block"
               >
                 {idea.idea}
               </Link>
@@ -117,11 +117,11 @@ export function TweetPlanner() {
           )}
         </div>
         {actionLoading && actionItemId === idea.id && editingId !== idea.id ? (
-          <div className="flex space-x-2 px-2">
+          <div className="flex space-x-2 px-2 self-start sm:self-auto mt-2 sm:mt-0">
             <Skeleton className="h-5 w-5 rounded-full" />
           </div>
         ) : editingId !== idea.id && (
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1">
+          <div className="opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1 self-end sm:self-auto">
             <Button size="icon" variant="ghost" onClick={() => handleCopyIdea(idea.idea)}>
               <Copy className="h-4 w-4 text-muted-foreground hover:text-foreground" />
             </Button>
@@ -164,31 +164,31 @@ export function TweetPlanner() {
       </div>
 
       <Tabs value={activeTab} onValueChange={(val) => dispatch(setActiveTab(val))} className="w-full">
-        <TabsList className="inline-flex w-full sm:w-auto h-auto bg-muted/30 p-1.5 rounded-full mb-8 flex-wrap justify-center sm:justify-start gap-1 border border-border/50">
+        <TabsList className="inline-flex w-full sm:w-auto h-auto bg-muted/30 p-1 sm:p-1.5 rounded-xl sm:rounded-full mb-6 sm:mb-8 flex-wrap justify-center sm:justify-start gap-1 border border-border/50">
           <TabsTrigger 
             value="pending" 
-            className="rounded-full px-5 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all font-medium text-sm"
+            className="rounded-lg sm:rounded-full px-3 py-2 sm:px-5 sm:py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all font-medium text-xs sm:text-sm"
           >
             {loading ? <Skeleton className="h-4 w-4 rounded-full mr-2" /> : <Clock className="w-4 h-4 mr-2" />}
             Pending ({loading ? '...' : pendingIdeas.length})
           </TabsTrigger>
           <TabsTrigger 
             value="articles" 
-            className="rounded-full px-5 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all font-medium text-sm"
+            className="rounded-lg sm:rounded-full px-3 py-2 sm:px-5 sm:py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all font-medium text-xs sm:text-sm"
           >
             {loading ? <Skeleton className="h-4 w-4 rounded-full mr-2" /> : <FileText className="w-4 h-4 mr-2" />}
             Articles ({loading ? '...' : eligibleForArticles.length})
           </TabsTrigger>
           <TabsTrigger 
             value="videos" 
-            className="rounded-full px-5 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all font-medium text-sm"
+            className="rounded-lg sm:rounded-full px-3 py-2 sm:px-5 sm:py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all font-medium text-xs sm:text-sm"
           >
             {loading ? <Skeleton className="h-4 w-4 rounded-full mr-2" /> : <Video className="w-4 h-4 mr-2" />}
             Videos ({loading ? '...' : eligibleForVideos.length})
           </TabsTrigger>
           <TabsTrigger 
             value="all" 
-            className="rounded-full px-5 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all font-medium text-sm"
+            className="rounded-lg sm:rounded-full px-3 py-2 sm:px-5 sm:py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all font-medium text-xs sm:text-sm"
           >
             {loading ? <Skeleton className="h-4 w-4 rounded-full mr-2" /> : <List className="w-4 h-4 mr-2" />}
             All ({loading ? '...' : filteredIdeas.length})

@@ -39,8 +39,8 @@ export default function NewIdeaPage() {
       
       <Card className="border-primary/20 shadow-xl bg-card">
         <CardHeader>
-          <CardTitle className="text-3xl font-bold text-primary">Create New Todo</CardTitle>
-          <CardDescription className="text-lg mt-2 text-muted-foreground/80">
+          <CardTitle className="text-2xl md:text-3xl font-bold text-primary">Create New Todo</CardTitle>
+          <CardDescription className="text-base md:text-lg mt-1 md:mt-2 text-muted-foreground/80">
             What's your next big idea? Write it down and start building.
           </CardDescription>
         </CardHeader>
@@ -51,13 +51,13 @@ export default function NewIdeaPage() {
               onChange={(e) => setIdea(e.target.value)} 
               placeholder="e.g. Write a comprehensive guide on Next.js 15..." 
               disabled={isSubmitting}
-              className="text-lg py-6 focus-visible:ring-primary/50 bg-background/50"
+              className="text-base py-4 sm:text-lg sm:py-6 focus-visible:ring-primary/50 bg-background/50"
               autoFocus
             />
             <Button 
               type="submit" 
               disabled={!idea.trim() || isSubmitting} 
-              className="w-full py-6 text-lg shadow-lg hover:shadow-primary/25 transition-all"
+              className="w-full py-4 text-base sm:py-6 sm:text-lg shadow-lg hover:shadow-primary/25 transition-all"
             >
               {isSubmitting ? <Skeleton className="h-5 w-5 rounded-full mr-2" /> : null}
               {isSubmitting ? 'Creating...' : 'Create Idea & Open Planner'}
