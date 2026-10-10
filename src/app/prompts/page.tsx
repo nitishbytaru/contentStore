@@ -9,7 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Copy, Plus, Trash2, Edit, Save, X, Lightbulb, Search } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Copy, Plus, Trash2, Edit, Save, X, AlertCircle, Search, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function PromptsPage() {
@@ -94,7 +95,13 @@ export default function PromptsPage() {
   };
 
   if (error) {
-    return <div className="p-8 text-center text-red-500">Error loading prompts: {error}</div>;
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Error Loading Prompts</AlertTitle>
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
   }
 
   const filteredPrompts = prompts.filter(p => 
@@ -104,44 +111,44 @@ export default function PromptsPage() {
   );
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-primary flex items-center">
-            <Lightbulb className="w-6 h-6 md:w-8 md:h-8 mr-2 md:mr-3" /> Prompt Library
-          </h1>
-          <p className="text-sm md:text-base text-muted-foreground mt-1">Manage your reusable prompts for tweets, video generation, and more.</p>
+          <h1 className="text-xl font-semibold tracking-tight">Prompt Library</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Manage your reusable prompts for content generation.</p>
         </div>
-        <div className="flex w-full sm:w-auto items-center space-x-2">
+        <div className="flex w-full sm:w-auto items-center gap-2">
           {!isCreating && (
-            <div className="relative w-full sm:w-64">
+            <div className="relative w-full sm:w-56">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
                 placeholder="Search prompts..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 bg-background"
+                className="pl-9"
               />
             </div>
           )}
           {!isCreating && (
-            <Button onClick={() => setIsCreating(true)} className="shrink-0 shadow-lg hover:shadow-primary/25 transition-all">
-              <Plus className="w-4 h-4 mr-2" /> Add Prompt
+            <Button onClick={() => setIsCreating(true)} className="shrink-0">
+              <Plus className="w-4 h-4 mr-1.5" /> Add Prompt
             </Button>
           )}
         </div>
       </div>
 
+      {/* Create Form */}
       {isCreating && (
-        <Card className="border-primary/20 shadow-xl bg-card">
-          <CardHeader>
-            <CardTitle>Create New Prompt</CardTitle>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Create New Prompt</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleCreate} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Title</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Title</label>
                   <Input 
                     placeholder="e.g. Technical Thread Hook..." 
                     value={newTitle} 
@@ -150,8 +157,8 @@ export default function PromptsPage() {
                     autoFocus
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Category</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Category</label>
                   <Input 
                     placeholder="e.g. Tweets, Video, Midjourney..." 
                     value={newCategory} 
@@ -160,20 +167,20 @@ export default function PromptsPage() {
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Prompt Content</label>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Prompt Content</label>
                 <Textarea 
                   placeholder="Paste your prompt template here..." 
                   value={newContent} 
                   onChange={e => setNewContent(e.target.value)}
-                  className="min-h-[150px]"
+                  className="min-h-[120px]"
                   disabled={actionLoading}
                 />
               </div>
-              <div className="flex justify-end space-x-2 pt-2">
-                <Button type="button" variant="ghost" onClick={() => setIsCreating(false)} disabled={actionLoading}>Cancel</Button>
-                <Button type="submit" disabled={!newTitle.trim() || !newContent.trim() || actionLoading}>
-                  {actionLoading ? <Skeleton className="h-4 w-4 mr-2 rounded-full" /> : <Save className="h-4 w-4 mr-2" />}
+              <div className="flex justify-end gap-2 pt-1">
+                <Button type="button" variant="ghost" size="sm" onClick={() => setIsCreating(false)} disabled={actionLoading}>Cancel</Button>
+                <Button type="submit" size="sm" disabled={!newTitle.trim() || !newContent.trim() || actionLoading}>
+                  {actionLoading ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Save className="h-4 w-4 mr-1.5" />}
                   Save Prompt
                 </Button>
               </div>
@@ -182,23 +189,34 @@ export default function PromptsPage() {
         </Card>
       )}
 
+      {/* Prompt Cards */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1,2,3].map(i => (
-            <Skeleton key={i} className="h-64 rounded-xl" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3].map(i => (
+            <Card key={i}>
+              <CardContent className="p-4 space-y-3">
+                <Skeleton className="h-5 w-2/3" />
+                <Skeleton className="h-4 w-16 rounded-full" />
+                <Skeleton className="h-20 w-full rounded-md" />
+                <div className="flex justify-end gap-2">
+                  <Skeleton className="h-7 w-14" />
+                  <Skeleton className="h-7 w-16" />
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       ) : filteredPrompts.length === 0 && !isCreating ? (
-        <div className="text-center p-6 md:p-12 border border-dashed rounded-xl border-border bg-muted/20">
-          <p className="text-muted-foreground text-base md:text-lg mb-4">
+        <div className="border border-dashed border-border rounded-lg py-12 text-center">
+          <p className="text-sm text-muted-foreground mb-3">
             {searchQuery ? 'No prompts match your search.' : 'No prompts yet. Start building your library!'}
           </p>
-          {!searchQuery && <Button onClick={() => setIsCreating(true)} variant="outline">Create your first prompt</Button>}
+          {!searchQuery && <Button onClick={() => setIsCreating(true)} variant="outline" size="sm">Create your first prompt</Button>}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredPrompts.map(p => (
-            <Card key={p.id} className="flex flex-col border-primary/10 hover:border-primary/30 transition-colors shadow-sm hover:shadow-md">
+            <Card key={p.id} className="flex flex-col hover:border-border transition-colors">
               {editingId === p.id ? (
                 <CardContent className="p-4 space-y-3 flex-1 flex flex-col">
                   <Input value={editTitle} onChange={e => setEditTitle(e.target.value)} placeholder="Title" />
@@ -206,39 +224,39 @@ export default function PromptsPage() {
                   <Textarea 
                     value={editContent} 
                     onChange={e => setEditContent(e.target.value)} 
-                    className="flex-1 min-h-[150px]"
+                    className="flex-1 min-h-[120px]"
                   />
-                  <div className="flex justify-end space-x-2">
+                  <div className="flex justify-end gap-2">
                     <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}><X className="h-4 w-4" /></Button>
                     <Button size="sm" onClick={handleSaveEdit} disabled={!editTitle.trim() || !editContent.trim()}>Save</Button>
                   </div>
                 </CardContent>
               ) : (
                 <>
-                  <CardHeader className="pb-3 flex flex-row items-start justify-between space-y-0">
-                    <div>
-                      <CardTitle className="text-lg line-clamp-1" title={p.title}>{p.title}</CardTitle>
-                      <CardDescription className="mt-1">
-                        <span className="inline-block px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                  <CardHeader className="pb-2 flex flex-row items-start justify-between space-y-0">
+                    <div className="min-w-0 flex-1">
+                      <CardTitle className="text-sm font-medium truncate" title={p.title}>{p.title}</CardTitle>
+                      <CardDescription className="mt-1.5">
+                        <span className="inline-block px-2 py-0.5 rounded-full bg-muted text-muted-foreground text-xs font-medium">
                           {p.category}
                         </span>
                       </CardDescription>
                     </div>
-                    <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground" onClick={() => handleCopy(p.content)} title="Copy Prompt">
-                      <Copy className="h-4 w-4" />
+                    <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground" onClick={() => handleCopy(p.content)} title="Copy Prompt">
+                      <Copy className="h-3.5 w-3.5" />
                     </Button>
                   </CardHeader>
-                  <CardContent className="flex-1">
-                    <div className="bg-muted/30 p-3 rounded-md text-sm text-foreground/80 line-clamp-6 whitespace-pre-wrap font-mono">
+                  <CardContent className="flex-1 pt-0">
+                    <div className="bg-muted/40 p-3 rounded-md text-xs text-muted-foreground line-clamp-6 whitespace-pre-wrap font-mono leading-relaxed">
                       {p.content}
                     </div>
                   </CardContent>
-                  <CardFooter className="pt-0 flex justify-end space-x-2">
-                    <Button size="sm" variant="ghost" onClick={() => handleStartEdit(p)} className="h-8 text-xs text-muted-foreground hover:text-foreground">
-                      <Edit className="h-3.5 w-3.5 mr-1.5" /> Edit
+                  <CardFooter className="pt-0 flex justify-end gap-1">
+                    <Button size="sm" variant="ghost" onClick={() => handleStartEdit(p)} className="h-7 text-xs text-muted-foreground hover:text-foreground">
+                      <Edit className="h-3 w-3 mr-1" /> Edit
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => handleDelete(p.id)} className="h-8 text-xs text-red-500 hover:text-red-600 hover:bg-red-500/10">
-                      <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete
+                    <Button size="sm" variant="ghost" onClick={() => handleDelete(p.id)} className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10">
+                      <Trash2 className="h-3 w-3 mr-1" /> Delete
                     </Button>
                   </CardFooter>
                 </>

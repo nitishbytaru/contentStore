@@ -3,7 +3,7 @@
 import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Save, Copy } from 'lucide-react';
+import { ArrowLeft, Save, Copy, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -80,7 +80,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
     const isVideosSelected = idea.eligibleYoutube || idea.ineligibleYoutube;
 
     if (!isXSelected || !isArticlesSelected || !isVideosSelected) {
-      toast.error('Validation Error: Please select Eligible or Ineligible for all sections in the Publishing Checklist.');
+      toast.error('Please select Eligible or Ineligible for all sections in the Publishing Checklist.');
       return;
     }
 
@@ -122,11 +122,20 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
 
   if (loading || storeLoading) {
     return (
-      <div className="p-8 max-w-6xl mx-auto space-y-6">
-        <Skeleton className="h-8 w-64" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <Skeleton className="h-[600px] col-span-2 rounded-xl" />
-          <Skeleton className="h-96 rounded-xl" />
+      <div className="space-y-6 pt-2">
+        <Skeleton className="h-5 w-32" />
+        <Skeleton className="h-4 w-64" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-4">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-[400px] w-full rounded-lg" />
+          </div>
+          <div className="space-y-4">
+            <Skeleton className="h-8 w-40" />
+            <Skeleton className="h-24 w-full rounded-lg" />
+            <Skeleton className="h-24 w-full rounded-lg" />
+            <Skeleton className="h-24 w-full rounded-lg" />
+          </div>
         </div>
       </div>
     );
@@ -134,78 +143,87 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
 
   if (!idea) {
     return (
-      <div className="p-8 text-center text-muted-foreground">
+      <div className="py-12 text-center text-muted-foreground">
         Idea not found. <Link href="/" className="text-primary hover:underline">Go back</Link>
       </div>
     );
   }
 
+  const contentTabs = [
+    { value: 'baseArticle', label: 'Base Article', placeholder: 'Draft your core article here...' },
+    { value: 'mediumArticle', label: 'Tweets', placeholder: 'Draft your tweets here...' },
+    { value: 'youtubeScript', label: 'Video Script', placeholder: 'Long-form video script...' },
+  ] as const;
+
+  const platforms = [
+    { eligibleIds: ['eligibleX'], publishedIds: ['publishedX'], ineligibleIds: ['ineligibleX'], label: 'X (Twitter)' },
+    { eligibleIds: ['eligibleMedium', 'eligibleSubstack'], publishedIds: ['publishedMedium', 'publishedSubstack'], ineligibleIds: ['ineligibleMedium', 'ineligibleSubstack'], label: 'Articles (Medium & Substack)' },
+    { eligibleIds: ['eligibleYoutube', 'eligibleInstagram'], publishedIds: ['publishedYoutube', 'publishedInstagram'], ineligibleIds: ['ineligibleYoutube', 'ineligibleInstagram'], label: 'Videos (YouTube & Instagram)' },
+  ];
+
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-        <div>
-          <Link href="/" className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors mb-4 text-sm font-medium">
-            <ArrowLeft className="w-4 h-4 mr-2" /> Back to Dashboard
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="min-w-0">
+          <Link href="/" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-3">
+            <ArrowLeft className="w-4 h-4 mr-1.5" /> Back to Ideas
           </Link>
-          <div className="flex items-start sm:items-center mt-1 space-x-2">
-            <p className="text-muted-foreground text-base md:text-lg line-clamp-2">Working on: <span className="text-foreground font-medium">{idea.idea}</span></p>
+          <div className="flex items-center gap-2 min-w-0">
+            <p className="text-sm text-muted-foreground truncate">
+              Working on: <span className="text-foreground font-medium">{idea.idea}</span>
+            </p>
             <Button 
               size="icon" 
               variant="ghost" 
-              className="h-7 w-7 text-muted-foreground hover:text-foreground shrink-0 -mt-0.5 sm:mt-0" 
+              className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground" 
               onClick={() => handleCopyContent(idea.idea)}
               title="Copy idea text"
             >
-              <Copy className="h-4 w-4" />
+              <Copy className="h-3.5 w-3.5" />
             </Button>
           </div>
         </div>
-        <Button onClick={handleSave} disabled={saving} size="lg" className="w-full sm:w-auto shadow-lg hover:shadow-primary/25 transition-all">
-          {saving ? <Skeleton className="w-4 h-4 mr-2 rounded-full" /> : <Save className="w-4 h-4 mr-2" />}
+        <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto shrink-0">
+          {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
           {saving ? 'Saving...' : 'Save All Changes'}
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content Area */}
         <div className="lg:col-span-2">
-          <Card className="border-primary/10 shadow-md">
-            <CardContent className="p-6">
+          <Card>
+            <CardContent className="p-4 sm:p-6">
               <Tabs defaultValue="baseArticle" className="w-full">
-                <TabsList className="w-full justify-start overflow-x-auto flex-nowrap rounded-lg p-1 bg-muted/50 mb-6 border">
-                  <TabsTrigger value="baseArticle" className="flex-1">Base Article</TabsTrigger>
-                  <TabsTrigger value="mediumArticle" className="flex-1">Tweets</TabsTrigger>
-                  <TabsTrigger value="youtubeScript" className="flex-1">Video Script</TabsTrigger>
+                <TabsList className="w-full justify-start rounded-lg p-1 bg-muted/50 mb-4 border border-border/50">
+                  {contentTabs.map(tab => (
+                    <TabsTrigger key={tab.value} value={tab.value} className="flex-1 text-sm">
+                      {tab.label}
+                    </TabsTrigger>
+                  ))}
                 </TabsList>
 
-                {([
-                  { value: 'baseArticle', label: 'Base Article', placeholder: 'Draft your core article here...' },
-                  { value: 'mediumArticle', label: 'Tweets', placeholder: 'Draft your tweets here...' },
-                  { value: 'youtubeScript', label: 'Video Script', placeholder: 'Long-form video script...' },
-                ] as const).map(tab => (
+                {contentTabs.map(tab => (
                   <TabsContent key={tab.value} value={tab.value} className="focus-visible:outline-none focus-visible:ring-0 mt-0">
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center mb-2">
-                        <h3 className="text-lg font-semibold">{tab.label}</h3>
-                      </div>
-                      <div className="relative group">
-                        <Textarea 
-                          placeholder={tab.placeholder}
-                          value={(idea[tab.value as keyof IdeaDetails] as string) || ''}
-                          onChange={(e) => handleTextChange(tab.value as keyof IdeaDetails, e.target.value)}
-                          className="h-[350px] md:h-[500px] overflow-y-auto resize-y text-sm md:text-base p-4 pr-12 bg-background/50 focus:bg-background transition-colors leading-relaxed"
-                          style={{ fieldSizing: 'fixed' } as any}
-                        />
-                        <Button 
-                          size="icon" 
-                          variant="secondary" 
-                          className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 shadow-sm"
-                          onClick={() => handleCopyContent(idea[tab.value as keyof IdeaDetails] as string)}
-                          title="Copy content"
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      </div>
+                    <div className="relative group">
+                      <Textarea 
+                        placeholder={tab.placeholder}
+                        value={(idea[tab.value as keyof IdeaDetails] as string) || ''}
+                        onChange={(e) => handleTextChange(tab.value as keyof IdeaDetails, e.target.value)}
+                        className="min-h-[350px] md:min-h-[450px] resize-y text-sm p-4 pr-12 leading-relaxed"
+                        style={{ fieldSizing: 'fixed' } as any}
+                      />
+                      <Button 
+                        size="icon" 
+                        variant="secondary" 
+                        className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7"
+                        onClick={() => handleCopyContent(idea[tab.value as keyof IdeaDetails] as string)}
+                        title="Copy content"
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
                   </TabsContent>
                 ))}
@@ -215,26 +233,22 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
         </div>
 
         {/* Sidebar: Publishing Checklist */}
-        <div className="space-y-6">
-          <Card className="border-primary/10 shadow-md sticky top-24">
-            <CardHeader className="pb-4">
-              <CardTitle>Publishing Checklist</CardTitle>
-              <CardDescription>Track where this content is live</CardDescription>
+        <div>
+          <Card className="sticky top-20">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Publishing Checklist</CardTitle>
+              <CardDescription className="text-xs">Track where this content is live</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-5">
-              {[
-                { eligibleIds: ['eligibleX'], publishedIds: ['publishedX'], ineligibleIds: ['ineligibleX'], label: 'X (Twitter)' },
-                { eligibleIds: ['eligibleMedium', 'eligibleSubstack'], publishedIds: ['publishedMedium', 'publishedSubstack'], ineligibleIds: ['ineligibleMedium', 'ineligibleSubstack'], label: 'Articles (Medium & Substack)' },
-                { eligibleIds: ['eligibleYoutube', 'eligibleInstagram'], publishedIds: ['publishedYoutube', 'publishedInstagram'], ineligibleIds: ['ineligibleYoutube', 'ineligibleInstagram'], label: 'Videos (YouTube & Instagram)' },
-              ].map((platform, idx) => {
+            <CardContent className="space-y-3">
+              {platforms.map((platform, idx) => {
                 const isEligible = idea[platform.eligibleIds[0] as keyof IdeaDetails] as boolean;
                 const isPublished = idea[platform.publishedIds[0] as keyof IdeaDetails] as boolean;
                 const isIneligible = idea[platform.ineligibleIds[0] as keyof IdeaDetails] as boolean;
                 return (
-                  <div key={idx} className={`rounded-lg border border-border/50 p-3 space-y-3 transition-colors hover:border-primary/20 ${isIneligible ? 'bg-muted/30 border-muted' : ''}`}>
-                    <p className={`text-sm font-semibold ${isIneligible ? 'text-muted-foreground line-through' : 'text-foreground'}`}>{platform.label}</p>
+                  <div key={idx} className={`rounded-lg border p-3 space-y-2.5 transition-colors ${isIneligible ? 'bg-muted/30 border-muted' : 'border-border/50 hover:border-border'}`}>
+                    <p className={`text-sm font-medium ${isIneligible ? 'text-muted-foreground line-through' : 'text-foreground'}`}>{platform.label}</p>
                     
-                    <div className="flex items-center space-x-3 group">
+                    <div className="flex items-center gap-2.5">
                       <Checkbox
                         id={`ineligible-${idx}`}
                         checked={isIneligible}
@@ -249,13 +263,13 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
                       />
                       <label
                         htmlFor={`ineligible-${idx}`}
-                        className="text-sm font-medium cursor-pointer group-hover:text-destructive transition-colors"
+                        className="text-xs font-medium cursor-pointer text-muted-foreground hover:text-destructive transition-colors"
                       >
                         Ineligible (Skip)
                       </label>
                     </div>
 
-                    <div className={`flex items-center space-x-3 group ${isIneligible ? 'opacity-40 pointer-events-none' : ''}`}>
+                    <div className={`flex items-center gap-2.5 ${isIneligible ? 'opacity-40 pointer-events-none' : ''}`}>
                       <Checkbox
                         id={`eligible-${idx}`}
                         checked={isEligible}
@@ -272,13 +286,13 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
                       />
                       <label
                         htmlFor={`eligible-${idx}`}
-                        className="text-sm font-medium cursor-pointer group-hover:text-primary transition-colors"
+                        className="text-xs font-medium cursor-pointer text-muted-foreground hover:text-primary transition-colors"
                       >
                         Eligible
                       </label>
                     </div>
 
-                    <div className={`flex items-center space-x-3 group ${!isEligible || isIneligible ? 'opacity-40 pointer-events-none' : ''}`}>
+                    <div className={`flex items-center gap-2.5 ${!isEligible || isIneligible ? 'opacity-40 pointer-events-none' : ''}`}>
                       <Checkbox
                         id={`published-${idx}`}
                         checked={isPublished}
@@ -288,7 +302,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
                       />
                       <label
                         htmlFor={`published-${idx}`}
-                        className="text-sm font-medium cursor-pointer group-hover:text-green-500 transition-colors"
+                        className="text-xs font-medium cursor-pointer text-muted-foreground hover:text-green-500 transition-colors"
                       >
                         Published
                       </label>

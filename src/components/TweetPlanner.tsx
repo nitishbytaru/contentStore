@@ -7,12 +7,14 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, Clock, Trash2, Edit, Save, X, Copy, FileText, Video, List, Plus, Search } from 'lucide-react';
+import { AlertCircle, Clock, Trash2, Edit, Save, X, Copy, FileText, Video, List, Plus, Search, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from "sonner";
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchIdeas, deleteIdea, updateIdea, Idea, setSearchQuery, setActiveTab } from '@/store/slices/ideasSlice';
 import { RootState, AppDispatch } from '@/store';
+
+const tabTriggerClass = "rounded-md px-3 py-1.5 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all";
 
 export function TweetPlanner() {
   const router = useRouter();
@@ -85,11 +87,11 @@ export function TweetPlanner() {
   }
 
   const renderIdeaCard = (idea: Idea) => (
-    <Card key={idea.id} className="transition-all hover:shadow-md hover:border-primary/50 group bg-card">
-      <CardContent className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 p-4 sm:p-5">
-        <div className="flex-1 space-y-1">
+    <Card key={idea.id} className="transition-all hover:border-primary/30 group">
+      <CardContent className="flex flex-col sm:flex-row sm:items-center gap-3 p-4">
+        <div className="flex-1 min-w-0">
           {editingId === idea.id ? (
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2">
               <Input 
                 value={editIdeaText} 
                 onChange={(e) => setEditIdeaText(e.target.value)} 
@@ -98,7 +100,7 @@ export function TweetPlanner() {
                 disabled={actionLoading && actionItemId === idea.id}
               />
               <Button size="icon" variant="ghost" onClick={() => handleEditIdea(idea.id)} disabled={actionLoading && actionItemId === idea.id}>
-                {actionLoading && actionItemId === idea.id ? <Skeleton className="h-4 w-4 rounded-full" /> : <Save className="h-4 w-4 text-primary" />}
+                {actionLoading && actionItemId === idea.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4 text-primary" />}
               </Button>
               <Button size="icon" variant="ghost" onClick={() => setEditingId(null)} disabled={actionLoading && actionItemId === idea.id}>
                 <X className="h-4 w-4 text-muted-foreground" />
@@ -108,30 +110,30 @@ export function TweetPlanner() {
             <>
               <Link 
                 href={`/ideas/${idea.id}`}
-                className="text-base sm:text-lg font-semibold leading-tight hover:underline cursor-pointer transition-all hover:text-primary block"
+                className="text-sm sm:text-base font-medium leading-tight hover:underline cursor-pointer transition-colors hover:text-primary block truncate"
               >
                 {idea.idea}
               </Link>
-              <p className="text-xs text-muted-foreground/80 font-medium">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 Created {new Date(idea.createdAt).toLocaleDateString()}
               </p>
             </>
           )}
         </div>
         {actionLoading && actionItemId === idea.id && editingId !== idea.id ? (
-          <div className="flex space-x-2 px-2 self-start sm:self-auto mt-2 sm:mt-0">
-            <Skeleton className="h-5 w-5 rounded-full" />
+          <div className="flex items-center px-2 shrink-0">
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
           </div>
         ) : editingId !== idea.id && (
-          <div className="opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1 self-end sm:self-auto">
-            <Button size="icon" variant="ghost" onClick={() => handleCopyIdea(idea.idea)}>
-              <Copy className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+          <div className="opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 shrink-0">
+            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleCopyIdea(idea.idea)}>
+              <Copy className="h-3.5 w-3.5 text-muted-foreground" />
             </Button>
-            <Button size="icon" variant="ghost" onClick={() => { setEditingId(idea.id); setEditIdeaText(idea.idea); }}>
-              <Edit className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { setEditingId(idea.id); setEditIdeaText(idea.idea); }}>
+              <Edit className="h-3.5 w-3.5 text-muted-foreground" />
             </Button>
-            <Button size="icon" variant="ghost" className="hover:bg-destructive/10 hover:text-destructive" onClick={() => handleDeleteIdea(idea.id)}>
-              <Trash2 className="h-4 w-4" />
+            <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive" onClick={() => handleDeleteIdea(idea.id)}>
+              <Trash2 className="h-3.5 w-3.5" />
             </Button>
           </div>
         )}
@@ -140,117 +142,90 @@ export function TweetPlanner() {
   );
 
   const renderSkeletons = () => (
-    <div className="space-y-4">
-      <Skeleton className="h-[90px] w-full rounded-xl" />
-      <Skeleton className="h-[90px] w-full rounded-xl" />
-      <Skeleton className="h-[90px] w-full rounded-xl" />
+    <div className="space-y-3">
+      {[1, 2, 3].map(i => (
+        <Card key={i}>
+          <CardContent className="p-4">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+
+  const renderEmptyState = (message: string) => (
+    <div className="border border-dashed border-border rounded-lg py-12 text-center">
+      <p className="text-sm text-muted-foreground">{message}</p>
     </div>
   );
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-4 sm:space-y-0 sm:space-x-4">
-        <div className="relative w-full sm:max-w-md">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <div className="relative w-full sm:max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input 
             placeholder="Search ideas..." 
             value={searchQuery}
             onChange={(e) => dispatch(setSearchQuery(e.target.value))}
-            className="pl-9 w-full bg-background"
+            className="pl-9 w-full"
           />
         </div>
-        <Button onClick={() => router.push('/ideas/new')} size="lg" className="shadow-md hover:shadow-primary/30 transition-all rounded-full px-6 w-full sm:w-auto">
-          <Plus className="mr-2 h-5 w-5" />
-          Create New Todo
+        <Button onClick={() => router.push('/ideas/new')} className="w-full sm:w-auto shrink-0">
+          <Plus className="mr-2 h-4 w-4" />
+          Create New Idea
         </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={(val) => dispatch(setActiveTab(val))} className="w-full">
-        <TabsList className="inline-flex w-full sm:w-auto h-auto bg-muted/30 p-1 sm:p-1.5 rounded-xl sm:rounded-full mb-6 sm:mb-8 flex-wrap justify-center sm:justify-start gap-1 border border-border/50">
-          <TabsTrigger 
-            value="pending" 
-            className="rounded-lg sm:rounded-full px-3 py-2 sm:px-5 sm:py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all font-medium text-xs sm:text-sm"
-          >
-            {loading ? <Skeleton className="h-4 w-4 rounded-full mr-2" /> : <Clock className="w-4 h-4 mr-2" />}
-            Pending ({loading ? '...' : pendingIdeas.length})
+        <TabsList className="inline-flex w-full sm:w-auto h-auto bg-muted/50 p-1 rounded-lg mb-6 flex-wrap gap-0.5 border border-border/50">
+          <TabsTrigger value="pending" className={tabTriggerClass}>
+            <Clock className="w-3.5 h-3.5 mr-1.5" />
+            Pending{!loading && ` (${pendingIdeas.length})`}
           </TabsTrigger>
-          <TabsTrigger 
-            value="articles" 
-            className="rounded-lg sm:rounded-full px-3 py-2 sm:px-5 sm:py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all font-medium text-xs sm:text-sm"
-          >
-            {loading ? <Skeleton className="h-4 w-4 rounded-full mr-2" /> : <FileText className="w-4 h-4 mr-2" />}
-            Articles ({loading ? '...' : eligibleForArticles.length})
+          <TabsTrigger value="articles" className={tabTriggerClass}>
+            <FileText className="w-3.5 h-3.5 mr-1.5" />
+            Articles{!loading && ` (${eligibleForArticles.length})`}
           </TabsTrigger>
-          <TabsTrigger 
-            value="videos" 
-            className="rounded-lg sm:rounded-full px-3 py-2 sm:px-5 sm:py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all font-medium text-xs sm:text-sm"
-          >
-            {loading ? <Skeleton className="h-4 w-4 rounded-full mr-2" /> : <Video className="w-4 h-4 mr-2" />}
-            Videos ({loading ? '...' : eligibleForVideos.length})
+          <TabsTrigger value="videos" className={tabTriggerClass}>
+            <Video className="w-3.5 h-3.5 mr-1.5" />
+            Videos{!loading && ` (${eligibleForVideos.length})`}
           </TabsTrigger>
-          <TabsTrigger 
-            value="all" 
-            className="rounded-lg sm:rounded-full px-3 py-2 sm:px-5 sm:py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all font-medium text-xs sm:text-sm"
-          >
-            {loading ? <Skeleton className="h-4 w-4 rounded-full mr-2" /> : <List className="w-4 h-4 mr-2" />}
-            All ({loading ? '...' : filteredIdeas.length})
+          <TabsTrigger value="all" className={tabTriggerClass}>
+            <List className="w-3.5 h-3.5 mr-1.5" />
+            All{!loading && ` (${filteredIdeas.length})`}
           </TabsTrigger>
         </TabsList>
         
-        <TabsContent value="pending" className="space-y-4">
-          {loading ? (
-            renderSkeletons()
-          ) : pendingIdeas.length === 0 ? (
-            <Card className="border-dashed">
-              <CardContent className="py-12 text-center text-muted-foreground">
-                {searchQuery ? 'No ideas match your search.' : 'No pending ideas. Time to brainstorm!'}
-              </CardContent>
-            </Card>
-          ) : (
-            pendingIdeas.map(renderIdeaCard)
-          )}
+        <TabsContent value="pending" className="space-y-3">
+          {loading ? renderSkeletons()
+            : pendingIdeas.length === 0
+              ? renderEmptyState(searchQuery ? 'No ideas match your search.' : 'No pending ideas. Time to brainstorm!')
+              : pendingIdeas.map(renderIdeaCard)}
         </TabsContent>
 
-        <TabsContent value="articles" className="space-y-4">
-          {loading ? (
-            renderSkeletons()
-          ) : eligibleForArticles.length === 0 ? (
-            <Card className="border-dashed">
-              <CardContent className="py-12 text-center text-muted-foreground">
-                {searchQuery ? 'No ideas match your search.' : 'Everything is published on Articles!'}
-              </CardContent>
-            </Card>
-          ) : (
-            eligibleForArticles.map(renderIdeaCard)
-          )}
+        <TabsContent value="articles" className="space-y-3">
+          {loading ? renderSkeletons()
+            : eligibleForArticles.length === 0
+              ? renderEmptyState(searchQuery ? 'No ideas match your search.' : 'Everything is published on Articles!')
+              : eligibleForArticles.map(renderIdeaCard)}
         </TabsContent>
 
-        <TabsContent value="videos" className="space-y-4">
-          {loading ? (
-            renderSkeletons()
-          ) : eligibleForVideos.length === 0 ? (
-            <Card className="border-dashed">
-              <CardContent className="py-12 text-center text-muted-foreground">
-                {searchQuery ? 'No ideas match your search.' : 'Everything is published on Videos!'}
-              </CardContent>
-            </Card>
-          ) : (
-            eligibleForVideos.map(renderIdeaCard)
-          )}
+        <TabsContent value="videos" className="space-y-3">
+          {loading ? renderSkeletons()
+            : eligibleForVideos.length === 0
+              ? renderEmptyState(searchQuery ? 'No ideas match your search.' : 'Everything is published on Videos!')
+              : eligibleForVideos.map(renderIdeaCard)}
         </TabsContent>
 
-        <TabsContent value="all" className="space-y-4">
-          {loading ? (
-            renderSkeletons()
-          ) : filteredIdeas.length === 0 ? (
-            <Card className="border-dashed">
-              <CardContent className="py-12 text-center text-muted-foreground">
-                {searchQuery ? 'No ideas match your search.' : 'No ideas yet. Time to brainstorm!'}
-              </CardContent>
-            </Card>
-          ) : (
-            filteredIdeas.map(renderIdeaCard)
-          )}
+        <TabsContent value="all" className="space-y-3">
+          {loading ? renderSkeletons()
+            : filteredIdeas.length === 0
+              ? renderEmptyState(searchQuery ? 'No ideas match your search.' : 'No ideas yet. Time to brainstorm!')
+              : filteredIdeas.map(renderIdeaCard)}
         </TabsContent>
       </Tabs>
     </div>

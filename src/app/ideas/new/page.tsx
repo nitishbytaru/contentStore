@@ -4,8 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ArrowLeft } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { toast } from "sonner";
 import Link from 'next/link';
 import { useDispatch, useSelector } from 'react-redux';
@@ -32,35 +31,35 @@ export default function NewIdeaPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-4 md:p-8 mt-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <Link href="/" className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors mb-6 text-sm font-medium">
-        <ArrowLeft className="w-4 h-4 mr-2" /> Back to Dashboard
+    <div className="max-w-lg mx-auto pt-8">
+      <Link href="/" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+        <ArrowLeft className="w-4 h-4 mr-1.5" /> Back to Ideas
       </Link>
       
-      <Card className="border-primary/20 shadow-xl bg-card">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-2xl md:text-3xl font-bold text-primary">Create New Todo</CardTitle>
-          <CardDescription className="text-base md:text-lg mt-1 md:mt-2 text-muted-foreground/80">
+          <CardTitle className="text-xl">Create New Idea</CardTitle>
+          <CardDescription>
             What's your next big idea? Write it down and start building.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleCreate} className="space-y-6">
+          <form onSubmit={handleCreate} className="space-y-4">
             <Input 
               value={idea} 
               onChange={(e) => setIdea(e.target.value)} 
               placeholder="e.g. Write a comprehensive guide on Next.js 15..." 
               disabled={isSubmitting}
-              className="text-base py-4 sm:text-lg sm:py-6 focus-visible:ring-primary/50 bg-background/50"
+              className="text-sm"
               autoFocus
             />
             <Button 
               type="submit" 
               disabled={!idea.trim() || isSubmitting} 
-              className="w-full py-4 text-base sm:py-6 sm:text-lg shadow-lg hover:shadow-primary/25 transition-all"
+              className="w-full"
             >
-              {isSubmitting ? <Skeleton className="h-5 w-5 rounded-full mr-2" /> : null}
-              {isSubmitting ? 'Creating...' : 'Create Idea & Open Planner'}
+              {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {isSubmitting ? 'Creating...' : 'Create Idea & Open Editor'}
             </Button>
           </form>
         </CardContent>
