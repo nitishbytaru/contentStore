@@ -74,6 +74,16 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
 
   const handleSave = async () => {
     if (!idea) return;
+
+    const isXSelected = idea.eligibleX || idea.ineligibleX;
+    const isArticlesSelected = idea.eligibleMedium || idea.ineligibleMedium;
+    const isVideosSelected = idea.eligibleYoutube || idea.ineligibleYoutube;
+
+    if (!isXSelected || !isArticlesSelected || !isVideosSelected) {
+      toast.error('Validation Error: Please select Eligible or Ineligible for all sections in the Publishing Checklist.');
+      return;
+    }
+
     try {
       setSaving(true);
       const result = await dispatch(updateIdea(idea));
@@ -154,13 +164,13 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
               <Tabs defaultValue="baseArticle" className="w-full">
                 <TabsList className="w-full justify-start overflow-x-auto flex-nowrap rounded-lg p-1 bg-muted/50 mb-6 border">
                   <TabsTrigger value="baseArticle" className="flex-1">Base Article</TabsTrigger>
-                  <TabsTrigger value="mediumArticle" className="flex-1">Optimized Article</TabsTrigger>
+                  <TabsTrigger value="mediumArticle" className="flex-1">Tweets</TabsTrigger>
                   <TabsTrigger value="youtubeScript" className="flex-1">Video Script</TabsTrigger>
                 </TabsList>
 
                 {([
                   { value: 'baseArticle', label: 'Base Article', placeholder: 'Draft your core article here...' },
-                  { value: 'mediumArticle', label: 'Optimized Article', placeholder: 'Draft the article version here...' },
+                  { value: 'mediumArticle', label: 'Tweets', placeholder: 'Draft your tweets here...' },
                   { value: 'youtubeScript', label: 'Video Script', placeholder: 'Long-form video script...' },
                 ] as const).map(tab => (
                   <TabsContent key={tab.value} value={tab.value} className="focus-visible:outline-none focus-visible:ring-0 mt-0">
