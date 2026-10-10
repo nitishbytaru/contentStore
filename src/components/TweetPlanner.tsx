@@ -70,8 +70,8 @@ export function TweetPlanner() {
   };
   
   const pendingIdeas = filteredIdeas.filter(isIdeaPending);
-  const eligibleForMedium = filteredIdeas.filter(i => i.eligibleMedium && !i.publishedMedium);
-  const eligibleForYoutube = filteredIdeas.filter(i => i.eligibleYoutube && !i.publishedYoutube);
+  const eligibleForArticles = filteredIdeas.filter(i => (i.eligibleMedium || i.eligibleSubstack) && !(i.publishedMedium && i.publishedSubstack));
+  const eligibleForVideos = filteredIdeas.filter(i => (i.eligibleYoutube || i.eligibleInstagram) && !(i.publishedYoutube && i.publishedInstagram));
 
   if (error) {
     return (
@@ -174,18 +174,18 @@ export function TweetPlanner() {
             Pending ({loading ? '...' : pendingIdeas.length})
           </TabsTrigger>
           <TabsTrigger 
-            value="medium" 
+            value="articles" 
             className="rounded-full px-5 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all font-medium text-sm"
           >
             {loading ? <Skeleton className="h-4 w-4 rounded-full mr-2" /> : <FileText className="w-4 h-4 mr-2" />}
-            Medium Eligible ({loading ? '...' : eligibleForMedium.length})
+            Articles ({loading ? '...' : eligibleForArticles.length})
           </TabsTrigger>
           <TabsTrigger 
-            value="youtube" 
+            value="videos" 
             className="rounded-full px-5 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all font-medium text-sm"
           >
             {loading ? <Skeleton className="h-4 w-4 rounded-full mr-2" /> : <Video className="w-4 h-4 mr-2" />}
-            YouTube Eligible ({loading ? '...' : eligibleForYoutube.length})
+            Videos ({loading ? '...' : eligibleForVideos.length})
           </TabsTrigger>
           <TabsTrigger 
             value="all" 
@@ -210,31 +210,31 @@ export function TweetPlanner() {
           )}
         </TabsContent>
 
-        <TabsContent value="medium" className="space-y-4">
+        <TabsContent value="articles" className="space-y-4">
           {loading ? (
             renderSkeletons()
-          ) : eligibleForMedium.length === 0 ? (
+          ) : eligibleForArticles.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="py-12 text-center text-muted-foreground">
-                {searchQuery ? 'No ideas match your search.' : 'Everything is published on Medium!'}
+                {searchQuery ? 'No ideas match your search.' : 'Everything is published on Articles!'}
               </CardContent>
             </Card>
           ) : (
-            eligibleForMedium.map(renderIdeaCard)
+            eligibleForArticles.map(renderIdeaCard)
           )}
         </TabsContent>
 
-        <TabsContent value="youtube" className="space-y-4">
+        <TabsContent value="videos" className="space-y-4">
           {loading ? (
             renderSkeletons()
-          ) : eligibleForYoutube.length === 0 ? (
+          ) : eligibleForVideos.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="py-12 text-center text-muted-foreground">
-                {searchQuery ? 'No ideas match your search.' : 'Everything is published on YouTube!'}
+                {searchQuery ? 'No ideas match your search.' : 'Everything is published on Videos!'}
               </CardContent>
             </Card>
           ) : (
-            eligibleForYoutube.map(renderIdeaCard)
+            eligibleForVideos.map(renderIdeaCard)
           )}
         </TabsContent>
 

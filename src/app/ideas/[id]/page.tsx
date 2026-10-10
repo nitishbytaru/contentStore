@@ -101,8 +101,13 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
     toast.success('Copied to clipboard!');
   };
 
-  const handleCheckboxChange = (field: keyof IdeaDetails, checked: boolean) => {
-    setIdea(prev => prev ? { ...prev, [field]: checked } : prev);
+  const handleCheckboxChange = (fields: (keyof IdeaDetails)[], checked: boolean) => {
+    setIdea(prev => {
+      if (!prev) return prev;
+      const updates = {} as any;
+      fields.forEach(f => updates[f] = checked);
+      return { ...prev, ...updates };
+    });
   };
 
   if (loading || storeLoading) {
@@ -149,14 +154,14 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
               <Tabs defaultValue="baseArticle" className="w-full">
                 <TabsList className="w-full justify-start overflow-x-auto flex-nowrap rounded-lg p-1 bg-muted/50 mb-6 border">
                   <TabsTrigger value="baseArticle" className="flex-1">Base Article</TabsTrigger>
-                  <TabsTrigger value="mediumArticle" className="flex-1">Medium Article</TabsTrigger>
-                  <TabsTrigger value="youtubeScript" className="flex-1">YouTube Script</TabsTrigger>
+                  <TabsTrigger value="mediumArticle" className="flex-1">Optimized Article</TabsTrigger>
+                  <TabsTrigger value="youtubeScript" className="flex-1">Video Script</TabsTrigger>
                 </TabsList>
 
                 {([
                   { value: 'baseArticle', label: 'Base Article', placeholder: 'Draft your core article here...' },
-                  { value: 'mediumArticle', label: 'Medium Article', placeholder: 'Draft the Medium-optimized version here...' },
-                  { value: 'youtubeScript', label: 'YouTube Script', placeholder: 'Long-form YouTube video script...' },
+                  { value: 'mediumArticle', label: 'Optimized Article', placeholder: 'Draft the article version here...' },
+                  { value: 'youtubeScript', label: 'Video Script', placeholder: 'Long-form video script...' },
                 ] as const).map(tab => (
                   <TabsContent key={tab.value} value={tab.value} className="focus-visible:outline-none focus-visible:ring-0 mt-0">
                     <div className="space-y-4">
@@ -197,34 +202,32 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
             </CardHeader>
             <CardContent className="space-y-5">
               {[
-                { eligibleId: 'eligibleX', publishedId: 'publishedX', ineligibleId: 'ineligibleX', label: 'X (Twitter)' },
-                { eligibleId: 'eligibleMedium', publishedId: 'publishedMedium', ineligibleId: 'ineligibleMedium', label: 'Medium' },
-                { eligibleId: 'eligibleSubstack', publishedId: 'publishedSubstack', ineligibleId: 'ineligibleSubstack', label: 'Substack' },
-                { eligibleId: 'eligibleYoutube', publishedId: 'publishedYoutube', ineligibleId: 'ineligibleYoutube', label: 'YouTube' },
-                { eligibleId: 'eligibleInstagram', publishedId: 'publishedInstagram', ineligibleId: 'ineligibleInstagram', label: 'Instagram' },
-              ].map(platform => {
-                const isEligible = idea[platform.eligibleId as keyof IdeaDetails] as boolean;
-                const isPublished = idea[platform.publishedId as keyof IdeaDetails] as boolean;
-                const isIneligible = idea[platform.ineligibleId as keyof IdeaDetails] as boolean;
+                { eligibleIds: ['eligibleX'], publishedIds: ['publishedX'], ineligibleIds: ['ineligibleX'], label: 'X (Twitter)' },
+                { eligibleIds: ['eligibleMedium', 'eligibleSubstack'], publishedIds: ['publishedMedium', 'publishedSubstack'], ineligibleIds: ['ineligibleMedium', 'ineligibleSubstack'], label: 'Articles (Medium & Substack)' },
+                { eligibleIds: ['eligibleYoutube', 'eligibleInstagram'], publishedIds: ['publishedYoutube', 'publishedInstagram'], ineligibleIds: ['ineligibleYoutube', 'ineligibleInstagram'], label: 'Videos (YouTube & Instagram)' },
+              ].map((platform, idx) => {
+                const isEligible = idea[platform.eligibleIds[0] as keyof IdeaDetails] as boolean;
+                const isPublished = idea[platform.publishedIds[0] as keyof IdeaDetails] as boolean;
+                const isIneligible = idea[platform.ineligibleIds[0] as keyof IdeaDetails] as boolean;
                 return (
-                  <div key={platform.eligibleId} className={`rounded-lg border border-border/50 p-3 space-y-3 transition-colors hover:border-primary/20 ${isIneligible ? 'bg-muted/30 border-muted' : ''}`}>
+                  <div key={idx} className={`rounded-lg border border-border/50 p-3 space-y-3 transition-colors hover:border-primary/20 ${isIneligible ? 'bg-muted/30 border-muted' : ''}`}>
                     <p className={`text-sm font-semibold ${isIneligible ? 'text-muted-foreground line-through' : 'text-foreground'}`}>{platform.label}</p>
                     
                     <div className="flex items-center space-x-3 group">
                       <Checkbox
-                        id={platform.ineligibleId}
+                        id={`ineligible-${idx}`}
                         checked={isIneligible}
                         onCheckedChange={(checked) => {
-                          handleCheckboxChange(platform.ineligibleId as keyof IdeaDetails, checked as boolean);
+                          handleCheckboxChange(platform.ineligibleIds as (keyof IdeaDetails)[], checked as boolean);
                           if (checked) {
-                            handleCheckboxChange(platform.eligibleId as keyof IdeaDetails, false);
-                            handleCheckboxChange(platform.publishedId as keyof IdeaDetails, false);
+                            handleCheckboxChange(platform.eligibleIds as (keyof IdeaDetails)[], false);
+                            handleCheckboxChange(platform.publishedIds as (keyof IdeaDetails)[], false);
                           }
                         }}
                         className="h-4 w-4 data-[state=checked]:bg-destructive data-[state=checked]:border-destructive"
                       />
                       <label
-                        htmlFor={platform.ineligibleId}
+                        htmlFor={`ineligible-${idx}`}
                         className="text-sm font-medium cursor-pointer group-hover:text-destructive transition-colors"
                       >
                         Ineligible (Skip)
@@ -233,21 +236,21 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
 
                     <div className={`flex items-center space-x-3 group ${isIneligible ? 'opacity-40 pointer-events-none' : ''}`}>
                       <Checkbox
-                        id={platform.eligibleId}
+                        id={`eligible-${idx}`}
                         checked={isEligible}
                         disabled={isIneligible}
                         onCheckedChange={(checked) => {
-                          handleCheckboxChange(platform.eligibleId as keyof IdeaDetails, checked as boolean);
+                          handleCheckboxChange(platform.eligibleIds as (keyof IdeaDetails)[], checked as boolean);
                           if (checked) {
-                            handleCheckboxChange(platform.ineligibleId as keyof IdeaDetails, false);
+                            handleCheckboxChange(platform.ineligibleIds as (keyof IdeaDetails)[], false);
                           } else {
-                            handleCheckboxChange(platform.publishedId as keyof IdeaDetails, false);
+                            handleCheckboxChange(platform.publishedIds as (keyof IdeaDetails)[], false);
                           }
                         }}
                         className="h-4 w-4 data-[state=checked]:bg-primary"
                       />
                       <label
-                        htmlFor={platform.eligibleId}
+                        htmlFor={`eligible-${idx}`}
                         className="text-sm font-medium cursor-pointer group-hover:text-primary transition-colors"
                       >
                         Eligible
@@ -256,14 +259,14 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
 
                     <div className={`flex items-center space-x-3 group ${!isEligible || isIneligible ? 'opacity-40 pointer-events-none' : ''}`}>
                       <Checkbox
-                        id={platform.publishedId}
+                        id={`published-${idx}`}
                         checked={isPublished}
                         disabled={!isEligible || isIneligible}
-                        onCheckedChange={(checked) => handleCheckboxChange(platform.publishedId as keyof IdeaDetails, checked as boolean)}
+                        onCheckedChange={(checked) => handleCheckboxChange(platform.publishedIds as (keyof IdeaDetails)[], checked as boolean)}
                         className="h-4 w-4 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
                       />
                       <label
-                        htmlFor={platform.publishedId}
+                        htmlFor={`published-${idx}`}
                         className="text-sm font-medium cursor-pointer group-hover:text-green-500 transition-colors"
                       >
                         Published
