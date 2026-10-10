@@ -11,18 +11,17 @@ import { AlertCircle, Clock, Trash2, Edit, Save, X, Copy, FileText, Video, List,
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from "sonner";
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchIdeas, deleteIdea, updateIdea, Idea } from '@/store/slices/ideasSlice';
+import { fetchIdeas, deleteIdea, updateIdea, Idea, setSearchQuery, setActiveTab } from '@/store/slices/ideasSlice';
 import { RootState, AppDispatch } from '@/store';
 
 export function TweetPlanner() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const { items: ideas, loading, error, actionLoading, hasFetched } = useSelector((state: RootState) => state.ideas);
+  const { items: ideas, loading, error, actionLoading, hasFetched, searchQuery, activeTab } = useSelector((state: RootState) => state.ideas);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editIdeaText, setEditIdeaText] = useState('');
   const [actionItemId, setActionItemId] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (!hasFetched) {
@@ -154,7 +153,7 @@ export function TweetPlanner() {
           <Input 
             placeholder="Search ideas..." 
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => dispatch(setSearchQuery(e.target.value))}
             className="pl-9 w-full bg-background"
           />
         </div>
@@ -164,7 +163,7 @@ export function TweetPlanner() {
         </Button>
       </div>
 
-      <Tabs defaultValue="pending" className="w-full">
+      <Tabs value={activeTab} onValueChange={(val) => dispatch(setActiveTab(val))} className="w-full">
         <TabsList className="inline-flex w-full sm:w-auto h-auto bg-muted/30 p-1.5 rounded-full mb-8 flex-wrap justify-center sm:justify-start gap-1 border border-border/50">
           <TabsTrigger 
             value="pending" 

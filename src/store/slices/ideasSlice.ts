@@ -32,6 +32,8 @@ interface IdeasState {
   error: string | null;
   actionLoading: boolean; // For create/update/delete specific actions
   hasFetched: boolean;
+  searchQuery: string;
+  activeTab: string;
 }
 
 const initialState: IdeasState = {
@@ -40,6 +42,8 @@ const initialState: IdeasState = {
   error: null,
   actionLoading: false,
   hasFetched: false,
+  searchQuery: '',
+  activeTab: 'pending',
 };
 
 export const fetchIdeas = createAsyncThunk('ideas/fetchIdeas', async (_, { rejectWithValue }) => {
@@ -97,7 +101,14 @@ export const deleteIdea = createAsyncThunk('ideas/deleteIdea', async (id: string
 const ideasSlice = createSlice({
   name: 'ideas',
   initialState,
-  reducers: {},
+  reducers: {
+    setSearchQuery: (state, action: PayloadAction<string>) => {
+      state.searchQuery = action.payload;
+    },
+    setActiveTab: (state, action: PayloadAction<string>) => {
+      state.activeTab = action.payload;
+    }
+  },
   extraReducers: (builder) => {
     // Fetch ideas
     builder.addCase(fetchIdeas.pending, (state) => {
@@ -158,4 +169,5 @@ const ideasSlice = createSlice({
   },
 });
 
+export const { setSearchQuery, setActiveTab } = ideasSlice.actions;
 export default ideasSlice.reducer;
