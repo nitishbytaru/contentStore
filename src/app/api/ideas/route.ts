@@ -58,7 +58,8 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Idea not found' }, { status: 404 });
       }
       const data = HEADERS.reduce((acc, header) => {
-        acc[header] = targetRow.get(header) || '';
+        let val = targetRow.get(header);
+        acc[header] = val ?? '';
         return acc;
       }, {} as any);
       // parse booleans
@@ -70,7 +71,8 @@ export async function GET(request: Request) {
 
     const data = rows.map((row) => {
       const rowData = HEADERS.reduce((acc, header) => {
-        acc[header] = row.get(header) || '';
+        let val = row.get(header);
+        acc[header] = val ?? '';
         return acc;
       }, {} as any);
       // parse booleans
@@ -168,7 +170,8 @@ export async function PUT(request: Request) {
     await targetRow.save();
 
     const updatedData = HEADERS.reduce((acc, header) => {
-      acc[header] = targetRow.get(header) || '';
+      let val = payload[header] !== undefined ? payload[header] : targetRow.get(header);
+      acc[header] = val ?? '';
       return acc;
     }, {} as any);
     
