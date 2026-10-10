@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getGoogleSheet } from '@/lib/google-sheets';
 
+export const dynamic = 'force-dynamic';
+
 const HEADERS = [
   'id', 'idea', 'status', 'datePosted', 'createdAt',
   'baseArticle', 'mediumArticle', 'youtubeScript',

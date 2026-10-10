@@ -166,7 +166,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
                       <div className="relative group">
                         <Textarea 
                           placeholder={tab.placeholder}
-                          value={idea[tab.value as keyof IdeaDetails] as string}
+                          value={(idea[tab.value as keyof IdeaDetails] as string) || ''}
                           onChange={(e) => handleTextChange(tab.value as keyof IdeaDetails, e.target.value)}
                           className="min-h-[500px] resize-y text-base p-4 pr-12 bg-background/50 focus:bg-background transition-colors leading-relaxed"
                         />
