@@ -148,7 +148,18 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
             <ArrowLeft className="w-4 h-4 mr-2" /> Back to Dashboard
           </Link>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-primary">Content Editor</h1>
-          <p className="text-muted-foreground mt-1 text-base md:text-lg line-clamp-2">Working on: <span className="text-foreground font-medium">{idea.idea}</span></p>
+          <div className="flex items-start sm:items-center mt-1 space-x-2">
+            <p className="text-muted-foreground text-base md:text-lg line-clamp-2">Working on: <span className="text-foreground font-medium">{idea.idea}</span></p>
+            <Button 
+              size="icon" 
+              variant="ghost" 
+              className="h-7 w-7 text-muted-foreground hover:text-foreground shrink-0 -mt-0.5 sm:mt-0" 
+              onClick={() => handleCopyContent(idea.idea)}
+              title="Copy idea text"
+            >
+              <Copy className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
         <Button onClick={handleSave} disabled={saving} size="lg" className="w-full sm:w-auto shadow-lg hover:shadow-primary/25 transition-all">
           {saving ? <Skeleton className="w-4 h-4 mr-2 rounded-full" /> : <Save className="w-4 h-4 mr-2" />}

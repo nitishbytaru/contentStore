@@ -60,12 +60,14 @@ export function TweetPlanner() {
   
   const isIdeaPending = (i: Idea) => {
     if (i.status === 'posted') return false;
-    const isDone = (i.publishedX || i.ineligibleX) && 
-                   (i.publishedMedium || i.ineligibleMedium) &&
-                   (i.publishedSubstack || i.ineligibleSubstack) &&
-                   (i.publishedYoutube || i.ineligibleYoutube) &&
-                   (i.publishedInstagram || i.ineligibleInstagram);
-    return !isDone;
+    
+    const isXSelected = i.eligibleX || i.ineligibleX;
+    const isArticlesSelected = i.eligibleMedium || i.ineligibleMedium;
+    const isVideosSelected = i.eligibleYoutube || i.ineligibleYoutube;
+    
+    const isChecklistFilled = isXSelected && isArticlesSelected && isVideosSelected;
+    
+    return !isChecklistFilled;
   };
   
   const pendingIdeas = filteredIdeas.filter(isIdeaPending);
