@@ -147,7 +147,6 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
           <Link href="/" className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors mb-4 text-sm font-medium">
             <ArrowLeft className="w-4 h-4 mr-2" /> Back to Dashboard
           </Link>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-primary">Content Editor</h1>
           <div className="flex items-start sm:items-center mt-1 space-x-2">
             <p className="text-muted-foreground text-base md:text-lg line-clamp-2">Working on: <span className="text-foreground font-medium">{idea.idea}</span></p>
             <Button 
