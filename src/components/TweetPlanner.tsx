@@ -13,8 +13,7 @@ import { toast } from "sonner";
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchIdeas, deleteIdea, updateIdea, Idea, setSearchQuery, setActiveTab } from '@/store/slices/ideasSlice';
 import { RootState, AppDispatch } from '@/store';
-
-const tabTriggerClass = "inline-flex items-center justify-center whitespace-nowrap rounded-lg px-1 sm:px-3.5 py-2 sm:py-1.5 text-xs sm:text-sm font-medium transition-all text-muted-foreground hover:text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-active:bg-primary data-active:text-primary-foreground shadow-none data-[state=active]:shadow-sm data-active:shadow-sm min-w-0 w-full";
+import { cn } from 'cn';
 
 export function TweetPlanner() {
   const router = useRouter();
@@ -170,7 +169,7 @@ const isIdeaCompleted = (i: Idea): boolean => {
     const untouchedTheme = !touched ? getUntouchedColor(idea.id, idx) : null;
     const completed = isIdeaCompleted(idea);
 
-    let cardClasses = "transition-all group border-l-4 ";
+    let cardClasses = "transition-all group border-l-4 rounded-xl ";
     if (!touched && untouchedTheme) {
       cardClasses += `${untouchedTheme.border} ${untouchedTheme.bg}`;
     } else if (completed) {
@@ -180,73 +179,111 @@ const isIdeaCompleted = (i: Idea): boolean => {
     }
 
     return (
-      <Card key={idea.id} className={cardClasses}>
-        <CardContent className="flex flex-col sm:flex-row sm:items-center gap-3 p-4">
-          <div className="flex-1 min-w-0">
-            {editingId === idea.id ? (
-              <div className="flex items-center gap-2">
-                <Input 
-                  value={editIdeaText} 
-                  onChange={(e) => setEditIdeaText(e.target.value)} 
-                  className="flex-1"
-                  autoFocus
-                  disabled={actionLoading && actionItemId === idea.id}
-                />
-                <Button size="icon" variant="ghost" onClick={() => handleEditIdea(idea.id)} disabled={actionLoading && actionItemId === idea.id}>
-                  {actionLoading && actionItemId === idea.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4 text-primary" />}
-                </Button>
-                <Button size="icon" variant="ghost" onClick={() => setEditingId(null)} disabled={actionLoading && actionItemId === idea.id}>
-                  <X className="h-4 w-4 text-muted-foreground" />
-                </Button>
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <Link 
-                    href={`/ideas/${idea.id}`}
-                    className="text-sm sm:text-base font-medium leading-tight hover:underline cursor-pointer transition-colors hover:text-primary block truncate max-w-xl"
-                  >
-                    {idea.idea}
-                  </Link>
+      <Card key={idea.id} className={cn("transition-all hover:shadow-sm", cardClasses)}>
+        <CardContent className="p-4 sm:p-5 flex flex-col justify-between gap-3 min-h-[104px]">
+          {editingId === idea.id ? (
+            <div className="flex items-center gap-2 w-full py-1">
+              <Input 
+                value={editIdeaText} 
+                onChange={(e) => setEditIdeaText(e.target.value)} 
+                className="flex-1 h-9 text-sm"
+                autoFocus
+                disabled={actionLoading && actionItemId === idea.id}
+              />
+              <Button 
+                size="sm" 
+                onClick={() => handleEditIdea(idea.id)} 
+                disabled={actionLoading && actionItemId === idea.id}
+                className="h-9 px-3 gap-1 shrink-0"
+              >
+                {actionLoading && actionItemId === idea.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                Save
+              </Button>
+              <Button 
+                size="icon" 
+                variant="ghost" 
+                className="h-9 w-9 shrink-0" 
+                onClick={() => setEditingId(null)} 
+                disabled={actionLoading && actionItemId === idea.id}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <>
+              {/* Row 1: Title (left) & Status Badge (right) */}
+              <div className="flex items-start justify-between gap-3">
+                <Link 
+                  href={`/ideas/${idea.id}`}
+                  className="text-sm sm:text-base font-medium leading-snug hover:underline cursor-pointer transition-colors hover:text-primary flex-1 min-w-0 line-clamp-2"
+                  title={idea.idea}
+                >
+                  {idea.idea}
+                </Link>
+                <div className="shrink-0 pt-0.5">
                   {!touched && untouchedTheme ? (
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${untouchedTheme.badge}`}>
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${untouchedTheme.badge}`}>
                       <span className={`w-1.5 h-1.5 rounded-full ${untouchedTheme.dot} animate-pulse`} />
                       Untouched
                     </span>
                   ) : completed ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                       Published
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-sky-500/10 text-sky-400 border border-sky-500/20">
                       <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
                       In Progress
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Created {new Date(idea.createdAt).toLocaleDateString()}
-                </p>
-              </>
-            )}
-          </div>
-          {actionLoading && actionItemId === idea.id && editingId !== idea.id ? (
-            <div className="flex items-center px-2 shrink-0">
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-            </div>
-          ) : editingId !== idea.id && (
-            <div className="opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 shrink-0">
-              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleCopyIdea(idea.idea)}>
-                <Copy className="h-3.5 w-3.5 text-muted-foreground" />
-              </Button>
-              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { setEditingId(idea.id); setEditIdeaText(idea.idea); }}>
-                <Edit className="h-3.5 w-3.5 text-muted-foreground" />
-              </Button>
-              <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive" onClick={() => handleDeleteIdea(idea.id)}>
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            </div>
+              </div>
+
+              {/* Row 2: Metadata (Date) on left & Action buttons on right */}
+              <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/40">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
+                  <Clock className="w-3.5 h-3.5 shrink-0 opacity-70" />
+                  <span className="truncate">Created {new Date(idea.createdAt).toLocaleDateString()}</span>
+                </div>
+                
+                {actionLoading && actionItemId === idea.id ? (
+                  <div className="flex items-center px-2 shrink-0">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted" 
+                      onClick={() => handleCopyIdea(idea.idea)}
+                      title="Copy Idea"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted" 
+                      onClick={() => { setEditingId(idea.id); setEditIdeaText(idea.idea); }}
+                      title="Edit Idea"
+                    >
+                      <Edit className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      className="h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" 
+                      onClick={() => handleDeleteIdea(idea.id)}
+                      title="Delete Idea"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
@@ -293,43 +330,43 @@ const isIdeaCompleted = (i: Idea): boolean => {
       </div>
 
       <Tabs value={activeTab} onValueChange={(val) => dispatch(setActiveTab(val))} className="w-full">
-        <TabsList className="grid grid-cols-4 w-full sm:flex sm:w-auto bg-muted/50 p-1 rounded-xl border border-border/50 gap-1 h-auto mb-6">
-          <TabsTrigger value="all" className={tabTriggerClass}>
-            <List className="w-3.5 h-3.5 mr-1.5 shrink-0 hidden sm:inline-block" />
-            <span className="truncate">All</span>
-            {!loading && (
-              <span className="ml-1 sm:ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-foreground/10 text-inherit leading-none shrink-0">
-                {filteredIdeas.length}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="pending" className={tabTriggerClass}>
-            <Clock className="w-3.5 h-3.5 mr-1.5 shrink-0 hidden sm:inline-block" />
-            <span className="truncate">Pending</span>
-            {!loading && (
-              <span className="ml-1 sm:ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-foreground/10 text-inherit leading-none shrink-0">
-                {pendingIdeas.length}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="articles" className={tabTriggerClass}>
-            <FileText className="w-3.5 h-3.5 mr-1.5 shrink-0 hidden sm:inline-block" />
-            <span className="truncate">Articles</span>
-            {!loading && (
-              <span className="ml-1 sm:ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-foreground/10 text-inherit leading-none shrink-0">
-                {eligibleForArticles.length}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="videos" className={tabTriggerClass}>
-            <Video className="w-3.5 h-3.5 mr-1.5 shrink-0 hidden sm:inline-block" />
-            <span className="truncate">Videos</span>
-            {!loading && (
-              <span className="ml-1 sm:ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-foreground/10 text-inherit leading-none shrink-0">
-                {eligibleForVideos.length}
-              </span>
-            )}
-          </TabsTrigger>
+        <TabsList className="grid grid-cols-4 w-full sm:w-auto sm:inline-flex h-auto p-1 bg-muted/60 rounded-xl border border-border/50 gap-1 mb-6">
+          {[
+            { id: 'all', label: 'All', count: filteredIdeas.length, icon: List },
+            { id: 'pending', label: 'Pending', count: pendingIdeas.length, icon: Clock },
+            { id: 'articles', label: 'Articles', count: eligibleForArticles.length, icon: FileText },
+            { id: 'videos', label: 'Videos', count: eligibleForVideos.length, icon: Video },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <TabsTrigger 
+                key={tab.id} 
+                value={tab.id} 
+                className={cn(
+                  "inline-flex items-center justify-center whitespace-nowrap rounded-lg px-1.5 sm:px-3.5 py-2 sm:py-1.5 text-xs sm:text-sm font-medium transition-all min-w-0 w-full",
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-sm font-semibold"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                )}
+              >
+                <Icon className="w-3.5 h-3.5 mr-1.5 shrink-0 hidden sm:inline-block" />
+                <span>{tab.label}</span>
+                {!loading && (
+                  <span 
+                    className={cn(
+                      "ml-1 sm:ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold leading-none shrink-0",
+                      isActive
+                        ? "bg-primary-foreground/20 text-primary-foreground"
+                        : "bg-foreground/10 text-muted-foreground"
+                    )}
+                  >
+                    {tab.count}
+                  </span>
+                )}
+              </TabsTrigger>
+            );
+          })}
         </TabsList>
         
         <TabsContent value="all" className="space-y-3">
