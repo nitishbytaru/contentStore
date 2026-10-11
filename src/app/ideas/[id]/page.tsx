@@ -186,7 +186,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
         </div>
         <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto shrink-0">
           {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-          {saving ? 'Saving...' : 'Save All Changes'}
+          {saving ? 'Saving...' : 'Save Changes'}
         </Button>
       </div>
 

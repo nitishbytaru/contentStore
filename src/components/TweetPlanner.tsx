@@ -48,6 +48,7 @@ export function TweetPlanner() {
     if (updateIdea.rejected.match(result)) {
       toast.error(result.payload as string);
     } else {
+      toast.success('Changes saved successfully!');
       setEditingId(null);
     }
     setActionItemId(null);

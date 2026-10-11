@@ -79,7 +79,7 @@ export default function PromptsPage() {
     if (updatePrompt.rejected.match(result)) {
       toast.error('Failed to update prompt');
     } else {
-      toast.success('Prompt updated!');
+      toast.success('Changes saved successfully!');
       setEditingId(null);
     }
   };
