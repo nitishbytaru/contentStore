@@ -32,7 +32,7 @@ export default function NewIdeaPage() {
 
   return (
     <div className="max-w-lg mx-auto pt-8">
-      <Link href="/" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+      <Link href="/ideas" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
         <ArrowLeft className="w-4 h-4 mr-1.5" /> Back to Ideas
       </Link>
       

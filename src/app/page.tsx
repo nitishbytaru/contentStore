@@ -1,5 +1,5 @@
-import { TweetPlanner } from '@/components/TweetPlanner';
+import { AnalyticsDashboard } from '@/components/AnalyticsDashboard';
 
 export default function Home() {
-  return <TweetPlanner />;
+  return <AnalyticsDashboard />;
 }

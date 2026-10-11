@@ -4,9 +4,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const links = [
-  { href: '/', label: 'Ideas' },
+  { href: '/', label: 'Analytics' },
+  { href: '/ideas', label: 'Ideas' },
   { href: '/prompts', label: 'Prompts' },
-  { href: '/analytics', label: 'Analytics' },
 ];
 
 export function NavLinks() {
@@ -20,7 +20,7 @@ export function NavLinks() {
       <nav className="flex items-center gap-1 text-sm font-medium">
         {links.map(({ href, label }) => {
           const isActive = href === '/'
-            ? pathname === '/' || pathname.startsWith('/ideas')
+            ? pathname === '/' || pathname === '/analytics'
             : pathname.startsWith(href);
 
           return (

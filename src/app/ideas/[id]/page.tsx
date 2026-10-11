@@ -144,7 +144,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
   if (!idea) {
     return (
       <div className="py-12 text-center text-muted-foreground">
-        Idea not found. <Link href="/" className="text-primary hover:underline">Go back</Link>
+        Idea not found. <Link href="/ideas" className="text-primary hover:underline">Go back</Link>
       </div>
     );
   }
@@ -166,7 +166,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="min-w-0">
-          <Link href="/" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-3">
+          <Link href="/ideas" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-3">
             <ArrowLeft className="w-4 h-4 mr-1.5" /> Back to Ideas
           </Link>
           <div className="flex items-center gap-2 min-w-0">
