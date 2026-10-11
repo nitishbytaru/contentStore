@@ -33,55 +33,83 @@ export function AnalyticsDashboard() {
     let totallyUnpublished = 0;
     let fullyPublished = 0;
     
-    const platformCounts = { 'X': 0, 'Medium': 0, 'Substack': 0, 'YouTube': 0, 'Instagram': 0 };
-    const ineligibleCounts = { 'X': 0, 'Medium': 0, 'Substack': 0, 'YouTube': 0, 'Instagram': 0 };
-    const pendingCounts = { 'X': 0, 'Medium': 0, 'Substack': 0, 'YouTube': 0, 'Instagram': 0 };
+    const channelCounts = {
+      'X': { published: 0, skipped: 0, pending: 0 },
+      'Articles': { published: 0, skipped: 0, pending: 0 },
+      'Videos': { published: 0, skipped: 0, pending: 0 },
+    };
 
     ideas.forEach(idea => {
-      const isX = idea.publishedX || idea.status === 'posted';
-      if (isX) platformCounts['X']++;
-      if (idea.publishedMedium) platformCounts['Medium']++;
-      if (idea.publishedSubstack) platformCounts['Substack']++;
-      if (idea.publishedYoutube) platformCounts['YouTube']++;
-      if (idea.publishedInstagram) platformCounts['Instagram']++;
+      // Channel 1: X (Twitter)
+      const isXPublished = Boolean(idea.publishedX || idea.status === 'posted');
+      const isXSkipped = !isXPublished && Boolean(idea.ineligibleX);
+      const isXPending = !isXPublished && !isXSkipped;
 
-      if (idea.ineligibleX) ineligibleCounts['X']++;
-      if (idea.ineligibleMedium) ineligibleCounts['Medium']++;
-      if (idea.ineligibleSubstack) ineligibleCounts['Substack']++;
-      if (idea.ineligibleYoutube) ineligibleCounts['YouTube']++;
-      if (idea.ineligibleInstagram) ineligibleCounts['Instagram']++;
+      if (isXPublished) channelCounts['X'].published++;
+      else if (isXSkipped) channelCounts['X'].skipped++;
+      else if (isXPending) channelCounts['X'].pending++;
 
-      if ((idea.eligibleX || !idea.ineligibleX) && !isX) pendingCounts['X']++;
-      if (idea.eligibleMedium && !idea.publishedMedium) pendingCounts['Medium']++;
-      if (idea.eligibleSubstack && !idea.publishedSubstack) pendingCounts['Substack']++;
-      if (idea.eligibleYoutube && !idea.publishedYoutube) pendingCounts['YouTube']++;
-      if (idea.eligibleInstagram && !idea.publishedInstagram) pendingCounts['Instagram']++;
+      // Channel 2: Articles (Medium & Substack)
+      const isArticlesPublished = Boolean(idea.publishedMedium || idea.publishedSubstack);
+      const isArticlesSkipped = !isArticlesPublished && Boolean(idea.ineligibleMedium || idea.ineligibleSubstack);
+      const isArticlesPending = !isArticlesPublished && !isArticlesSkipped && Boolean(idea.eligibleMedium || idea.eligibleSubstack);
 
-      const totalPlatforms = [
-        isX || idea.ineligibleX, 
-        idea.publishedMedium || idea.ineligibleMedium, 
-        idea.publishedSubstack || idea.ineligibleSubstack, 
-        idea.publishedYoutube || idea.ineligibleYoutube, 
-        idea.publishedInstagram || idea.ineligibleInstagram
-      ].filter(Boolean).length;
-      
-      if (totalPlatforms === 0) totallyUnpublished++;
-      if (totalPlatforms === 5) fullyPublished++;
+      if (isArticlesPublished) channelCounts['Articles'].published++;
+      else if (isArticlesSkipped) channelCounts['Articles'].skipped++;
+      else if (isArticlesPending) channelCounts['Articles'].pending++;
+
+      // Channel 3: Videos (YouTube & Instagram)
+      const isVideosPublished = Boolean(idea.publishedYoutube || idea.publishedInstagram);
+      const isVideosSkipped = !isVideosPublished && Boolean(idea.ineligibleYoutube || idea.ineligibleInstagram);
+      const isVideosPending = !isVideosPublished && !isVideosSkipped && Boolean(idea.eligibleYoutube || idea.eligibleInstagram);
+
+      if (isVideosPublished) channelCounts['Videos'].published++;
+      else if (isVideosSkipped) channelCounts['Videos'].skipped++;
+      else if (isVideosPending) channelCounts['Videos'].pending++;
+
+      // Completion calculation across 3 merged channels
+      const isXDone = isXPublished || isXSkipped;
+      const isArticlesDone = isArticlesPublished || isArticlesSkipped;
+      const isVideosDone = isVideosPublished || isVideosSkipped;
+
+      const channelsDone = [isXDone, isArticlesDone, isVideosDone].filter(Boolean).length;
+      if (channelsDone === 0) totallyUnpublished++;
+      if (channelsDone === 3) fullyPublished++;
     });
 
     const activeIdeas = totalIdeas - totallyUnpublished;
     const completionRate = totalIdeas > 0 ? ((fullyPublished / totalIdeas) * 100).toFixed(1) : '0';
 
-    const barChartData = Object.keys(platformCounts).map((name) => ({ 
-      name, 
-      Published: platformCounts[name as keyof typeof platformCounts],
-      Pending: pendingCounts[name as keyof typeof pendingCounts],
-      Skipped: ineligibleCounts[name as keyof typeof ineligibleCounts],
-    }));
+    const barChartData = [
+      { 
+        name: 'X', 
+        fullName: 'X (Twitter)',
+        subtitle: 'Twitter',
+        Published: channelCounts['X'].published,
+        Pending: channelCounts['X'].pending,
+        Skipped: channelCounts['X'].skipped,
+      },
+      { 
+        name: 'Articles', 
+        fullName: 'Articles (Medium & Substack)',
+        subtitle: 'Medium & Substack',
+        Published: channelCounts['Articles'].published,
+        Pending: channelCounts['Articles'].pending,
+        Skipped: channelCounts['Articles'].skipped,
+      },
+      { 
+        name: 'Videos', 
+        fullName: 'Videos (YouTube & Instagram)',
+        subtitle: 'YouTube & Instagram',
+        Published: channelCounts['Videos'].published,
+        Pending: channelCounts['Videos'].pending,
+        Skipped: channelCounts['Videos'].skipped,
+      },
+    ];
 
     const pieChartData = [
       { name: 'Unpublished', value: totallyUnpublished },
-      { name: 'In Progress', value: activeIdeas - fullyPublished },
+      { name: 'In Progress', value: Math.max(0, activeIdeas - fullyPublished) },
       { name: 'Completed', value: fullyPublished },
     ];
 
@@ -160,10 +188,27 @@ export function AnalyticsDashboard() {
 
   const metricCards = [
     { label: 'Total Ideas', value: totalIdeas, sub: 'across all time', icon: FileText },
-    { label: 'Active', value: activeIdeas, sub: 'on at least 1 platform', icon: TrendingUp },
-    { label: 'Completed', value: fullyPublished, sub: 'all platforms done', icon: CheckCircle },
+    { label: 'Active', value: activeIdeas, sub: 'on at least 1 channel', icon: TrendingUp },
+    { label: 'Completed', value: fullyPublished, sub: 'all channels done', icon: CheckCircle },
     { label: 'Completion', value: `${completionRate}%`, sub: 'omnipresent rate', icon: Target },
   ];
+
+  const renderPlatformAxisTick = ({ x, y, payload }: { x?: string | number; y?: string | number; payload?: { value?: string } }) => {
+    if (!payload?.value) return null;
+    const item = barChartData.find(d => d.name === payload.value);
+    return (
+      <g transform={`translate(${x ?? 0},${y ?? 0})`}>
+        <text x={0} y={0} dy={14} textAnchor="middle" fill="var(--card-foreground)" fontSize={11} fontWeight={500}>
+          {payload.value}
+        </text>
+        {item?.subtitle && (
+          <text x={0} y={0} dy={27} textAnchor="middle" fill="var(--muted-foreground)" fontSize={9}>
+            {item.subtitle}
+          </text>
+        )}
+      </g>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -190,15 +235,22 @@ export function AnalyticsDashboard() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Platform Distribution</CardTitle>
-            <CardDescription className="text-xs">Published, pending, and skipped per platform</CardDescription>
+            <CardDescription className="text-xs">Published, pending, and skipped across X, Articles, and Videos</CardDescription>
           </CardHeader>
           <CardContent className="h-[280px] sm:h-[320px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={barChartData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+              <BarChart data={barChartData} maxBarSize={52} margin={{ top: 8, right: 8, left: -16, bottom: 4 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
-                <XAxis dataKey="name" tick={axisStyle} stroke={gridStroke} />
+                <XAxis dataKey="name" stroke={gridStroke} height={36} tick={renderPlatformAxisTick} />
                 <YAxis tick={axisStyle} stroke={gridStroke} allowDecimals={false} />
-                <RechartsTooltip cursor={{ fill: 'var(--muted)' }} contentStyle={tooltipStyle} />
+                <RechartsTooltip 
+                  cursor={{ fill: 'var(--muted)', opacity: 0.2 }} 
+                  contentStyle={tooltipStyle}
+                  labelFormatter={(label) => {
+                    const item = barChartData.find(d => d.name === label);
+                    return item ? item.fullName : label;
+                  }}
+                />
                 <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
                 <Bar dataKey="Published" fill="#10b981" radius={[3, 3, 0, 0]} stackId="a" />
                 <Bar dataKey="Pending" fill="#f59e0b" radius={[3, 3, 0, 0]} stackId="a" />
