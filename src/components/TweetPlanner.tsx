@@ -183,6 +183,10 @@ export function TweetPlanner() {
 
       <Tabs value={activeTab} onValueChange={(val) => dispatch(setActiveTab(val))} className="w-full">
         <TabsList className="inline-flex w-full sm:w-auto h-auto bg-muted/50 p-1 rounded-lg mb-6 flex-wrap gap-0.5 border border-border/50">
+          <TabsTrigger value="all" className={tabTriggerClass}>
+            <List className="w-3.5 h-3.5 mr-1.5" />
+            All{!loading && ` (${filteredIdeas.length})`}
+          </TabsTrigger>
           <TabsTrigger value="pending" className={tabTriggerClass}>
             <Clock className="w-3.5 h-3.5 mr-1.5" />
             Pending{!loading && ` (${pendingIdeas.length})`}
@@ -195,12 +199,15 @@ export function TweetPlanner() {
             <Video className="w-3.5 h-3.5 mr-1.5" />
             Videos{!loading && ` (${eligibleForVideos.length})`}
           </TabsTrigger>
-          <TabsTrigger value="all" className={tabTriggerClass}>
-            <List className="w-3.5 h-3.5 mr-1.5" />
-            All{!loading && ` (${filteredIdeas.length})`}
-          </TabsTrigger>
         </TabsList>
         
+        <TabsContent value="all" className="space-y-3">
+          {loading ? renderSkeletons()
+            : filteredIdeas.length === 0
+              ? renderEmptyState(searchQuery ? 'No ideas match your search.' : 'No ideas yet. Time to brainstorm!')
+              : filteredIdeas.map(renderIdeaCard)}
+        </TabsContent>
+
         <TabsContent value="pending" className="space-y-3">
           {loading ? renderSkeletons()
             : pendingIdeas.length === 0
@@ -220,13 +227,6 @@ export function TweetPlanner() {
             : eligibleForVideos.length === 0
               ? renderEmptyState(searchQuery ? 'No ideas match your search.' : 'Everything is published on Videos!')
               : eligibleForVideos.map(renderIdeaCard)}
-        </TabsContent>
-
-        <TabsContent value="all" className="space-y-3">
-          {loading ? renderSkeletons()
-            : filteredIdeas.length === 0
-              ? renderEmptyState(searchQuery ? 'No ideas match your search.' : 'No ideas yet. Time to brainstorm!')
-              : filteredIdeas.map(renderIdeaCard)}
         </TabsContent>
       </Tabs>
     </div>

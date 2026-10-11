@@ -43,7 +43,7 @@ const initialState: IdeasState = {
   actionLoading: false,
   hasFetched: false,
   searchQuery: '',
-  activeTab: 'pending',
+  activeTab: 'all',
 };
 
 export const fetchIdeas = createAsyncThunk('ideas/fetchIdeas', async (_, { rejectWithValue }) => {
