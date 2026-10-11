@@ -14,7 +14,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchIdeas, deleteIdea, updateIdea, Idea, setSearchQuery, setActiveTab } from '@/store/slices/ideasSlice';
 import { RootState, AppDispatch } from '@/store';
 
-const tabTriggerClass = "rounded-md px-3 py-1.5 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all";
+const tabTriggerClass = "inline-flex items-center justify-center whitespace-nowrap rounded-lg px-1 sm:px-3.5 py-2 sm:py-1.5 text-xs sm:text-sm font-medium transition-all text-muted-foreground hover:text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-active:bg-primary data-active:text-primary-foreground shadow-none data-[state=active]:shadow-sm data-active:shadow-sm min-w-0 w-full";
 
 export function TweetPlanner() {
   const router = useRouter();
@@ -293,22 +293,42 @@ const isIdeaCompleted = (i: Idea): boolean => {
       </div>
 
       <Tabs value={activeTab} onValueChange={(val) => dispatch(setActiveTab(val))} className="w-full">
-        <TabsList className="inline-flex w-full sm:w-auto h-auto bg-muted/50 p-1 rounded-lg mb-6 flex-wrap gap-0.5 border border-border/50">
+        <TabsList className="grid grid-cols-4 w-full sm:flex sm:w-auto bg-muted/50 p-1 rounded-xl border border-border/50 gap-1 h-auto mb-6">
           <TabsTrigger value="all" className={tabTriggerClass}>
-            <List className="w-3.5 h-3.5 mr-1.5" />
-            All{!loading && ` (${filteredIdeas.length})`}
+            <List className="w-3.5 h-3.5 mr-1.5 shrink-0 hidden sm:inline-block" />
+            <span className="truncate">All</span>
+            {!loading && (
+              <span className="ml-1 sm:ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-foreground/10 text-inherit leading-none shrink-0">
+                {filteredIdeas.length}
+              </span>
+            )}
           </TabsTrigger>
           <TabsTrigger value="pending" className={tabTriggerClass}>
-            <Clock className="w-3.5 h-3.5 mr-1.5" />
-            Pending{!loading && ` (${pendingIdeas.length})`}
+            <Clock className="w-3.5 h-3.5 mr-1.5 shrink-0 hidden sm:inline-block" />
+            <span className="truncate">Pending</span>
+            {!loading && (
+              <span className="ml-1 sm:ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-foreground/10 text-inherit leading-none shrink-0">
+                {pendingIdeas.length}
+              </span>
+            )}
           </TabsTrigger>
           <TabsTrigger value="articles" className={tabTriggerClass}>
-            <FileText className="w-3.5 h-3.5 mr-1.5" />
-            Articles{!loading && ` (${eligibleForArticles.length})`}
+            <FileText className="w-3.5 h-3.5 mr-1.5 shrink-0 hidden sm:inline-block" />
+            <span className="truncate">Articles</span>
+            {!loading && (
+              <span className="ml-1 sm:ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-foreground/10 text-inherit leading-none shrink-0">
+                {eligibleForArticles.length}
+              </span>
+            )}
           </TabsTrigger>
           <TabsTrigger value="videos" className={tabTriggerClass}>
-            <Video className="w-3.5 h-3.5 mr-1.5" />
-            Videos{!loading && ` (${eligibleForVideos.length})`}
+            <Video className="w-3.5 h-3.5 mr-1.5 shrink-0 hidden sm:inline-block" />
+            <span className="truncate">Videos</span>
+            {!loading && (
+              <span className="ml-1 sm:ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-foreground/10 text-inherit leading-none shrink-0">
+                {eligibleForVideos.length}
+              </span>
+            )}
           </TabsTrigger>
         </TabsList>
         
