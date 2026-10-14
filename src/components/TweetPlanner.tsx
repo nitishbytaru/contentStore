@@ -16,6 +16,7 @@ import { RootState, AppDispatch } from '@/store';
 import { cn } from 'cn';
 import { getIdeaPublishStatus, isIdeaPending } from '@/lib/ideaStatus';
 import { calculateCadence } from '@/lib/cadence';
+import { MobileTimer } from '@/components/MobileTimer';
 
 export function TweetPlanner() {
   const router = useRouter();
@@ -352,6 +353,9 @@ export function TweetPlanner() {
           </div>
         </div>
       )}
+
+      {/* Mobile-Only Session Timer */}
+      <MobileTimer />
 
       <Tabs value={activeTab} onValueChange={(val) => dispatch(setActiveTab(val))} className="w-full">
         <TabsList className="grid grid-cols-4 w-full sm:w-auto sm:inline-flex h-auto p-1 bg-muted/60 rounded-xl border border-border/50 gap-1 mb-6">
