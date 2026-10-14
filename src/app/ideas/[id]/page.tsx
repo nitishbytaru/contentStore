@@ -166,7 +166,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
   return (
     <div className="space-y-6 w-full max-w-full min-w-0 overflow-x-hidden">
       {/* Top Bar Navigation & Save Button */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full min-w-0">
+      <div className="flex items-center justify-between gap-4 w-full min-w-0">
         <Link
           href="/ideas"
           className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors group"
@@ -177,7 +177,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
         <Button
           onClick={handleSave}
           disabled={saving}
-          className="w-full sm:w-auto shrink-0 shadow-sm font-medium"
+          className="w-auto shrink-0 shadow-sm font-medium"
         >
           {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
           {saving ? 'Saving...' : 'Save Changes'}
