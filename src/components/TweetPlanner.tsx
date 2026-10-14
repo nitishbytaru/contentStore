@@ -140,7 +140,7 @@ export function TweetPlanner() {
                     <div>
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25">
                         <FileText className="w-3 h-3 shrink-0 opacity-80" />
-                        No Base Article
+                        No Research
                       </span>
                     </div>
                   )}

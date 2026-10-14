@@ -154,8 +154,8 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
   }
 
   const contentTabs = [
-    { value: 'baseArticle', label: 'Base Article', placeholder: 'Draft your core article here...' },
-    { value: 'mediumArticle', label: 'Tweets', placeholder: 'Draft your tweets here...' },
+    { value: 'baseArticle', label: 'Research', placeholder: 'Draft your research notes here...' },
+    { value: 'mediumArticle', label: 'Article', placeholder: 'Draft your article here...' },
     { value: 'youtubeScript', label: 'Video Script', placeholder: 'Long-form video script...' },
   ] as const;
 
