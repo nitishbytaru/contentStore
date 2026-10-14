@@ -185,30 +185,33 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
       </div>
 
       {/* "Working on" Responsive Box/Card Container */}
-      <div className="w-full min-w-0 rounded-xl border border-border/70 bg-card/75 backdrop-blur-sm p-4 sm:p-5 shadow-xs transition-all">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full min-w-0">
-          <div className="min-w-0 flex-1 space-y-1">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-              <span>Working on</span>
-            </div>
-            <h1 className="text-base sm:text-lg md:text-xl font-semibold text-foreground break-words [overflow-wrap:anywhere] leading-snug">
-              {idea.idea}
-            </h1>
+      <div className="relative overflow-hidden w-full min-w-0 rounded-2xl border border-border/70 bg-gradient-to-b from-card/95 via-card/85 to-card/70 backdrop-blur-md p-4 sm:p-5 shadow-xs transition-all">
+        {/* Subtle accent border line */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-500/80 via-emerald-400/40 to-transparent" />
+        
+        {/* Top Meta Bar: Status badge on left, Copy Idea button on right */}
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            <span>Working on</span>
           </div>
-          <div className="flex items-center gap-2 shrink-0 self-start sm:self-center pt-1 sm:pt-0">
-            <Button 
-              size="sm" 
-              variant="outline" 
-              className="h-8 text-xs gap-1.5 text-muted-foreground hover:text-foreground border-border/80 shrink-0" 
-              onClick={() => handleCopyContent(idea.idea)}
-              title="Copy idea text"
-            >
-              <Copy className="h-3.5 w-3.5" />
-              <span>Copy Idea</span>
-            </Button>
-          </div>
+
+          <Button 
+            size="sm" 
+            variant="outline" 
+            className="h-7 sm:h-8 px-2.5 sm:px-3 text-xs gap-1.5 text-muted-foreground hover:text-foreground border-border/70 hover:border-border hover:bg-muted/60 transition-colors shrink-0" 
+            onClick={() => handleCopyContent(idea.idea)}
+            title="Copy idea text"
+          >
+            <Copy className="h-3.5 w-3.5" />
+            <span className="text-xs">Copy Idea</span>
+          </Button>
         </div>
+
+        {/* Idea Title */}
+        <h1 className="text-base sm:text-lg md:text-xl font-semibold text-foreground break-words [overflow-wrap:anywhere] leading-snug sm:leading-relaxed">
+          {idea.idea}
+        </h1>
       </div>
 
       {/* Content Grid */}
