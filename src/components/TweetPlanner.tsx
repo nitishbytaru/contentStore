@@ -59,7 +59,16 @@ export function TweetPlanner() {
     toast.success('Copied to clipboard!');
   };
 
-  const filteredIdeas = ideas.filter(i => i.idea.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredIdeas = ideas
+    .filter(i => i.idea.toLowerCase().includes(searchQuery.toLowerCase()))
+    .sort((a, b) => {
+      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      if (isNaN(timeA) && isNaN(timeB)) return 0;
+      if (isNaN(timeA)) return 1;
+      if (isNaN(timeB)) return -1;
+      return timeB - timeA;
+    });
   
   const pendingIdeas = filteredIdeas.filter(isIdeaPending);
   const eligibleForArticles = filteredIdeas.filter(i => (i.eligibleMedium || i.eligibleSubstack) && !(i.publishedMedium && i.publishedSubstack));
