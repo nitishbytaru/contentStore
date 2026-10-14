@@ -77,6 +77,7 @@ export function TweetPlanner() {
 
   const renderIdeaCard = (idea: Idea, _idx?: number) => {
     const publishStatus = getIdeaPublishStatus(idea);
+    const hasBaseArticle = Boolean(idea.baseArticle && idea.baseArticle.trim().length > 0);
     const cardClasses = cn(
       "transition-all group border-l-4 rounded-xl hover:shadow-sm border-border/80",
       publishStatus.borderClass,
@@ -118,13 +119,23 @@ export function TweetPlanner() {
             <>
               {/* Row 1: Title (left) & Status Badge (right) */}
               <div className="flex items-start justify-between gap-3">
-                <Link 
-                  href={`/ideas/${idea.id}`}
-                  className="text-sm sm:text-base font-medium leading-snug hover:underline cursor-pointer transition-colors hover:text-primary flex-1 min-w-0 line-clamp-2"
-                  title={idea.idea}
-                >
-                  {idea.idea}
-                </Link>
+                <div className="flex-1 min-w-0 space-y-1.5">
+                  <Link 
+                    href={`/ideas/${idea.id}`}
+                    className="text-sm sm:text-base font-medium leading-snug hover:underline cursor-pointer transition-colors hover:text-primary block line-clamp-2"
+                    title={idea.idea}
+                  >
+                    {idea.idea}
+                  </Link>
+                  {!hasBaseArticle && (
+                    <div>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25">
+                        <FileText className="w-3 h-3 shrink-0 opacity-80" />
+                        No Base Article
+                      </span>
+                    </div>
+                  )}
+                </div>
                 <div className="shrink-0 pt-0.5">
                   <span className={cn(
                     "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium border",
