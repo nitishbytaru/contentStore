@@ -39,7 +39,7 @@ export function NavLinks() {
     <div className="w-full flex items-center justify-between min-w-0">
       {/* Brand Logo */}
       <Link
-        href={isLoginPage ? '#' : '/'}
+        href={isLoginPage ? '#' : '/ideas'}
         onClick={() => setMobileMenuOpen(false)}
         className="font-bold text-base sm:text-lg tracking-tight shrink-0 text-foreground flex items-center gap-2 hover:opacity-90 transition-opacity min-w-0"
       >
