@@ -158,6 +158,17 @@ export function AnalyticsDashboard() {
     };
   }, [ideas]);
 
+  const cadence = useMemo(() => calculateCadence(ideas), [ideas]);
+  const topicAnalytics = useMemo(() => calculateTopicTimeAnalytics(ideas), [ideas, timeUpdateKey]);
+  const topTopicsForChart = useMemo(() => {
+    return topicAnalytics.topics.slice(0, 8).map((t) => ({
+      ...t,
+      researchHours: Number((t.researchMinutes / 60).toFixed(1)),
+      articleHours: Number((t.articleMinutes / 60).toFixed(1)),
+      videoHours: Number((t.videoMinutes / 60).toFixed(1)),
+    }));
+  }, [topicAnalytics]);
+
   if (error) {
     return (
       <Alert variant="destructive">
@@ -200,16 +211,6 @@ export function AnalyticsDashboard() {
   }
 
   const { totalIdeas, activeIdeas, fullyPublished, completionRate, barChartData, pieChartData, timelineData } = analyticsData;
-  const cadence = useMemo(() => calculateCadence(ideas), [ideas]);
-  const topicAnalytics = useMemo(() => calculateTopicTimeAnalytics(ideas), [ideas, timeUpdateKey]);
-  const topTopicsForChart = useMemo(() => {
-    return topicAnalytics.topics.slice(0, 8).map((t) => ({
-      ...t,
-      researchHours: Number((t.researchMinutes / 60).toFixed(1)),
-      articleHours: Number((t.articleMinutes / 60).toFixed(1)),
-      videoHours: Number((t.videoMinutes / 60).toFixed(1)),
-    }));
-  }, [topicAnalytics]);
 
   const tooltipStyle = { 
     backgroundColor: 'var(--card)', 
