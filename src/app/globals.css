@@ -185,6 +185,33 @@ textarea {
   box-sizing: border-box !important;
 }
 
+/* Force bottom-right placement on mobile screens */
+@media (max-width: 640px) {
+  [data-sonner-toaster] {
+    top: auto !important;
+    bottom: 16px !important;
+    right: 16px !important;
+    left: auto !important;
+    width: auto !important;
+    max-width: calc(100vw - 32px) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    justify-content: flex-end !important;
+    pointer-events: none !important;
+  }
+
+  [data-sonner-toaster] [data-sonner-toast] {
+    left: auto !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    top: auto !important;
+    width: auto !important;
+    max-width: calc(100vw - 32px) !important;
+    pointer-events: auto !important;
+  }
+}
+
 [data-sonner-toast] {
   max-width: calc(100vw - 32px) !important;
   width: auto !important;
