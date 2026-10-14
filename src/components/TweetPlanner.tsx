@@ -1,13 +1,13 @@
 'use client';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, Clock, Trash2, Edit, Save, X, Copy, FileText, Video, List, Plus, Search, Loader2 } from 'lucide-react';
+import { AlertCircle, Clock, Trash2, Edit, Save, X, Copy, FileText, Video, List, Plus, Search, Loader2, Bell } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from "sonner";
 import { useDispatch, useSelector } from 'react-redux';
@@ -15,6 +15,7 @@ import { fetchIdeas, deleteIdea, updateIdea, Idea, setSearchQuery, setActiveTab 
 import { RootState, AppDispatch } from '@/store';
 import { cn } from 'cn';
 import { getIdeaPublishStatus, isIdeaPending } from '@/lib/ideaStatus';
+import { calculateCadence } from '@/lib/cadence';
 
 export function TweetPlanner() {
   const router = useRouter();
@@ -24,6 +25,9 @@ export function TweetPlanner() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editIdeaText, setEditIdeaText] = useState('');
   const [actionItemId, setActionItemId] = useState<string | null>(null);
+  const [dismissReminder, setDismissReminder] = useState(false);
+
+  const cadence = useMemo(() => calculateCadence(ideas), [ideas]);
 
   useEffect(() => {
     if (!hasFetched) {
@@ -253,6 +257,101 @@ export function TweetPlanner() {
           <span className="hidden sm:inline">Create New Idea</span>
         </Button>
       </div>
+
+      {/* Cadence Reminder Banner */}
+      {cadence.needsReminder && !dismissReminder && !loading && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 dark:bg-amber-950/20 p-3 sm:p-4 transition-all">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-2.5 min-w-0">
+              <div className="p-1.5 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
+                <Bell className="w-4 h-4" />
+              </div>
+              <div className="space-y-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-xs sm:text-sm font-semibold text-foreground">
+                    Publishing Reminders
+                  </h3>
+                  <span className="text-[11px] text-muted-foreground">
+                    (Target: 1 article / 3 days • 1 video / 7 days)
+                  </span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                    <span>
+                      <strong className="text-foreground font-medium">Articles:</strong>{' '}
+                      <span className={cn(
+                        cadence.article.status === 'overdue' || cadence.article.status === 'no-posts' 
+                          ? 'text-rose-600 dark:text-rose-400 font-semibold' 
+                          : cadence.article.status === 'due-today' 
+                          ? 'text-amber-600 dark:text-amber-400 font-semibold' 
+                          : 'text-muted-foreground'
+                      )}>
+                        {cadence.article.statusLabel}
+                      </span>
+                    </span>
+                  </div>
+                  <span className="hidden sm:inline text-muted-foreground/40">•</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+                    <span>
+                      <strong className="text-foreground font-medium">Videos:</strong>{' '}
+                      <span className={cn(
+                        cadence.video.status === 'overdue' || cadence.video.status === 'no-posts' 
+                          ? 'text-rose-600 dark:text-rose-400 font-semibold' 
+                          : cadence.video.status === 'due-today' 
+                          ? 'text-amber-600 dark:text-amber-400 font-semibold' 
+                          : 'text-muted-foreground'
+                      )}>
+                        {cadence.video.statusLabel}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setDismissReminder(true)}
+              className="text-muted-foreground hover:text-foreground p-1 rounded-md transition-colors shrink-0"
+              title="Dismiss reminder"
+              aria-label="Dismiss reminder"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="mt-3 pt-2.5 border-t border-amber-500/20 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => dispatch(setActiveTab('articles'))}
+                className="h-7 text-xs px-2.5 bg-background/80 hover:bg-background border-border/80"
+              >
+                <FileText className="w-3 h-3 mr-1 text-emerald-600" />
+                View Articles
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => dispatch(setActiveTab('videos'))}
+                className="h-7 text-xs px-2.5 bg-background/80 hover:bg-background border-border/80"
+              >
+                <Video className="w-3 h-3 mr-1 text-rose-500" />
+                View Videos
+              </Button>
+            </div>
+            <Link
+              href="/"
+              className="text-xs text-primary hover:underline font-medium inline-flex items-center gap-1"
+            >
+              <span>View Cadence Analytics</span>
+              <span aria-hidden="true">&rarr;</span>
+            </Link>
+          </div>
+        </div>
+      )}
 
       <Tabs value={activeTab} onValueChange={(val) => dispatch(setActiveTab(val))} className="w-full">
         <TabsList className="grid grid-cols-4 w-full sm:w-auto sm:inline-flex h-auto p-1 bg-muted/60 rounded-xl border border-border/50 gap-1 mb-6">

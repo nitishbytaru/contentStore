@@ -4,7 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TrendingUp, CheckCircle, FileText, Target, AlertCircle } from 'lucide-react';
+import { TrendingUp, CheckCircle, FileText, Target, AlertCircle, Bell, Video, Calendar, Clock } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend,
   PieChart, Pie, Cell,
@@ -13,6 +13,8 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchIdeas } from '@/store/slices/ideasSlice';
 import { AppDispatch, RootState } from '@/store';
+import { cn } from 'cn';
+import { calculateCadence } from '@/lib/cadence';
 
 const PIE_COLORS = ['#8b5cf6', '#f59e0b', '#10b981'];
 
@@ -189,6 +191,7 @@ export function AnalyticsDashboard() {
   }
 
   const { totalIdeas, activeIdeas, fullyPublished, completionRate, barChartData, pieChartData, timelineData } = analyticsData;
+  const cadence = useMemo(() => calculateCadence(ideas), [ideas]);
 
   const tooltipStyle = { 
     backgroundColor: 'var(--card)', 
@@ -242,6 +245,159 @@ export function AnalyticsDashboard() {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      {/* Publishing Cadence & Reminders */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Bell className="w-4 h-4 text-primary" />
+            <h2 className="text-sm font-semibold tracking-tight">Publishing Cadence & Reminders</h2>
+          </div>
+          <span className="text-xs text-muted-foreground hidden sm:inline">
+            Goals: 1 article / 3 days • 1 video / 7 days
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Article Cadence Card */}
+          <Card className={cn(
+            "border-l-4 transition-all shadow-xs",
+            cadence.article.status === 'overdue' || cadence.article.status === 'no-posts'
+              ? "border-l-rose-500 bg-rose-500/[0.02]"
+              : cadence.article.status === 'due-today'
+              ? "border-l-amber-500 bg-amber-500/[0.02]"
+              : "border-l-emerald-500 bg-emerald-500/[0.02]"
+          )}>
+            <CardContent className="p-4 sm:p-5 space-y-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-semibold">Article Publishing</h3>
+                    <p className="text-xs text-muted-foreground">Target: 1 article every 3 days</p>
+                  </div>
+                </div>
+                <span className={cn(
+                  "px-2.5 py-0.5 rounded-full text-xs font-medium border shrink-0",
+                  cadence.article.status === 'overdue' || cadence.article.status === 'no-posts'
+                    ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25"
+                    : cadence.article.status === 'due-today'
+                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25"
+                    : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
+                )}>
+                  {cadence.article.statusLabel}
+                </span>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Cycle progress</span>
+                  <span className="font-medium text-foreground">
+                    {cadence.article.daysSinceLast !== null 
+                      ? `${cadence.article.daysSinceLast} / 3 days elapsed`
+                      : 'No posts yet'}
+                  </span>
+                </div>
+                <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+                  <div 
+                    className={cn(
+                      "h-full rounded-full transition-all",
+                      cadence.article.status === 'overdue' || cadence.article.status === 'no-posts'
+                        ? "bg-rose-500"
+                        : cadence.article.status === 'due-today'
+                        ? "bg-amber-500"
+                        : "bg-emerald-500"
+                    )}
+                    style={{ width: `${cadence.article.progressPercent}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Meta Stats */}
+              <div className="flex items-center justify-between text-xs text-muted-foreground pt-1 border-t border-border/40">
+                <span>
+                  Last published: {cadence.article.lastPublishedDate 
+                    ? cadence.article.lastPublishedDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+                    : 'None yet'}
+                </span>
+                <span>Total: {cadence.article.totalPublished} published</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Video Cadence Card */}
+          <Card className={cn(
+            "border-l-4 transition-all shadow-xs",
+            cadence.video.status === 'overdue' || cadence.video.status === 'no-posts'
+              ? "border-l-rose-500 bg-rose-500/[0.02]"
+              : cadence.video.status === 'due-today'
+              ? "border-l-amber-500 bg-amber-500/[0.02]"
+              : "border-l-emerald-500 bg-emerald-500/[0.02]"
+          )}>
+            <CardContent className="p-4 sm:p-5 space-y-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="p-2 rounded-lg bg-rose-500/10 text-rose-500 shrink-0">
+                    <Video className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-semibold">Video Publishing</h3>
+                    <p className="text-xs text-muted-foreground">Target: 1 video every 7 days</p>
+                  </div>
+                </div>
+                <span className={cn(
+                  "px-2.5 py-0.5 rounded-full text-xs font-medium border shrink-0",
+                  cadence.video.status === 'overdue' || cadence.video.status === 'no-posts'
+                    ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25"
+                    : cadence.video.status === 'due-today'
+                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25"
+                    : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
+                )}>
+                  {cadence.video.statusLabel}
+                </span>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Cycle progress</span>
+                  <span className="font-medium text-foreground">
+                    {cadence.video.daysSinceLast !== null 
+                      ? `${cadence.video.daysSinceLast} / 7 days elapsed`
+                      : 'No posts yet'}
+                  </span>
+                </div>
+                <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+                  <div 
+                    className={cn(
+                      "h-full rounded-full transition-all",
+                      cadence.video.status === 'overdue' || cadence.video.status === 'no-posts'
+                        ? "bg-rose-500"
+                        : cadence.video.status === 'due-today'
+                        ? "bg-amber-500"
+                        : "bg-emerald-500"
+                    )}
+                    style={{ width: `${cadence.video.progressPercent}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Meta Stats */}
+              <div className="flex items-center justify-between text-xs text-muted-foreground pt-1 border-t border-border/40">
+                <span>
+                  Last published: {cadence.video.lastPublishedDate 
+                    ? cadence.video.lastPublishedDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+                    : 'None yet'}
+                </span>
+                <span>Total: {cadence.video.totalPublished} published</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Charts */}
