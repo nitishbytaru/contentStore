@@ -113,19 +113,33 @@ export function AnalyticsDashboard() {
       { name: 'Completed', value: fullyPublished },
     ];
 
-    const sortedIdeas = [...ideas].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-    const sortedDatesMap = new Map<string, number>();
+    const sortedIdeas = [...ideas].sort((a, b) => {
+      const timeA = new Date(a.datePosted || a.createdAt).getTime();
+      const timeB = new Date(b.datePosted || b.createdAt).getTime();
+      return timeA - timeB;
+    });
+
+    const sortedDatesMap = new Map<string, { medium: number; youtube: number }>();
     sortedIdeas.forEach(idea => {
-      const dateObj = new Date(idea.createdAt);
+      const rawDate = idea.datePosted || idea.createdAt;
+      const dateObj = new Date(rawDate);
       if (!isNaN(dateObj.getTime())) {
         const dateStr = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-        sortedDatesMap.set(dateStr, (sortedDatesMap.get(dateStr) || 0) + 1);
+        const current = sortedDatesMap.get(dateStr) || { medium: 0, youtube: 0 };
+        if (idea.publishedMedium || idea.publishedSubstack) {
+          current.medium++;
+        }
+        if (idea.publishedYoutube || idea.publishedInstagram) {
+          current.youtube++;
+        }
+        sortedDatesMap.set(dateStr, current);
       }
     });
     
-    const timelineData = Array.from(sortedDatesMap.entries()).map(([date, count]) => ({
+    const timelineData = Array.from(sortedDatesMap.entries()).map(([date, counts]) => ({
       date,
-      ideas: count
+      'Medium Posts': counts.medium,
+      'YouTube Posts': counts.youtube,
     }));
 
     return {
@@ -290,23 +304,43 @@ export function AnalyticsDashboard() {
 
         <Card className="lg:col-span-2">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Idea Creation Timeline</CardTitle>
-            <CardDescription className="text-xs">Content generation over time</CardDescription>
+            <CardTitle className="text-sm font-medium">Published Posts Timeline</CardTitle>
+            <CardDescription className="text-xs">Medium and YouTube posts over time</CardDescription>
           </CardHeader>
           <CardContent className="h-[240px] sm:h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={timelineData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="colorIdeas" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
+                  <linearGradient id="colorMedium" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorYoutube" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
                 <XAxis dataKey="date" tick={axisStyle} stroke={gridStroke} />
                 <YAxis tick={axisStyle} stroke={gridStroke} allowDecimals={false} />
                 <RechartsTooltip contentStyle={tooltipStyle} />
-                <Area type="monotone" dataKey="ideas" stroke="var(--primary)" fillOpacity={1} fill="url(#colorIdeas)" />
+                <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
+                <Area 
+                  type="monotone" 
+                  dataKey="Medium Posts" 
+                  stroke="#10b981" 
+                  strokeWidth={2}
+                  fillOpacity={1} 
+                  fill="url(#colorMedium)" 
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="YouTube Posts" 
+                  stroke="#ef4444" 
+                  strokeWidth={2}
+                  fillOpacity={1} 
+                  fill="url(#colorYoutube)" 
+                />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
