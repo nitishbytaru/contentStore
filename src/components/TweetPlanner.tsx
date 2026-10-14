@@ -14,6 +14,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchIdeas, deleteIdea, updateIdea, Idea, setSearchQuery, setActiveTab } from '@/store/slices/ideasSlice';
 import { RootState, AppDispatch } from '@/store';
 import { cn } from 'cn';
+import { getIdeaPublishStatus, isIdeaPending } from '@/lib/ideaStatus';
 
 export function TweetPlanner() {
   const router = useRouter();
@@ -60,18 +61,6 @@ export function TweetPlanner() {
 
   const filteredIdeas = ideas.filter(i => i.idea.toLowerCase().includes(searchQuery.toLowerCase()));
   
-  const isIdeaPending = (i: Idea) => {
-    if (i.status === 'posted') return false;
-    
-    const isXSelected = i.eligibleX || i.ineligibleX;
-    const isArticlesSelected = i.eligibleMedium || i.ineligibleMedium;
-    const isVideosSelected = i.eligibleYoutube || i.ineligibleYoutube;
-    
-    const isChecklistFilled = isXSelected && isArticlesSelected && isVideosSelected;
-    
-    return !isChecklistFilled;
-  };
-  
   const pendingIdeas = filteredIdeas.filter(isIdeaPending);
   const eligibleForArticles = filteredIdeas.filter(i => (i.eligibleMedium || i.eligibleSubstack) && !(i.publishedMedium && i.publishedSubstack));
   const eligibleForVideos = filteredIdeas.filter(i => (i.eligibleYoutube || i.eligibleInstagram) && !(i.publishedYoutube && i.publishedInstagram));
@@ -86,100 +75,16 @@ export function TweetPlanner() {
     );
   }
 
-const UNTOUCHED_COLOR_PALETTES = [
-  {
-    border: 'border-l-amber-500 border-amber-500/30 hover:border-amber-500/60',
-    bg: 'bg-amber-500/[0.03]',
-    badge: 'bg-amber-500/10 text-amber-400 border-amber-500/25',
-    dot: 'bg-amber-400',
-  },
-  {
-    border: 'border-l-purple-500 border-purple-500/30 hover:border-purple-500/60',
-    bg: 'bg-purple-500/[0.03]',
-    badge: 'bg-purple-500/10 text-purple-400 border-purple-500/25',
-    dot: 'bg-purple-400',
-  },
-  {
-    border: 'border-l-rose-500 border-rose-500/30 hover:border-rose-500/60',
-    bg: 'bg-rose-500/[0.03]',
-    badge: 'bg-rose-500/10 text-rose-400 border-rose-500/25',
-    dot: 'bg-rose-400',
-  },
-  {
-    border: 'border-l-cyan-500 border-cyan-500/30 hover:border-cyan-500/60',
-    bg: 'bg-cyan-500/[0.03]',
-    badge: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/25',
-    dot: 'bg-cyan-400',
-  },
-  {
-    border: 'border-l-indigo-500 border-indigo-500/30 hover:border-indigo-500/60',
-    bg: 'bg-indigo-500/[0.03]',
-    badge: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/25',
-    dot: 'bg-indigo-400',
-  },
-  {
-    border: 'border-l-fuchsia-500 border-fuchsia-500/30 hover:border-fuchsia-500/60',
-    bg: 'bg-fuchsia-500/[0.03]',
-    badge: 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/25',
-    dot: 'bg-fuchsia-400',
-  },
-];
-
-const getUntouchedColor = (id: string, index?: number) => {
-  if (index !== undefined) {
-    return UNTOUCHED_COLOR_PALETTES[index % UNTOUCHED_COLOR_PALETTES.length];
-  }
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = (hash << 5) - hash + id.charCodeAt(i);
-    hash |= 0;
-  }
-  return UNTOUCHED_COLOR_PALETTES[Math.abs(hash) % UNTOUCHED_COLOR_PALETTES.length];
-};
-
-const isIdeaTouched = (i: Idea): boolean => {
-  const hasContent = Boolean(
-    (i.baseArticle && i.baseArticle.trim().length > 0) ||
-    (i.mediumArticle && i.mediumArticle.trim().length > 0) ||
-    (i.youtubeScript && i.youtubeScript.trim().length > 0)
-  );
-
-  const hasChecklist = Boolean(
-    i.eligibleX || i.ineligibleX || i.publishedX ||
-    i.eligibleMedium || i.ineligibleMedium || i.publishedMedium ||
-    i.eligibleSubstack || i.ineligibleSubstack || i.publishedSubstack ||
-    i.eligibleYoutube || i.ineligibleYoutube || i.publishedYoutube ||
-    i.eligibleInstagram || i.ineligibleInstagram || i.publishedInstagram ||
-    i.status === 'posted'
-  );
-
-  return hasContent || hasChecklist;
-};
-
-const isIdeaCompleted = (i: Idea): boolean => {
-  if (i.status === 'posted') return true;
-  const isXDone = i.publishedX || i.ineligibleX;
-  const isArticlesDone = (i.publishedMedium && i.publishedSubstack) || i.ineligibleMedium || i.ineligibleSubstack;
-  const isVideosDone = (i.publishedYoutube && i.publishedInstagram) || i.ineligibleYoutube || i.ineligibleInstagram;
-  return Boolean(isXDone && isArticlesDone && isVideosDone);
-};
-
-  const renderIdeaCard = (idea: Idea, idx = 0) => {
-    const touched = isIdeaTouched(idea);
-    const untouchedTheme = !touched ? getUntouchedColor(idea.id, idx) : null;
-    const completed = isIdeaCompleted(idea);
-
-    let cardClasses = "transition-all group border-l-4 rounded-xl ";
-    if (!touched && untouchedTheme) {
-      cardClasses += `${untouchedTheme.border} ${untouchedTheme.bg}`;
-    } else if (completed) {
-      cardClasses += "border-l-emerald-500 border-border/80 bg-emerald-500/[0.02] hover:border-emerald-500/50";
-    } else {
-      cardClasses += "border-l-sky-500 border-border/80 bg-sky-500/[0.02] hover:border-sky-500/50";
-    }
+  const renderIdeaCard = (idea: Idea, _idx?: number) => {
+    const publishStatus = getIdeaPublishStatus(idea);
+    const cardClasses = cn(
+      "transition-all group border-l-4 rounded-xl hover:shadow-sm border-border/80",
+      publishStatus.borderClass,
+      publishStatus.bgClass
+    );
 
     return (
-      <Card key={idea.id} className={cn("transition-all hover:shadow-sm", cardClasses)}>
+      <Card key={idea.id} className={cardClasses}>
         <CardContent className="p-4 sm:p-5 flex flex-col justify-between gap-3 min-h-[104px]">
           {editingId === idea.id ? (
             <div className="flex items-center gap-2 w-full py-1">
@@ -221,22 +126,17 @@ const isIdeaCompleted = (i: Idea): boolean => {
                   {idea.idea}
                 </Link>
                 <div className="shrink-0 pt-0.5">
-                  {!touched && untouchedTheme ? (
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${untouchedTheme.badge}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${untouchedTheme.dot} animate-pulse`} />
-                      Untouched
-                    </span>
-                  ) : completed ? (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                      Published
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-sky-500/10 text-sky-400 border border-sky-500/20">
-                      <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
-                      In Progress
-                    </span>
-                  )}
+                  <span className={cn(
+                    "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium border",
+                    publishStatus.badgeClass
+                  )}>
+                    <span className={cn(
+                      "w-1.5 h-1.5 rounded-full",
+                      publishStatus.dotClass,
+                      publishStatus.status === 'untouched' ? "animate-pulse" : ""
+                    )} />
+                    {publishStatus.label}
+                  </span>
                 </div>
               </div>
 

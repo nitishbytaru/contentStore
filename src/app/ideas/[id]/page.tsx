@@ -14,6 +14,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchIdeas, updateIdea } from '@/store/slices/ideasSlice';
 import { AppDispatch, RootState } from '@/store';
+import { cn } from 'cn';
+import { getIdeaPublishStatus } from '@/lib/ideaStatus';
 
 interface IdeaDetails {
   id: string;
@@ -163,6 +165,8 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
     { eligibleIds: ['eligibleYoutube', 'eligibleInstagram'], publishedIds: ['publishedYoutube', 'publishedInstagram'], ineligibleIds: ['ineligibleYoutube', 'ineligibleInstagram'], label: 'Videos (YouTube & Instagram)' },
   ];
 
+  const publishStatus = idea ? getIdeaPublishStatus(idea) : null;
+
   return (
     <div className="space-y-6 w-full max-w-full min-w-0 overflow-x-hidden">
       {/* Top Bar Navigation & Save Button */}
@@ -187,14 +191,18 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
       {/* "Working on" Responsive Box/Card Container */}
       <div className="relative overflow-hidden w-full min-w-0 rounded-2xl border border-border/70 bg-gradient-to-b from-card/95 via-card/85 to-card/70 backdrop-blur-md p-4 sm:p-5 shadow-xs transition-all">
         {/* Subtle accent border line */}
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-500/80 via-emerald-400/40 to-transparent" />
+        {publishStatus && (
+          <div className={cn("absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r", publishStatus.accentGradient)} />
+        )}
         
         {/* Top Meta Bar: Status badge on left, Copy Idea button on right */}
         <div className="flex items-center justify-between gap-3 mb-3">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-            <span>Working on</span>
-          </div>
+          {publishStatus && (
+            <div className={cn("inline-flex items-center gap-2 px-2.5 py-1 rounded-full border text-[11px] font-semibold uppercase tracking-wider", publishStatus.badgeClass)}>
+              <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", publishStatus.dotClass, publishStatus.status === 'untouched' ? 'animate-pulse' : '')} />
+              <span>{publishStatus.label}</span>
+            </div>
+          )}
 
           <Button 
             size="sm" 
