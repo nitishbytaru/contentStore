@@ -48,6 +48,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [idea, setIdea] = useState<IdeaDetails | null>(null);
+  const [activeContentTab, setActiveContentTab] = useState<string>('baseArticle');
 
   // Initialize and fetch from store if needed
   useEffect(() => {
@@ -228,17 +229,25 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
         <div className="lg:col-span-2 w-full min-w-0">
           <Card className="w-full min-w-0 overflow-hidden shadow-xs border-border/70">
             <CardContent className="p-3.5 sm:p-6 w-full min-w-0 overflow-hidden">
-              <Tabs defaultValue="baseArticle" className="w-full min-w-0">
-                <TabsList className="grid grid-cols-3 w-full rounded-lg p-1 bg-muted/60 mb-4 border border-border/50 h-auto min-w-0">
-                  {contentTabs.map(tab => (
-                    <TabsTrigger
-                      key={tab.value}
-                      value={tab.value}
-                      className="text-xs sm:text-sm py-2 px-1 sm:px-3 text-center truncate min-w-0 font-medium"
-                    >
-                      {tab.label}
-                    </TabsTrigger>
-                  ))}
+              <Tabs value={activeContentTab} onValueChange={(val) => val && setActiveContentTab(val)} className="w-full min-w-0">
+                <TabsList className="grid grid-cols-3 w-full rounded-xl p-1 bg-muted/60 mb-4 border border-border/50 h-auto min-w-0 gap-1">
+                  {contentTabs.map(tab => {
+                    const isActive = activeContentTab === tab.value;
+                    return (
+                      <TabsTrigger
+                        key={tab.value}
+                        value={tab.value}
+                        className={cn(
+                          "text-xs sm:text-sm py-2 px-1 sm:px-3 text-center truncate min-w-0 font-medium rounded-lg transition-all",
+                          isActive
+                            ? "bg-background text-foreground shadow-sm font-semibold border border-border/70"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                        )}
+                      >
+                        {tab.label}
+                      </TabsTrigger>
+                    );
+                  })}
                 </TabsList>
 
                 {contentTabs.map(tab => (
