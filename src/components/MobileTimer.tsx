@@ -18,6 +18,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { cn } from 'cn';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import { recordTopicTime } from '@/lib/timeTracking';
 
 type TimerMode = 'stopwatch' | 'countdown';
 
@@ -28,6 +31,7 @@ const COUNTDOWN_PRESETS = [
 ];
 
 export function MobileTimer() {
+  const { items: ideas } = useSelector((state: RootState) => state.ideas);
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [mode, setMode] = useState<TimerMode>('stopwatch');
   const [seconds, setSeconds] = useState<number>(0);
@@ -35,9 +39,12 @@ export function MobileTimer() {
   const [stoppedDueToBackground, setStoppedDueToBackground] = useState<boolean>(false);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [isFloating, setIsFloating] = useState<boolean>(false);
+  const [selectedTopicId, setSelectedTopicId] = useState<string>('');
 
   const isRunningRef = useRef<boolean>(isRunning);
   isRunningRef.current = isRunning;
+  const selectedTopicIdRef = useRef<string>(selectedTopicId);
+  selectedTopicIdRef.current = selectedTopicId;
 
   // 1. Mobile viewport detection: only works on mobile screens (< 768px)
   useEffect(() => {
@@ -113,6 +120,11 @@ export function MobileTimer() {
           }
           return prev - 1;
         });
+      }
+
+      // Record 1 second to the selected topic
+      if (selectedTopicIdRef.current) {
+        recordTopicTime(selectedTopicIdRef.current, 1);
       }
     }, 1000);
 
@@ -355,7 +367,50 @@ export function MobileTimer() {
                 )}
               </div>
 
-              <p className="text-[10px] text-muted-foreground/80 flex items-center gap-1">
+              {/* Topic Selector for Session */}
+              <div className="pt-1.5 space-y-1.5">
+                <div className="flex items-center justify-between gap-1 text-[11px]">
+                  <span className="text-muted-foreground font-medium">Link session to topic:</span>
+                  {selectedTopicId && (
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          recordTopicTime(selectedTopicId, 15 * 60);
+                          toast.success('Added +15m to topic!');
+                        }}
+                        className="text-[10px] px-1.5 py-0.5 rounded bg-muted hover:bg-muted/80 text-foreground border border-border/50"
+                      >
+                        +15m
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          recordTopicTime(selectedTopicId, 30 * 60);
+                          toast.success('Added +30m to topic!');
+                        }}
+                        className="text-[10px] px-1.5 py-0.5 rounded bg-muted hover:bg-muted/80 text-foreground border border-border/50"
+                      >
+                        +30m
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <select
+                  value={selectedTopicId}
+                  onChange={(e) => setSelectedTopicId(e.target.value)}
+                  className="w-full text-xs bg-background/80 border border-border/80 rounded-md px-2.5 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary truncate"
+                >
+                  <option value="">-- General Focus (No specific topic) --</option>
+                  {ideas.map((idea) => (
+                    <option key={idea.id} value={idea.id}>
+                      {idea.idea || 'Untitled Topic'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <p className="text-[10px] text-muted-foreground/80 flex items-center gap-1 pt-0.5">
                 <Clock className="w-3 h-3 text-muted-foreground/60 shrink-0" />
                 <span>Timer strictly pauses if the mobile browser is minimized or sent to background.</span>
               </p>

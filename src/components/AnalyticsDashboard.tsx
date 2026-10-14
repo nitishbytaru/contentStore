@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TrendingUp, CheckCircle, FileText, Target, AlertCircle, Bell, Video, Calendar, Clock } from 'lucide-react';
+import { TrendingUp, CheckCircle, FileText, Target, AlertCircle, Bell, Video, Calendar, Clock, Timer, Hourglass, Sparkles, Layers } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend,
   PieChart, Pie, Cell,
@@ -15,12 +15,21 @@ import { fetchIdeas } from '@/store/slices/ideasSlice';
 import { AppDispatch, RootState } from '@/store';
 import { cn } from 'cn';
 import { calculateCadence } from '@/lib/cadence';
+import { calculateTopicTimeAnalytics } from '@/lib/timeTracking';
 
 const PIE_COLORS = ['#8b5cf6', '#f59e0b', '#10b981'];
+const TOPIC_COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#06b6d4', '#64748b'];
 
 export function AnalyticsDashboard() {
   const dispatch = useDispatch<AppDispatch>();
   const { items: ideas, loading, error, hasFetched } = useSelector((state: RootState) => state.ideas);
+  const [timeUpdateKey, setTimeUpdateKey] = useState(0);
+
+  useEffect(() => {
+    const handleTimeUpdate = () => setTimeUpdateKey((k) => k + 1);
+    window.addEventListener('topic-time-updated', handleTimeUpdate);
+    return () => window.removeEventListener('topic-time-updated', handleTimeUpdate);
+  }, []);
 
   useEffect(() => {
     if (!hasFetched) {
@@ -192,6 +201,15 @@ export function AnalyticsDashboard() {
 
   const { totalIdeas, activeIdeas, fullyPublished, completionRate, barChartData, pieChartData, timelineData } = analyticsData;
   const cadence = useMemo(() => calculateCadence(ideas), [ideas]);
+  const topicAnalytics = useMemo(() => calculateTopicTimeAnalytics(ideas), [ideas, timeUpdateKey]);
+  const topTopicsForChart = useMemo(() => {
+    return topicAnalytics.topics.slice(0, 8).map((t) => ({
+      ...t,
+      researchHours: Number((t.researchMinutes / 60).toFixed(1)),
+      articleHours: Number((t.articleMinutes / 60).toFixed(1)),
+      videoHours: Number((t.videoMinutes / 60).toFixed(1)),
+    }));
+  }, [topicAnalytics]);
 
   const tooltipStyle = { 
     backgroundColor: 'var(--card)', 
@@ -501,6 +519,198 @@ export function AnalyticsDashboard() {
             </ResponsiveContainer>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Time Spent on Each Topic */}
+      <div className="space-y-4 pt-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Clock className="w-4 h-4 text-primary" />
+            <h2 className="text-sm font-semibold tracking-tight">Time Spent on Each Topic</h2>
+          </div>
+          <span className="text-xs text-muted-foreground hidden sm:inline">
+            Tracking research, writing, and video scripting effort
+          </span>
+        </div>
+
+        {/* Time Metrics Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-muted-foreground">Total Invested Time</p>
+                <Timer className="w-4 h-4 text-violet-500" />
+              </div>
+              <p className="text-2xl font-semibold">{topicAnalytics.totalHoursFormatted}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Across all {topicAnalytics.topics.length} topics</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-muted-foreground">Avg Time / Topic</p>
+                <Hourglass className="w-4 h-4 text-amber-500" />
+              </div>
+              <p className="text-2xl font-semibold">{topicAnalytics.averageMinutes} mins</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Estimated & tracked effort</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-muted-foreground">Top Invested Topic</p>
+                <Sparkles className="w-4 h-4 text-emerald-500" />
+              </div>
+              <p className="text-sm font-semibold truncate" title={topicAnalytics.topTopic?.fullName}>
+                {topicAnalytics.topTopic?.topic || 'N/A'}
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {topicAnalytics.topTopic ? `${topicAnalytics.topTopic.formattedTime} invested` : 'No data'}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-muted-foreground">Active Topics</p>
+                <Layers className="w-4 h-4 text-sky-500" />
+              </div>
+              <p className="text-2xl font-semibold">{topicAnalytics.topics.length}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">With content & focus logs</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Topic Time Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Horizontal Bar Chart: Time Spent per Topic */}
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-sm font-medium">Time Invested per Topic</CardTitle>
+                  <CardDescription className="text-xs">Top topics breakdown by Research, Articles, and Videos</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="h-[340px] sm:h-[380px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  layout="vertical"
+                  data={topTopicsForChart}
+                  margin={{ top: 8, right: 16, left: 0, bottom: 8 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} horizontal={false} />
+                  <XAxis 
+                    type="number" 
+                    unit="h" 
+                    tick={axisStyle} 
+                    stroke={gridStroke} 
+                  />
+                  <YAxis 
+                    type="category" 
+                    dataKey="topic" 
+                    width={110} 
+                    tick={{ ...axisStyle, fontSize: 10 }} 
+                    stroke={gridStroke} 
+                  />
+                  <RechartsTooltip
+                    cursor={{ fill: 'var(--muted)', opacity: 0.2 }}
+                    contentStyle={tooltipStyle}
+                    formatter={(val: any, name: any) => [`${val} hrs`, String(name ?? '')]}
+                    labelFormatter={(_label, payload) => {
+                      if (payload && payload.length > 0) {
+                        const item = payload[0].payload;
+                        return `${item.fullName} (Total: ${item.formattedTime})`;
+                      }
+                      return _label;
+                    }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
+                  <Bar dataKey="researchHours" name="Research" fill="#8b5cf6" stackId="t" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="articleHours" name="Articles" fill="#10b981" stackId="t" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="videoHours" name="Videos" fill="#ef4444" stackId="t" radius={[0, 3, 3, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Donut Chart: Topic Time Share */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Topic Time Share</CardTitle>
+              <CardDescription className="text-xs">Distribution of total focus time across top topics</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[340px] sm:h-[380px] flex items-center justify-center">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={topicAnalytics.pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius="50%"
+                    outerRadius="78%"
+                    paddingAngle={3}
+                    dataKey="value"
+                  >
+                    {topicAnalytics.pieData.map((_, index) => (
+                      <Cell key={`topic-cell-${index}`} fill={TOPIC_COLORS[index % TOPIC_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <RechartsTooltip
+                    contentStyle={tooltipStyle}
+                    formatter={(val: any, name: any, item: any) => [
+                      `${val} hrs (${item.payload.formatted})`,
+                      String(item.payload.fullName || name || '')
+                    ]}
+                  />
+                  <Legend wrapperStyle={{ fontSize: '11px', maxHeight: '70px', overflowY: 'auto' }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Stage Breakdown Cards */}
+          <Card className="lg:col-span-2">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Time Allocation by Content Format</CardTitle>
+              <CardDescription className="text-xs">Cumulative time invested in research, writing articles, and video production</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {topicAnalytics.stageBreakdown.map((stage) => {
+                  const percent = topicAnalytics.totalMinutes > 0 
+                    ? Math.round((stage.minutes / topicAnalytics.totalMinutes) * 100) 
+                    : 0;
+                  return (
+                    <div 
+                      key={stage.stage} 
+                      className="p-3.5 rounded-xl border border-border/60 bg-muted/20 space-y-2"
+                    >
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-medium text-foreground">{stage.stage}</span>
+                        <span className="font-semibold" style={{ color: stage.color }}>{stage.hours} hrs</span>
+                      </div>
+                      <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+                        <div 
+                          className="h-full rounded-full transition-all"
+                          style={{ width: `${percent}%`, backgroundColor: stage.color }}
+                        />
+                      </div>
+                      <div className="flex justify-between text-[11px] text-muted-foreground">
+                        <span>{percent}% of focus time</span>
+                        <span>{stage.minutes} mins</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
