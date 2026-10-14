@@ -213,19 +213,24 @@ export function TweetPlanner() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <div className="relative w-full sm:max-w-sm">
+      <div className="flex items-center justify-between gap-2.5 sm:gap-3 w-full">
+        <div className="relative flex-1 sm:max-w-sm min-w-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input 
             placeholder="Search ideas..." 
             value={searchQuery}
             onChange={(e) => dispatch(setSearchQuery(e.target.value))}
-            className="pl-9 w-full"
+            className="pl-9 h-9 w-full"
           />
         </div>
-        <Button onClick={() => router.push('/ideas/new')} className="w-full sm:w-auto shrink-0">
-          <Plus className="mr-2 h-4 w-4" />
-          Create New Idea
+        <Button 
+          onClick={() => router.push('/ideas/new')} 
+          className="shrink-0 h-9 w-9 sm:w-auto p-0 sm:px-4"
+          title="Create New Idea"
+          aria-label="Create New Idea"
+        >
+          <Plus className="h-4 w-4 sm:mr-2 shrink-0" />
+          <span className="hidden sm:inline">Create New Idea</span>
         </Button>
       </div>
 
