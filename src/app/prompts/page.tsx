@@ -173,7 +173,7 @@ export default function PromptsPage() {
                   placeholder="Paste your prompt template here..." 
                   value={newContent} 
                   onChange={e => setNewContent(e.target.value)}
-                  className="min-h-[120px]"
+                  className="min-h-[120px] max-h-[320px] overflow-y-auto overscroll-contain"
                   disabled={actionLoading}
                 />
               </div>
@@ -224,7 +224,7 @@ export default function PromptsPage() {
                   <Textarea 
                     value={editContent} 
                     onChange={e => setEditContent(e.target.value)} 
-                    className="flex-1 min-h-[120px]"
+                    className="flex-1 min-h-[120px] max-h-[300px] overflow-y-auto overscroll-contain"
                   />
                   <div className="flex justify-end gap-2">
                     <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}><X className="h-4 w-4" /></Button>

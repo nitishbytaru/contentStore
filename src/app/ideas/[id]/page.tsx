@@ -244,7 +244,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
                         placeholder={tab.placeholder}
                         value={(idea[tab.value as keyof IdeaDetails] as string) || ''}
                         onChange={(e) => handleTextChange(tab.value as keyof IdeaDetails, e.target.value)}
-                        className="min-h-[350px] md:min-h-[450px] w-full max-w-full resize-y text-sm p-3.5 sm:p-4 pr-10 sm:pr-12 leading-relaxed break-words overflow-x-hidden [field-sizing:fixed]"
+                        className="h-[380px] sm:h-[480px] md:h-[520px] max-h-[65vh] w-full max-w-full resize-none sm:resize-y text-sm p-3.5 sm:p-4 pr-10 sm:pr-12 leading-relaxed break-words overflow-x-hidden overflow-y-auto overscroll-contain"
                       />
                       <Button 
                         size="icon" 

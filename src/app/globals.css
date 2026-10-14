@@ -135,6 +135,29 @@
   button, input, optgroup, select, textarea {
     font-family: inherit;
   }
+  textarea {
+    field-sizing: fixed;
+  }
+}
+
+/* Sleek custom scrollbars for textareas */
+textarea::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+textarea::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.25);
+  border-radius: 9999px;
+}
+textarea::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.45);
+}
+textarea {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.25) transparent;
 }
 
 /* Utility: hide scrollbar */
