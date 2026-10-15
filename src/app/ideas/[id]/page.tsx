@@ -2,8 +2,9 @@
 
 import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Save, Copy, Loader2, Sparkles } from 'lucide-react';
+import { ArrowLeft, Save, Copy, Loader2, Sparkles, Tv } from 'lucide-react';
 import { toast } from 'sonner';
+import ScriptPrompter from '@/components/ScriptPrompter';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -49,6 +50,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
   const [saving, setSaving] = useState(false);
   const [idea, setIdea] = useState<IdeaDetails | null>(null);
   const [activeContentTab, setActiveContentTab] = useState<string>('baseArticle');
+  const [isPrompterOpen, setIsPrompterOpen] = useState(false);
 
   // Initialize and fetch from store if needed
   useEffect(() => {
@@ -250,31 +252,77 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
                   })}
                 </TabsList>
 
-                {contentTabs.map(tab => (
-                  <TabsContent
-                    key={tab.value}
-                    value={tab.value}
-                    className="focus-visible:outline-none focus-visible:ring-0 mt-0 w-full min-w-0"
-                  >
-                    <div className="relative group w-full min-w-0">
-                      <Textarea 
-                        placeholder={tab.placeholder}
-                        value={(idea[tab.value as keyof IdeaDetails] as string) || ''}
-                        onChange={(e) => handleTextChange(tab.value as keyof IdeaDetails, e.target.value)}
-                        className="h-[380px] sm:h-[480px] md:h-[520px] max-h-[65vh] w-full max-w-full resize-none sm:resize-y text-sm p-3.5 sm:p-4 pr-10 sm:pr-12 leading-relaxed break-words overflow-x-hidden overflow-y-auto overscroll-contain"
-                      />
-                      <Button 
-                        size="icon" 
-                        variant="secondary" 
-                        className="absolute top-3 right-3 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 shadow-xs"
-                        onClick={() => handleCopyContent(idea[tab.value as keyof IdeaDetails] as string)}
-                        title="Copy content"
-                      >
-                        <Copy className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </TabsContent>
-                ))}
+                {contentTabs.map(tab => {
+                  const isVideoScript = tab.value === 'youtubeScript';
+                  const contentText = (idea[tab.value as keyof IdeaDetails] as string) || '';
+                  const wordCount = contentText.trim().split(/\s+/).filter(Boolean).length;
+                  const readingTimeMins = Math.max(1, Math.round(wordCount / 130));
+
+                  return (
+                    <TabsContent
+                      key={tab.value}
+                      value={tab.value}
+                      className="focus-visible:outline-none focus-visible:ring-0 mt-0 w-full min-w-0"
+                    >
+                      {/* Section Toolbar / Info Bar */}
+                      <div className="flex items-center justify-between gap-2 mb-2 px-1">
+                        <div className="flex items-center gap-2 min-w-0">
+                          {isVideoScript ? (
+                            <span className="text-xs font-semibold text-primary flex items-center gap-1.5 shrink-0">
+                              <Tv className="w-3.5 h-3.5" />
+                              Video Script
+                            </span>
+                          ) : (
+                            <span className="text-xs font-medium text-muted-foreground truncate">
+                              {tab.label}
+                            </span>
+                          )}
+                          {wordCount > 0 && (
+                            <span className="text-[11px] text-muted-foreground bg-muted/80 px-2 py-0.5 rounded-full font-mono shrink-0">
+                              {wordCount} words {isVideoScript ? `• ~${readingTimeMins}m read` : ''}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {isVideoScript && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="default"
+                              onClick={() => setIsPrompterOpen(true)}
+                              className="h-7.5 px-3 text-xs font-semibold gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]"
+                              title="Open full-screen prompter for recording from a distance"
+                            >
+                              <Tv className="h-3.5 w-3.5" />
+                              Prompter
+                            </Button>
+                          )}
+                          <Button 
+                            type="button"
+                            size="sm" 
+                            variant="outline" 
+                            className="h-7.5 px-2.5 text-xs gap-1.5 text-muted-foreground hover:text-foreground border-border/70 hover:bg-muted"
+                            onClick={() => handleCopyContent(contentText)}
+                            title="Copy content"
+                          >
+                            <Copy className="h-3 w-3" />
+                            <span className="hidden sm:inline text-xs">Copy</span>
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="relative group w-full min-w-0">
+                        <Textarea 
+                          placeholder={tab.placeholder}
+                          value={contentText}
+                          onChange={(e) => handleTextChange(tab.value as keyof IdeaDetails, e.target.value)}
+                          className="h-[380px] sm:h-[480px] md:h-[520px] max-h-[65vh] w-full max-w-full resize-none sm:resize-y text-sm p-3.5 sm:p-4 leading-relaxed break-words overflow-x-hidden overflow-y-auto overscroll-contain"
+                        />
+                      </div>
+                    </TabsContent>
+                  );
+                })}
               </Tabs>
             </CardContent>
           </Card>
@@ -376,6 +424,16 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
           </Card>
         </div>
       </div>
+
+      {/* Fullscreen Video Script Prompter */}
+      {idea && (
+        <ScriptPrompter
+          isOpen={isPrompterOpen}
+          onClose={() => setIsPrompterOpen(false)}
+          title={idea.idea}
+          script={idea.youtubeScript || ''}
+        />
+      )}
     </div>
   );
 }
