@@ -26,6 +26,19 @@ const BOOLEAN_FIELDS = [
 async function getIdeasSheet() {
   const doc = await getGoogleSheet();
   const sheet = doc.sheetsByIndex[0];
+
+  // Ensure sheet has enough columns for all headers (Google Sheets defaults to 26 columns A-Z, but we have 31)
+  const targetCols = Math.max(HEADERS.length + 10, 45);
+  if ((sheet.columnCount || 0) < targetCols) {
+    try {
+      await sheet.resize({
+        rowCount: Math.max(sheet.rowCount || 100, 100),
+        columnCount: targetCols,
+      });
+    } catch (resizeErr) {
+      console.warn('Failed pre-resizing sheet columns:', resizeErr);
+    }
+  }
   
   try {
     await sheet.loadHeaderRow();
@@ -40,9 +53,21 @@ async function getIdeasSheet() {
       }
     }
     if (headersModified) {
+      if (currentHeaders.length > (sheet.columnCount || 0)) {
+        await sheet.resize({
+          rowCount: Math.max(sheet.rowCount || 100, 100),
+          columnCount: currentHeaders.length + 10,
+        });
+      }
       await sheet.setHeaderRow(currentHeaders);
     }
   } catch (e) {
+    if (HEADERS.length > (sheet.columnCount || 0)) {
+      await sheet.resize({
+        rowCount: Math.max(sheet.rowCount || 100, 100),
+        columnCount: Math.max(HEADERS.length + 10, 45),
+      });
+    }
     // If headers don't exist, set them
     await sheet.setHeaderRow(HEADERS);
   }

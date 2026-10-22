@@ -5,36 +5,23 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
-  TrendingUp, CheckCircle, FileText, AlertCircle, Clock, Timer, 
+  TrendingUp, CheckCircle, FileText, AlertCircle, Clock, 
   Hourglass, Sparkles, Layers, Film, Scissors, Upload, Video, 
   ArrowRight, ArrowDownRight, ArrowUpRight, Zap, BarChart3, 
   Search, BookOpen, CheckCircle2, ChevronRight
 } from 'lucide-react';
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend,
-  PieChart, Pie, Cell,
-  AreaChart, Area
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend, Cell
 } from 'recharts';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchIdeas } from '@/store/slices/ideasSlice';
 import { AppDispatch, RootState } from '@/store';
 import { cn } from 'cn';
-import { calculateTopicTimeAnalytics } from '@/lib/timeTracking';
 import { calculateConversionAnalytics, StageDurationStat } from '@/lib/stageAnalytics';
-
-const PIE_COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ec4899'];
-const TOPIC_COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#06b6d4', '#64748b'];
 
 export function AnalyticsDashboard() {
   const dispatch = useDispatch<AppDispatch>();
   const { items: ideas, loading, error, hasFetched } = useSelector((state: RootState) => state.ideas);
-  const [timeUpdateKey, setTimeUpdateKey] = useState(0);
-
-  useEffect(() => {
-    const handleTimeUpdate = () => setTimeUpdateKey((k) => k + 1);
-    window.addEventListener('topic-time-updated', handleTimeUpdate);
-    return () => window.removeEventListener('topic-time-updated', handleTimeUpdate);
-  }, []);
 
   useEffect(() => {
     if (!hasFetched) {
@@ -47,17 +34,6 @@ export function AnalyticsDashboard() {
     if (!ideas.length) return null;
     return calculateConversionAnalytics(ideas);
   }, [ideas]);
-
-  // Topic time tracking analytics
-  const topicAnalytics = useMemo(() => calculateTopicTimeAnalytics(ideas), [ideas, timeUpdateKey]);
-  const topTopicsForChart = useMemo(() => {
-    return topicAnalytics.topics.slice(0, 7).map((t) => ({
-      ...t,
-      researchHours: Number((t.researchMinutes / 60).toFixed(1)),
-      articleHours: Number((t.articleMinutes / 60).toFixed(1)),
-      videoHours: Number((t.videoMinutes / 60).toFixed(1)),
-    }));
-  }, [topicAnalytics]);
 
   if (error) {
     return (
@@ -133,13 +109,6 @@ export function AnalyticsDashboard() {
     color: s.color,
   }));
 
-  // Format distribution pie data
-  const formatPieData = [
-    { name: 'Articles Only', value: Math.max(0, formats.articles - formats.both), color: '#10b981' },
-    { name: 'Videos Only', value: Math.max(0, formats.videos - formats.both), color: '#f43f5e' },
-    { name: 'Both Formats', value: formats.both, color: '#8b5cf6' },
-    { name: 'Research Only', value: formats.neither, color: '#3b82f6' },
-  ].filter(d => d.value > 0);
 
   return (
     <div className="space-y-7 pb-10">
@@ -644,102 +613,6 @@ export function AnalyticsDashboard() {
         </CardContent>
       </Card>
 
-      {/* 5. Topic Focus Time Tracking Analytics */}
-      <div className="space-y-3 pt-1">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Timer className="w-4 h-4 text-primary" />
-            <h2 className="text-base font-semibold tracking-tight text-foreground">
-              Focus Time Invested per Topic
-            </h2>
-          </div>
-          <span className="text-xs text-muted-foreground">
-            Total {topicAnalytics.totalHoursFormatted} tracked across {topicAnalytics.topics.length} topics
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Horizontal Bar Chart: Time Invested per Topic */}
-          <Card className="rounded-xl border-border/75">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold">Time Invested per Topic (Hours)</CardTitle>
-              <CardDescription className="text-xs">Top topics categorized by Research, Articles, and Videos</CardDescription>
-            </CardHeader>
-            <CardContent className="h-[320px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  layout="vertical"
-                  data={topTopicsForChart}
-                  margin={{ top: 8, right: 16, left: 0, bottom: 8 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} horizontal={false} />
-                  <XAxis 
-                    type="number" 
-                    unit="h" 
-                    tick={axisStyle} 
-                    stroke={gridStroke} 
-                  />
-                  <YAxis 
-                    type="category" 
-                    dataKey="topic" 
-                    width={110} 
-                    tick={{ ...axisStyle, fontSize: 10 }} 
-                    stroke={gridStroke} 
-                  />
-                  <RechartsTooltip
-                    cursor={{ fill: 'var(--muted)', opacity: 0.2 }}
-                    contentStyle={tooltipStyle}
-                    formatter={(val: any, name: any) => [`${val} hrs`, String(name ?? '')]}
-                    labelFormatter={(_label, payload) => {
-                      if (payload && payload.length > 0) {
-                        const item = payload[0].payload;
-                        return `${item.fullName} (Total: ${item.formattedTime})`;
-                      }
-                      return _label;
-                    }}
-                  />
-                  <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
-                  <Bar dataKey="researchHours" name="Research" fill="#8b5cf6" stackId="t" />
-                  <Bar dataKey="articleHours" name="Articles" fill="#10b981" stackId="t" />
-                  <Bar dataKey="videoHours" name="Videos" fill="#f43f5e" stackId="t" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* Format Share Pie Chart */}
-          <Card className="rounded-xl border-border/75">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold">Format Distribution Share</CardTitle>
-              <CardDescription className="text-xs">Proportion of ideas converted by format</CardDescription>
-            </CardHeader>
-            <CardContent className="h-[320px] flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={formatPieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius="48%"
-                    outerRadius="76%"
-                    paddingAngle={4}
-                    dataKey="value"
-                  >
-                    {formatPieData.map((entry, index) => (
-                      <Cell key={`format-cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <RechartsTooltip 
-                    contentStyle={tooltipStyle} 
-                    formatter={(val: any, name: any) => [`${val} ideas`, String(name)]}
-                  />
-                  <Legend wrapperStyle={{ fontSize: '11px' }} />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
     </div>
   );
 }
