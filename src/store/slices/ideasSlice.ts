@@ -34,6 +34,9 @@ export interface Idea {
   videoUploadedAt?: string;
 }
 
+export type IdeaTypeFilter = 'all' | 'research' | 'article' | 'video';
+export type IdeaStatusFilter = 'pending' | 'completed';
+
 interface IdeasState {
   items: Idea[];
   loading: boolean;
@@ -41,6 +44,8 @@ interface IdeasState {
   actionLoading: boolean; // For create/update/delete specific actions
   hasFetched: boolean;
   searchQuery: string;
+  typeFilter: IdeaTypeFilter;
+  statusFilter: IdeaStatusFilter;
   activeTab: string;
 }
 
@@ -51,6 +56,8 @@ const initialState: IdeasState = {
   actionLoading: false,
   hasFetched: false,
   searchQuery: '',
+  typeFilter: 'all',
+  statusFilter: 'pending',
   activeTab: 'pending',
 };
 
@@ -117,6 +124,12 @@ const ideasSlice = createSlice({
     setSearchQuery: (state, action: PayloadAction<string>) => {
       state.searchQuery = action.payload;
     },
+    setTypeFilter: (state, action: PayloadAction<IdeaTypeFilter>) => {
+      state.typeFilter = action.payload;
+    },
+    setStatusFilter: (state, action: PayloadAction<IdeaStatusFilter>) => {
+      state.statusFilter = action.payload;
+    },
     setActiveTab: (state, action: PayloadAction<string>) => {
       state.activeTab = action.payload;
     }
@@ -145,6 +158,8 @@ const ideasSlice = createSlice({
       state.actionLoading = false;
       state.items.unshift(action.payload);
       state.activeTab = 'pending';
+      state.statusFilter = 'pending';
+      state.typeFilter = 'all';
     });
     builder.addCase(addIdea.rejected, (state, action) => {
       state.actionLoading = false;
@@ -182,5 +197,5 @@ const ideasSlice = createSlice({
   },
 });
 
-export const { setSearchQuery, setActiveTab } = ideasSlice.actions;
+export const { setSearchQuery, setTypeFilter, setStatusFilter, setActiveTab } = ideasSlice.actions;
 export default ideasSlice.reducer;

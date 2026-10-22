@@ -37,11 +37,67 @@ export type IdeaChecklistFields = {
   videoUploadedAt?: string;
 };
 
+export type IdeaTypeFilter = 'all' | 'research' | 'article' | 'video';
+export type IdeaStatusFilter = 'pending' | 'completed';
+
 /**
  * Checks if an idea has been finalized and marked as completed.
  */
 export const isIdeaCompleted = (idea: IdeaChecklistFields): boolean => {
   return idea.status === 'posted' || idea.status === 'completed';
+};
+
+export const isArticleIdea = (idea: IdeaChecklistFields): boolean => {
+  return Boolean(idea.eligibleMedium || idea.eligibleSubstack);
+};
+
+export const isVideoIdea = (idea: IdeaChecklistFields): boolean => {
+  return Boolean(idea.eligibleYoutube || idea.eligibleInstagram);
+};
+
+export const hasIdeaResearch = (idea: IdeaChecklistFields): boolean => {
+  return Boolean(idea.baseArticle && idea.baseArticle.trim().length > 0);
+};
+
+export const isArticlePublished = (idea: IdeaChecklistFields): boolean => {
+  return Boolean(idea.articlePublishedDone || idea.publishedMedium || idea.publishedSubstack);
+};
+
+export const isVideoPublished = (idea: IdeaChecklistFields): boolean => {
+  return Boolean(idea.videoUploadedDone || idea.publishedYoutube || idea.publishedInstagram);
+};
+
+/**
+ * Filter evaluation for the dual-group filter system:
+ * Group 1 (Type): 'all' | 'research' | 'article' | 'video'
+ * Group 2 (Status): 'pending' | 'completed'
+ */
+export const matchesIdeaFilters = (
+  idea: IdeaChecklistFields,
+  typeFilter: IdeaTypeFilter = 'all',
+  statusFilter: IdeaStatusFilter = 'pending'
+): boolean => {
+  const completed = isIdeaCompleted(idea);
+  const articleSelected = isArticleIdea(idea);
+  const videoSelected = isVideoIdea(idea);
+  const articleDone = isArticlePublished(idea) || completed;
+  const videoDone = isVideoPublished(idea) || completed;
+  const researchDone = hasIdeaResearch(idea) || completed;
+
+  if (statusFilter === 'completed') {
+    if (typeFilter === 'all') return completed;
+    if (typeFilter === 'research') return researchDone;
+    if (typeFilter === 'article') return articleSelected && articleDone;
+    if (typeFilter === 'video') return videoSelected && videoDone;
+  } else {
+    // statusFilter === 'pending'
+    if (typeFilter === 'all') return !completed;
+    if (typeFilter === 'research') return !completed && (!hasIdeaResearch(idea) || (!articleSelected && !videoSelected));
+    if (typeFilter === 'article') return articleSelected && !articleDone && !completed;
+    if (typeFilter === 'video') return videoSelected && !videoDone && !completed;
+  }
+
+  return true;
 };
 
 /**
@@ -62,8 +118,8 @@ export const isIdeaPending = (idea: IdeaChecklistFields): boolean => {
 export const isIdeaForArticles = (idea: IdeaChecklistFields): boolean => {
   if (isIdeaCompleted(idea)) return false;
   const isArticleRequired = Boolean(idea.eligibleMedium || idea.eligibleSubstack);
-  const isArticlePublished = Boolean(idea.articlePublishedDone || idea.publishedMedium || idea.publishedSubstack);
-  return isArticleRequired && !isArticlePublished;
+  const isArticlePub = isArticlePublished(idea);
+  return isArticleRequired && !isArticlePub;
 };
 
 /**
@@ -73,8 +129,8 @@ export const isIdeaForArticles = (idea: IdeaChecklistFields): boolean => {
 export const isIdeaForVideos = (idea: IdeaChecklistFields): boolean => {
   if (isIdeaCompleted(idea)) return false;
   const isVideoRequired = Boolean(idea.eligibleYoutube || idea.eligibleInstagram);
-  const isVideoPublished = Boolean(idea.videoUploadedDone || idea.publishedYoutube || idea.publishedInstagram);
-  return isVideoRequired && !isVideoPublished;
+  const isVideoPub = isVideoPublished(idea);
+  return isVideoRequired && !isVideoPub;
 };
 
 /**

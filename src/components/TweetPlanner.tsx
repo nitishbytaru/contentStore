@@ -6,26 +6,23 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   AlertCircle, Clock, Trash2, Edit, Save, X, Copy, FileText, Video, 
-  List, Plus, Search, Loader2, CheckCircle, ExternalLink 
+  List, Plus, Search, Loader2, CheckCircle, ExternalLink,
+  Layers, BookOpen
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from "sonner";
 import { useDispatch, useSelector } from 'react-redux';
 import { 
   fetchIdeas, deleteIdea, updateIdea, addIdea, Idea, 
-  setSearchQuery, setActiveTab 
+  setSearchQuery, setTypeFilter, setStatusFilter, IdeaTypeFilter, IdeaStatusFilter 
 } from '@/store/slices/ideasSlice';
 import { RootState, AppDispatch } from '@/store';
 import { cn } from 'cn';
 import { 
   getIdeaPublishStatus, 
-  isIdeaPending, 
-  isIdeaCompleted, 
-  isIdeaForArticles, 
-  isIdeaForVideos 
+  matchesIdeaFilters 
 } from '@/lib/ideaStatus';
 import { MobileTimer } from '@/components/MobileTimer';
 
@@ -39,7 +36,8 @@ export function IdeasPlanner() {
     actionLoading, 
     hasFetched, 
     searchQuery, 
-    activeTab 
+    typeFilter = 'all', 
+    statusFilter = 'pending' 
   } = useSelector((state: RootState) => state.ideas);
 
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -108,21 +106,37 @@ export function IdeasPlanner() {
     toast.success('Copied to clipboard!');
   };
 
-  const filteredIdeas = ideas
-    .filter(i => i.idea.toLowerCase().includes(searchQuery.toLowerCase()))
-    .sort((a, b) => {
-      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      if (isNaN(timeA) && isNaN(timeB)) return 0;
-      if (isNaN(timeA)) return 1;
-      if (isNaN(timeB)) return -1;
-      return timeB - timeA;
-    });
-  
-  const pendingIdeas = filteredIdeas.filter(isIdeaPending);
-  const eligibleForArticles = filteredIdeas.filter(isIdeaForArticles);
-  const eligibleForVideos = filteredIdeas.filter(isIdeaForVideos);
-  const completedIdeas = filteredIdeas.filter(isIdeaCompleted);
+  const sortedIdeas = useMemo(() => {
+    return [...ideas]
+      .filter(i => !searchQuery.trim() || i.idea.toLowerCase().includes(searchQuery.toLowerCase()))
+      .sort((a, b) => {
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        if (isNaN(timeA) && isNaN(timeB)) return 0;
+        if (isNaN(timeA)) return 1;
+        if (isNaN(timeB)) return -1;
+        return timeB - timeA;
+      });
+  }, [ideas, searchQuery]);
+
+  const currentFilteredIdeas = useMemo(() => {
+    return sortedIdeas.filter(idea => matchesIdeaFilters(idea, typeFilter, statusFilter));
+  }, [sortedIdeas, typeFilter, statusFilter]);
+
+  const filterCounts = useMemo(() => {
+    return {
+      status: {
+        pending: sortedIdeas.filter(idea => matchesIdeaFilters(idea, 'all', 'pending')).length,
+        completed: sortedIdeas.filter(idea => matchesIdeaFilters(idea, 'all', 'completed')).length,
+      },
+      type: {
+        all: sortedIdeas.filter(idea => matchesIdeaFilters(idea, 'all', statusFilter)).length,
+        research: sortedIdeas.filter(idea => matchesIdeaFilters(idea, 'research', statusFilter)).length,
+        article: sortedIdeas.filter(idea => matchesIdeaFilters(idea, 'article', statusFilter)).length,
+        video: sortedIdeas.filter(idea => matchesIdeaFilters(idea, 'video', statusFilter)).length,
+      }
+    };
+  }, [sortedIdeas, statusFilter]);
 
   if (error) {
     return (
@@ -334,13 +348,34 @@ export function IdeasPlanner() {
     </div>
   );
 
-  const tabItems = [
-    { id: 'pending', label: 'Pending', count: pendingIdeas.length, icon: Clock },
-    { id: 'articles', label: 'Articles', count: eligibleForArticles.length, icon: FileText },
-    { id: 'videos', label: 'Videos', count: eligibleForVideos.length, icon: Video },
-    { id: 'completed', label: 'Completed', count: completedIdeas.length, icon: CheckCircle },
-    { id: 'all', label: 'All Ideas', count: filteredIdeas.length, icon: List },
+  const typeOptions: Array<{ id: IdeaTypeFilter; label: string; icon: any; count: number }> = [
+    { id: 'all', label: 'All', icon: Layers, count: filterCounts.type.all },
+    { id: 'research', label: 'Research', icon: BookOpen, count: filterCounts.type.research },
+    { id: 'article', label: 'Article', icon: FileText, count: filterCounts.type.article },
+    { id: 'video', label: 'Video', icon: Video, count: filterCounts.type.video },
   ];
+
+  const statusOptions: Array<{ id: IdeaStatusFilter; label: string; icon: any; count: number }> = [
+    { id: 'pending', label: 'Pending', icon: Clock, count: filterCounts.status.pending },
+    { id: 'completed', label: 'Completed', icon: CheckCircle, count: filterCounts.status.completed },
+  ];
+
+  const getEmptyMessage = () => {
+    if (searchQuery.trim()) {
+      return `No ideas match your search for "${searchQuery}".`;
+    }
+    if (statusFilter === 'completed') {
+      if (typeFilter === 'video') return 'No completed video ideas yet. Complete and upload a video to see it here.';
+      if (typeFilter === 'article') return 'No completed article ideas yet. Publish an article to see it here.';
+      if (typeFilter === 'research') return 'No ideas with completed research yet.';
+      return 'No completed ideas yet. Once an idea is published and marked complete, it will appear here.';
+    } else {
+      if (typeFilter === 'video') return 'No video scripts currently in progress. Open an idea and choose "Yes" for video to start scripting!';
+      if (typeFilter === 'article') return 'No articles currently in progress. Open an idea and choose "Yes" for article to start drafting!';
+      if (typeFilter === 'research') return 'No ideas pending research right now. Drop a new idea above to get started!';
+      return 'No pending ideas right now. Drop a new idea above to start brainstorming!';
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -407,93 +442,113 @@ export function IdeasPlanner() {
       {/* Mobile-Only Session Timer */}
       <MobileTimer />
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={(val) => dispatch(setActiveTab(val))} className="w-full">
-        <TabsList className="grid grid-cols-5 w-full sm:w-auto sm:inline-flex h-auto p-1 bg-muted/60 rounded-xl border border-border/50 gap-1 mb-6">
-          {tabItems.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
+      {/* Two-Group Filter Controls */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-2 sm:p-2.5 rounded-2xl border border-border/75 bg-muted/20 backdrop-blur-xs">
+        {/* Group 1: Content Type (All, Research, Article, Video) */}
+        <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground pl-1.5 pr-0.5">
+            Content:
+          </span>
+          {typeOptions.map((opt) => {
+            const Icon = opt.icon;
+            const isSelected = typeFilter === opt.id;
             return (
-              <TabsTrigger 
-                key={tab.id} 
-                value={tab.id} 
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => dispatch(setTypeFilter(opt.id))}
                 className={cn(
-                  "inline-flex items-center justify-center whitespace-nowrap rounded-lg px-1.5 sm:px-3 py-2 sm:py-1.5 text-xs sm:text-sm font-medium transition-all min-w-0 w-full",
-                  isActive
-                    ? "bg-primary text-primary-foreground shadow-sm font-semibold"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-medium transition-all cursor-pointer select-none",
+                  isSelected
+                    ? "bg-primary text-primary-foreground shadow-xs font-semibold ring-1 ring-primary/40"
+                    : "bg-card/80 text-muted-foreground hover:text-foreground hover:bg-muted border border-border/60"
                 )}
               >
-                <Icon className="w-3.5 h-3.5 mr-1.5 shrink-0 hidden sm:inline-block" />
-                <span className="truncate">{tab.label}</span>
+                <Icon className="w-3.5 h-3.5 shrink-0" />
+                <span>{opt.label}</span>
                 {!loading && (
-                  <span 
+                  <span
                     className={cn(
-                      "ml-1 sm:ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold leading-none shrink-0",
-                      isActive
+                      "px-1.5 py-0.2 rounded-full text-[10px] font-semibold leading-tight shrink-0",
+                      isSelected
                         ? "bg-primary-foreground/20 text-primary-foreground"
                         : "bg-foreground/10 text-muted-foreground"
                     )}
                   >
-                    {tab.count}
+                    {opt.count}
                   </span>
                 )}
-              </TabsTrigger>
+              </button>
             );
           })}
-        </TabsList>
-        
-        <TabsContent value="pending" className="space-y-3">
-          {loading ? renderSkeletons()
-            : pendingIdeas.length === 0
-              ? renderEmptyState(
-                  searchQuery 
-                    ? 'No pending ideas match your search.' 
-                    : 'No pending ideas right now. Drop a new idea above to start creating!'
-                )
-              : pendingIdeas.map((idea, idx) => renderIdeaCard(idea, idx))}
-        </TabsContent>
+        </div>
 
-        <TabsContent value="articles" className="space-y-3">
-          {loading ? renderSkeletons()
-            : eligibleForArticles.length === 0
-              ? renderEmptyState(
-                  searchQuery 
-                    ? 'No ideas match your search.' 
-                    : 'No articles currently in progress. Open any pending idea and choose "Yes" to write an article.'
-                )
-              : eligibleForArticles.map((idea, idx) => renderIdeaCard(idea, idx))}
-        </TabsContent>
+        {/* Group 2: Status (Pending, Completed) */}
+        <div className="flex items-center gap-1 sm:gap-1.5 justify-start md:justify-end border-t md:border-t-0 pt-2 md:pt-0 border-border/60">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground pl-1.5 pr-0.5">
+            Status:
+          </span>
+          {statusOptions.map((opt) => {
+            const Icon = opt.icon;
+            const isSelected = statusFilter === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => dispatch(setStatusFilter(opt.id))}
+                className={cn(
+                  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-medium transition-all cursor-pointer select-none",
+                  isSelected
+                    ? "bg-foreground text-background shadow-xs font-semibold ring-1 ring-foreground/40"
+                    : "bg-card/80 text-muted-foreground hover:text-foreground hover:bg-muted border border-border/60"
+                )}
+              >
+                <Icon className="w-3.5 h-3.5 shrink-0" />
+                <span>{opt.label}</span>
+                {!loading && (
+                  <span
+                    className={cn(
+                      "px-1.5 py-0.2 rounded-full text-[10px] font-semibold leading-tight shrink-0",
+                      isSelected
+                        ? "bg-background/20 text-background"
+                        : "bg-foreground/10 text-muted-foreground"
+                    )}
+                  >
+                    {opt.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
-        <TabsContent value="videos" className="space-y-3">
-          {loading ? renderSkeletons()
-            : eligibleForVideos.length === 0
-              ? renderEmptyState(
-                  searchQuery 
-                    ? 'No ideas match your search.' 
-                    : 'No video scripts currently in progress. Open any pending idea and choose "Yes" to create a video.'
-                )
-              : eligibleForVideos.map((idea, idx) => renderIdeaCard(idea, idx))}
-        </TabsContent>
+      {/* Status Bar / Results Count */}
+      <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+        <span>
+          Showing <span className="font-semibold text-foreground">{currentFilteredIdeas.length}</span> {typeFilter === 'all' ? '' : typeFilter + ' '}{statusFilter} ideas
+        </span>
+        {searchQuery && (
+          <button
+            type="button"
+            onClick={() => dispatch(setSearchQuery(''))}
+            className="text-primary hover:underline cursor-pointer"
+          >
+            Clear search
+          </button>
+        )}
+      </div>
 
-        <TabsContent value="completed" className="space-y-3">
-          {loading ? renderSkeletons()
-            : completedIdeas.length === 0
-              ? renderEmptyState(
-                  searchQuery 
-                    ? 'No completed ideas match your search.' 
-                    : 'No completed ideas yet. Once an article and/or video is published and marked complete, it will appear here.'
-                )
-              : completedIdeas.map((idea, idx) => renderIdeaCard(idea, idx))}
-        </TabsContent>
-
-        <TabsContent value="all" className="space-y-3">
-          {loading ? renderSkeletons()
-            : filteredIdeas.length === 0
-              ? renderEmptyState(searchQuery ? 'No ideas match your search.' : 'No ideas yet. Time to brainstorm!')
-              : filteredIdeas.map((idea, idx) => renderIdeaCard(idea, idx))}
-        </TabsContent>
-      </Tabs>
+      {/* Ideas Card List */}
+      <div className="space-y-3">
+        {loading ? (
+          renderSkeletons()
+        ) : currentFilteredIdeas.length === 0 ? (
+          renderEmptyState(getEmptyMessage())
+        ) : (
+          currentFilteredIdeas.map((idea, idx) => renderIdeaCard(idea, idx))
+        )}
+      </div>
     </div>
   );
 }

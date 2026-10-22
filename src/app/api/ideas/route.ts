@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getGoogleSheet } from '@/lib/google-sheets';
+import { matchesIdeaFilters, IdeaTypeFilter, IdeaStatusFilter } from '@/lib/ideaStatus';
 
 export const dynamic = 'force-dynamic';
 
@@ -86,7 +87,21 @@ export async function GET(request: Request) {
       return rowData;
     });
 
-    return NextResponse.json({ data }, { status: 200 });
+    const typeParam = searchParams.get('type') as IdeaTypeFilter | null;
+    const statusParam = searchParams.get('status') as IdeaStatusFilter | null;
+
+    let filteredData = data;
+    if (typeParam || statusParam) {
+      filteredData = data.filter(item => 
+        matchesIdeaFilters(
+          item, 
+          typeParam || 'all', 
+          statusParam || 'pending'
+        )
+      );
+    }
+
+    return NextResponse.json({ data: filteredData }, { status: 200 });
   } catch (error: any) {
     console.error('Error fetching ideas:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
