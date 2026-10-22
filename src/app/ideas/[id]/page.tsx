@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, use } from 'react';
+import { useEffect, useState, useMemo, useRef, use } from 'react';
 import Link from 'next/link';
 import { 
   ArrowLeft, ArrowRight, Save, Copy, Loader2, Tv, FileText, Video, 
@@ -61,6 +61,17 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
   const [activeContentTab, setActiveContentTab] = useState<string>('baseArticle');
   const [isPrompterOpen, setIsPrompterOpen] = useState(false);
   const [isFormatModalOpen, setIsFormatModalOpen] = useState(false);
+
+  // Ref to auto-expand video script textarea so it is not scrollable and shows all text at a stretch
+  const videoScriptRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    if (activeContentTab === 'youtubeScript' && videoScriptRef.current) {
+      const el = videoScriptRef.current;
+      el.style.height = 'auto';
+      el.style.height = `${Math.max(el.scrollHeight, 360)}px`;
+    }
+  }, [activeContentTab, idea?.youtubeScript]);
 
   // Initialize and load idea
   useEffect(() => {
@@ -692,12 +703,26 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
                     </div>
 
                     <div className="relative group w-full min-w-0">
-                      <Textarea 
-                        placeholder={tab.placeholder}
-                        value={contentText}
-                        onChange={(e) => handleTextChange(tab.value as keyof IdeaDetails, e.target.value)}
-                        className="h-[440px] sm:h-[520px] md:h-[580px] max-h-[72vh] w-full max-w-full resize-none sm:resize-y text-sm p-3.5 sm:p-5 leading-relaxed break-words overflow-x-hidden overflow-y-auto overscroll-contain"
-                      />
+                      {isVideoScript ? (
+                        <Textarea 
+                          ref={videoScriptRef}
+                          placeholder={tab.placeholder}
+                          value={contentText}
+                          onChange={(e) => {
+                            handleTextChange('youtubeScript', e.target.value);
+                            e.target.style.height = 'auto';
+                            e.target.style.height = `${Math.max(e.target.scrollHeight, 360)}px`;
+                          }}
+                          className="min-h-[360px] h-auto overflow-hidden [field-sizing:content] resize-none w-full max-w-full text-sm p-3.5 sm:p-5 leading-relaxed break-words"
+                        />
+                      ) : (
+                        <Textarea 
+                          placeholder={tab.placeholder}
+                          value={contentText}
+                          onChange={(e) => handleTextChange(tab.value as keyof IdeaDetails, e.target.value)}
+                          className="h-[440px] sm:h-[520px] md:h-[580px] max-h-[72vh] w-full max-w-full resize-none sm:resize-y text-sm p-3.5 sm:p-5 leading-relaxed break-words overflow-x-hidden overflow-y-auto overscroll-contain"
+                        />
+                      )}
                     </div>
                   </TabsContent>
                 );
