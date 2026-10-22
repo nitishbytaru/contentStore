@@ -4,7 +4,7 @@ import { getGoogleSheet } from '@/lib/google-sheets';
 export const dynamic = 'force-dynamic';
 
 const HEADERS = [
-  'id', 'idea', 'status', 'datePosted', 'createdAt',
+  'id', 'idea', 'description', 'status', 'datePosted', 'createdAt',
   'baseArticle', 'mediumArticle', 'youtubeScript',
   'eligibleMedium', 'eligibleSubstack', 'eligibleX', 'eligibleYoutube', 'eligibleInstagram',
   'ineligibleMedium', 'ineligibleSubstack', 'ineligibleX', 'ineligibleYoutube', 'ineligibleInstagram',
@@ -91,20 +91,22 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { idea } = await request.json();
+    const { idea, description, baseArticle } = await request.json();
     
-    if (!idea) {
-      return NextResponse.json({ error: 'Idea is required' }, { status: 400 });
+    if (!idea || !idea.trim()) {
+      return NextResponse.json({ error: 'Title / Idea is required' }, { status: 400 });
     }
 
     const sheet = await getIdeasSheet();
+    const descText = description ? String(description).trim() : '';
     const newIdea = {
       id: crypto.randomUUID(),
-      idea,
+      idea: idea.trim(),
+      description: descText,
       status: 'pending',
       datePosted: '',
       createdAt: new Date().toISOString(),
-      baseArticle: '',
+      baseArticle: baseArticle || descText,
       mediumArticle: '',
       youtubeScript: '',
       eligibleMedium: false,

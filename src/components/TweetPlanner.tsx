@@ -180,6 +180,11 @@ export function TweetPlanner() {
                   >
                     {idea.idea}
                   </Link>
+                  {idea.description && (
+                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                      {idea.description}
+                    </p>
+                  )}
                   {!hasBaseArticle && (
                     <div>
                       <Link

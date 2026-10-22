@@ -3,6 +3,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 export interface Idea {
   id: string;
   idea: string;
+  description?: string;
   status: 'pending' | 'posted';
   datePosted: string;
   createdAt: string;
@@ -57,20 +58,24 @@ export const fetchIdeas = createAsyncThunk('ideas/fetchIdeas', async (_, { rejec
   }
 });
 
-export const addIdea = createAsyncThunk('ideas/addIdea', async (ideaText: string, { rejectWithValue }) => {
-  try {
-    const res = await fetch('/api/ideas', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ idea: ideaText }),
-    });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || 'Failed to add idea');
-    return json.data as Idea;
-  } catch (err: any) {
-    return rejectWithValue(err.message);
+export const addIdea = createAsyncThunk(
+  'ideas/addIdea', 
+  async (payload: string | { idea: string; description?: string }, { rejectWithValue }) => {
+    try {
+      const body = typeof payload === 'string' ? { idea: payload } : payload;
+      const res = await fetch('/api/ideas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to add idea');
+      return json.data as Idea;
+    } catch (err: any) {
+      return rejectWithValue(err.message);
+    }
   }
-});
+);
 
 export const updateIdea = createAsyncThunk('ideas/updateIdea', async (idea: Partial<Idea> & { id: string }, { rejectWithValue }) => {
   try {
