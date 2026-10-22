@@ -1,5 +1,5 @@
 export interface PublishStatus {
-  status: 'published' | 'pending-x' | 'pending-articles' | 'pending-videos' | 'pending' | 'ineligible' | 'untouched';
+  status: 'published' | 'pending-x' | 'pending-articles' | 'pending-videos' | 'pending' | 'ineligible';
   label: string;
   badgeClass: string;
   dotClass: string;
@@ -57,32 +57,6 @@ export const getIdeaPublishStatus = (i: IdeaChecklistFields): PublishStatus => {
   const isVideosPublished = Boolean(i.publishedYoutube || i.publishedInstagram);
   const isVideosIneligible = !isVideosPublished && Boolean(i.ineligibleYoutube || i.ineligibleInstagram);
   const isVideosDone = isVideosPublished || isVideosIneligible;
-
-  // Has any platform or content been touched?
-  const hasChecklist = Boolean(
-    i.eligibleX || i.ineligibleX || i.publishedX ||
-    i.eligibleMedium || i.ineligibleMedium || i.publishedMedium ||
-    i.eligibleSubstack || i.ineligibleSubstack || i.publishedSubstack ||
-    i.eligibleYoutube || i.ineligibleYoutube || i.publishedYoutube ||
-    i.eligibleInstagram || i.ineligibleInstagram || i.publishedInstagram
-  );
-  const hasContent = Boolean(
-    (i.baseArticle && i.baseArticle.trim() !== '') ||
-    (i.mediumArticle && i.mediumArticle.trim() !== '') ||
-    (i.youtubeScript && i.youtubeScript.trim() !== '')
-  );
-
-  if (!hasChecklist && !hasContent) {
-    return {
-      status: 'untouched',
-      label: 'Untouched',
-      badgeClass: 'bg-muted/60 text-muted-foreground border-border/60',
-      dotClass: 'bg-muted-foreground/50',
-      borderClass: 'border-l-muted-foreground/40',
-      bgClass: 'bg-muted/[0.02]',
-      accentGradient: 'from-muted-foreground/40 via-border/40 to-transparent',
-    };
-  }
 
   // All 3 channels filled completely
   const allChannelsDone = isXDone && isArticlesDone && isVideosDone;
@@ -157,7 +131,7 @@ export const getIdeaPublishStatus = (i: IdeaChecklistFields): PublishStatus => {
     }
   }
 
-  // Multiple channels pending
+  // Multiple channels pending (default state for new and in-progress ideas)
   return {
     status: 'pending',
     label: 'Pending',

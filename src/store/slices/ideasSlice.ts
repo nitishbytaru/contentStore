@@ -43,7 +43,7 @@ const initialState: IdeasState = {
   actionLoading: false,
   hasFetched: false,
   searchQuery: '',
-  activeTab: 'all',
+  activeTab: 'pending',
 };
 
 export const fetchIdeas = createAsyncThunk('ideas/fetchIdeas', async (_, { rejectWithValue }) => {
@@ -131,7 +131,8 @@ const ideasSlice = createSlice({
     });
     builder.addCase(addIdea.fulfilled, (state, action) => {
       state.actionLoading = false;
-      state.items.push(action.payload);
+      state.items.unshift(action.payload);
+      state.activeTab = 'pending';
     });
     builder.addCase(addIdea.rejected, (state, action) => {
       state.actionLoading = false;

@@ -202,7 +202,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
         <div className="flex items-center justify-between gap-3 mb-3">
           {publishStatus && (
             <div className={cn("inline-flex items-center gap-2 px-2.5 py-1 rounded-full border text-[11px] font-semibold uppercase tracking-wider", publishStatus.badgeClass)}>
-              <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", publishStatus.dotClass, publishStatus.status === 'untouched' ? 'animate-pulse' : '')} />
+              <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", publishStatus.dotClass)} />
               <span>{publishStatus.label}</span>
             </div>
           )}
