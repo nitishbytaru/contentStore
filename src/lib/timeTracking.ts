@@ -88,7 +88,7 @@ function getDeterministicBaselineSeconds(idea: Idea): number {
   // 2. Publication state bonus
   if (idea.publishedMedium || idea.publishedSubstack) estimatedMinutes += 45;
   if (idea.publishedYoutube || idea.publishedInstagram) estimatedMinutes += 60;
-  if (idea.publishedX || idea.status === 'posted') estimatedMinutes += 20;
+  if (idea.status === 'posted') estimatedMinutes += 20;
 
   // 3. Fallback deterministic baseline between 25 and 95 mins based on ID string
   let hash = 0;
@@ -169,8 +169,7 @@ export function calculateTopicTimeAnalytics(ideas: Idea[]): TopicTimeAnalytics {
         idea.publishedMedium || 
         idea.publishedSubstack || 
         idea.publishedYoutube || 
-        idea.publishedInstagram || 
-        idea.publishedX
+        idea.publishedInstagram
       ),
     };
   });

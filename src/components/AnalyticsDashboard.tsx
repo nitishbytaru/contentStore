@@ -44,22 +44,12 @@ export function AnalyticsDashboard() {
     let fullyPublished = 0;
     
     const channelCounts = {
-      'X': { published: 0, skipped: 0, pending: 0 },
       'Articles': { published: 0, skipped: 0, pending: 0 },
       'Videos': { published: 0, skipped: 0, pending: 0 },
     };
 
     ideas.forEach(idea => {
-      // Channel 1: X (Twitter)
-      const isXPublished = Boolean(idea.publishedX || idea.status === 'posted');
-      const isXSkipped = !isXPublished && Boolean(idea.ineligibleX);
-      const isXPending = !isXPublished && !isXSkipped;
-
-      if (isXPublished) channelCounts['X'].published++;
-      else if (isXSkipped) channelCounts['X'].skipped++;
-      else if (isXPending) channelCounts['X'].pending++;
-
-      // Channel 2: Articles (Medium & Substack)
+      // Channel 1: Articles (Medium & Substack)
       const isArticlesPublished = Boolean(idea.publishedMedium || idea.publishedSubstack);
       const isArticlesSkipped = !isArticlesPublished && Boolean(idea.ineligibleMedium || idea.ineligibleSubstack);
       const isArticlesPending = !isArticlesPublished && !isArticlesSkipped && Boolean(idea.eligibleMedium || idea.eligibleSubstack);
@@ -68,7 +58,7 @@ export function AnalyticsDashboard() {
       else if (isArticlesSkipped) channelCounts['Articles'].skipped++;
       else if (isArticlesPending) channelCounts['Articles'].pending++;
 
-      // Channel 3: Videos (YouTube & Instagram)
+      // Channel 2: Videos (YouTube & Instagram)
       const isVideosPublished = Boolean(idea.publishedYoutube || idea.publishedInstagram);
       const isVideosSkipped = !isVideosPublished && Boolean(idea.ineligibleYoutube || idea.ineligibleInstagram);
       const isVideosPending = !isVideosPublished && !isVideosSkipped && Boolean(idea.eligibleYoutube || idea.eligibleInstagram);
@@ -77,28 +67,19 @@ export function AnalyticsDashboard() {
       else if (isVideosSkipped) channelCounts['Videos'].skipped++;
       else if (isVideosPending) channelCounts['Videos'].pending++;
 
-      // Completion calculation across 3 merged channels
-      const isXDone = isXPublished || isXSkipped;
+      // Completion calculation across 2 channels
       const isArticlesDone = isArticlesPublished || isArticlesSkipped;
       const isVideosDone = isVideosPublished || isVideosSkipped;
 
-      const channelsDone = [isXDone, isArticlesDone, isVideosDone].filter(Boolean).length;
+      const channelsDone = [isArticlesDone, isVideosDone].filter(Boolean).length;
       if (channelsDone === 0) totallyUnpublished++;
-      if (channelsDone === 3) fullyPublished++;
+      if (channelsDone === 2) fullyPublished++;
     });
 
     const activeIdeas = totalIdeas - totallyUnpublished;
     const completionRate = totalIdeas > 0 ? ((fullyPublished / totalIdeas) * 100).toFixed(1) : '0';
 
     const barChartData = [
-      { 
-        name: 'X', 
-        fullName: 'X (Twitter)',
-        subtitle: 'Twitter',
-        Published: channelCounts['X'].published,
-        Pending: channelCounts['X'].pending,
-        Skipped: channelCounts['X'].skipped,
-      },
       { 
         name: 'Articles', 
         fullName: 'Articles (Medium & Substack)',
@@ -269,7 +250,7 @@ export function AnalyticsDashboard() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Platform Distribution</CardTitle>
-            <CardDescription className="text-xs">Published, pending, and skipped across X, Articles, and Videos</CardDescription>
+            <CardDescription className="text-xs">Published, pending, and skipped across Articles and Videos</CardDescription>
           </CardHeader>
           <CardContent className="h-[280px] sm:h-[320px]">
             <ResponsiveContainer width="100%" height="100%">

@@ -6,15 +6,15 @@ export const dynamic = 'force-dynamic';
 const HEADERS = [
   'id', 'idea', 'description', 'status', 'datePosted', 'createdAt',
   'baseArticle', 'mediumArticle', 'youtubeScript',
-  'eligibleMedium', 'eligibleSubstack', 'eligibleX', 'eligibleYoutube', 'eligibleInstagram',
-  'ineligibleMedium', 'ineligibleSubstack', 'ineligibleX', 'ineligibleYoutube', 'ineligibleInstagram',
-  'publishedMedium', 'publishedSubstack', 'publishedX', 'publishedYoutube', 'publishedInstagram'
+  'eligibleMedium', 'eligibleSubstack', 'eligibleYoutube', 'eligibleInstagram',
+  'ineligibleMedium', 'ineligibleSubstack', 'ineligibleYoutube', 'ineligibleInstagram',
+  'publishedMedium', 'publishedSubstack', 'publishedYoutube', 'publishedInstagram'
 ];
 
 const BOOLEAN_FIELDS = [
-  'eligibleMedium', 'eligibleSubstack', 'eligibleX', 'eligibleYoutube', 'eligibleInstagram',
-  'ineligibleMedium', 'ineligibleSubstack', 'ineligibleX', 'ineligibleYoutube', 'ineligibleInstagram',
-  'publishedMedium', 'publishedSubstack', 'publishedX', 'publishedYoutube', 'publishedInstagram'
+  'eligibleMedium', 'eligibleSubstack', 'eligibleYoutube', 'eligibleInstagram',
+  'ineligibleMedium', 'ineligibleSubstack', 'ineligibleYoutube', 'ineligibleInstagram',
+  'publishedMedium', 'publishedSubstack', 'publishedYoutube', 'publishedInstagram'
 ];
 
 // Helper to get the correct sheet and ensure headers exist
@@ -111,17 +111,14 @@ export async function POST(request: Request) {
       youtubeScript: '',
       eligibleMedium: false,
       eligibleSubstack: false,
-      eligibleX: false,
       eligibleYoutube: false,
       eligibleInstagram: false,
       ineligibleMedium: false,
       ineligibleSubstack: false,
-      ineligibleX: false,
       ineligibleYoutube: false,
       ineligibleInstagram: false,
       publishedMedium: false,
       publishedSubstack: false,
-      publishedX: false,
       publishedYoutube: false,
       publishedInstagram: false
     };

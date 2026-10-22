@@ -23,7 +23,7 @@ import { cn } from 'cn';
 import { getIdeaPublishStatus, isIdeaPending, isIdeaCompleted } from '@/lib/ideaStatus';
 import { MobileTimer } from '@/components/MobileTimer';
 
-export function TweetPlanner() {
+export function IdeasPlanner() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { 
@@ -453,3 +453,5 @@ export function TweetPlanner() {
     </div>
   );
 }
+
+export const TweetPlanner = IdeasPlanner;

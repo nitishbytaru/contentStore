@@ -1,5 +1,5 @@
 export interface PublishStatus {
-  status: 'published' | 'pending-x' | 'pending-articles' | 'pending-videos' | 'pending' | 'ineligible';
+  status: 'published' | 'pending-articles' | 'pending-videos' | 'pending' | 'ineligible';
   label: string;
   badgeClass: string;
   dotClass: string;
@@ -10,9 +10,6 @@ export interface PublishStatus {
 
 export type IdeaChecklistFields = {
   status?: string;
-  eligibleX?: boolean;
-  publishedX?: boolean;
-  ineligibleX?: boolean;
   eligibleMedium?: boolean;
   publishedMedium?: boolean;
   ineligibleMedium?: boolean;
@@ -43,24 +40,19 @@ export const getIdeaPublishStatus = (i: IdeaChecklistFields): PublishStatus => {
     };
   }
 
-  // 1. Channel X
-  const isXPublished = Boolean(i.publishedX);
-  const isXIneligible = !isXPublished && Boolean(i.ineligibleX);
-  const isXDone = isXPublished || isXIneligible;
-
-  // 2. Channel Articles (Medium & Substack)
+  // 1. Channel Articles (Medium & Substack)
   const isArticlesPublished = Boolean(i.publishedMedium || i.publishedSubstack);
   const isArticlesIneligible = !isArticlesPublished && Boolean(i.ineligibleMedium || i.ineligibleSubstack);
   const isArticlesDone = isArticlesPublished || isArticlesIneligible;
 
-  // 3. Channel Videos (YouTube & Instagram)
+  // 2. Channel Videos (YouTube & Instagram)
   const isVideosPublished = Boolean(i.publishedYoutube || i.publishedInstagram);
   const isVideosIneligible = !isVideosPublished && Boolean(i.ineligibleYoutube || i.ineligibleInstagram);
   const isVideosDone = isVideosPublished || isVideosIneligible;
 
-  // All 3 channels filled completely
-  const allChannelsDone = isXDone && isArticlesDone && isVideosDone;
-  const anyChannelPublished = isXPublished || isArticlesPublished || isVideosPublished;
+  // Both channels filled completely
+  const allChannelsDone = isArticlesDone && isVideosDone;
+  const anyChannelPublished = isArticlesPublished || isVideosPublished;
 
   if (allChannelsDone) {
     if (anyChannelPublished) {
@@ -74,7 +66,7 @@ export const getIdeaPublishStatus = (i: IdeaChecklistFields): PublishStatus => {
         accentGradient: 'from-emerald-500/80 via-emerald-400/40 to-transparent',
       };
     } else {
-      // All 3 channels ineligible
+      // Both channels ineligible
       return {
         status: 'ineligible',
         label: 'Ineligible',
@@ -89,24 +81,12 @@ export const getIdeaPublishStatus = (i: IdeaChecklistFields): PublishStatus => {
 
   // Identify non-done channels
   const pendingChannels: string[] = [];
-  if (!isXDone) pendingChannels.push('X');
   if (!isArticlesDone) pendingChannels.push('Articles');
   if (!isVideosDone) pendingChannels.push('Videos');
 
   // Exactly 1 channel pending
   if (pendingChannels.length === 1) {
     const channel = pendingChannels[0];
-    if (channel === 'X') {
-      return {
-        status: 'pending-x',
-        label: 'Pending X',
-        badgeClass: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20',
-        dotClass: 'bg-sky-500',
-        borderClass: 'border-l-sky-500',
-        bgClass: 'bg-sky-500/[0.02]',
-        accentGradient: 'from-sky-500/80 via-sky-400/40 to-transparent',
-      };
-    }
     if (channel === 'Articles') {
       return {
         status: 'pending-articles',

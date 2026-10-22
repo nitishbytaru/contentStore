@@ -29,17 +29,14 @@ interface IdeaDetails {
   youtubeScript: string;
   eligibleMedium: boolean;
   eligibleSubstack: boolean;
-  eligibleX: boolean;
   eligibleYoutube: boolean;
   eligibleInstagram: boolean;
   ineligibleMedium: boolean;
   ineligibleSubstack: boolean;
-  ineligibleX: boolean;
   ineligibleYoutube: boolean;
   ineligibleInstagram: boolean;
   publishedMedium: boolean;
   publishedSubstack: boolean;
-  publishedX: boolean;
   publishedYoutube: boolean;
   publishedInstagram: boolean;
 }
