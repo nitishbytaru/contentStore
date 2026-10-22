@@ -2,7 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchPrompts, addPrompt, updatePrompt, deletePrompt, PromptItem } from '@/store/slices/promptsSlice';
+import { 
+  fetchPrompts, 
+  fetchPromptCategories, 
+  createPromptCategory, 
+  addPrompt, 
+  updatePrompt, 
+  deletePrompt, 
+  setSelectedCategory, 
+  PromptItem 
+} from '@/store/slices/promptsSlice';
 import { AppDispatch, RootState } from '@/store';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -10,17 +19,29 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Copy, Plus, Trash2, Edit, Save, X, AlertCircle, Search, Loader2 } from 'lucide-react';
+import { 
+  Copy, Plus, Trash2, Edit, Save, X, AlertCircle, Search, Loader2, 
+  ChevronDown, FolderPlus, Tag 
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function PromptsPage() {
   const dispatch = useDispatch<AppDispatch>();
-  const { items: prompts, loading, error, hasFetched, actionLoading } = useSelector((state: RootState) => state.prompts);
+  const { 
+    items: prompts, 
+    categories, 
+    selectedCategory, 
+    loading, 
+    categoriesLoading, 
+    error, 
+    hasFetched, 
+    actionLoading 
+  } = useSelector((state: RootState) => state.prompts);
 
   const [isCreating, setIsCreating] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
-  const [newCategory, setNewCategory] = useState('');
+  const [newCategory, setNewCategory] = useState('General');
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
@@ -29,16 +50,31 @@ export default function PromptsPage() {
 
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Category creation modal
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [creatingCategoryLoading, setCreatingCategoryLoading] = useState(false);
+
   useEffect(() => {
     if (!hasFetched) {
       dispatch(fetchPrompts());
     }
+    dispatch(fetchPromptCategories());
   }, [dispatch, hasFetched]);
 
   const handleCopy = (text: string) => {
     if (!text) return;
     navigator.clipboard.writeText(text);
     toast.success('Prompt copied to clipboard!');
+  };
+
+  const handleOpenCreate = () => {
+    dispatch(fetchPromptCategories());
+    const initialCat = selectedCategory !== 'all' 
+      ? selectedCategory 
+      : (categories.find(c => c.toLowerCase() === 'general') || categories[0] || 'General');
+    setNewCategory(initialCat);
+    setIsCreating(true);
   };
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -57,15 +93,16 @@ export default function PromptsPage() {
       setIsCreating(false);
       setNewTitle('');
       setNewContent('');
-      setNewCategory('');
+      setNewCategory(selectedCategory !== 'all' ? selectedCategory : 'General');
     }
   };
 
   const handleStartEdit = (p: PromptItem) => {
+    dispatch(fetchPromptCategories());
     setEditingId(p.id);
     setEditTitle(p.title);
     setEditContent(p.content);
-    setEditCategory(p.category);
+    setEditCategory(p.category || 'General');
   };
 
   const handleSaveEdit = async () => {
@@ -94,6 +131,32 @@ export default function PromptsPage() {
     }
   };
 
+  const handleCreateCategorySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = newCategoryName.trim();
+    if (!trimmed) return;
+
+    setCreatingCategoryLoading(true);
+    try {
+      const result = await dispatch(createPromptCategory(trimmed));
+      if (createPromptCategory.fulfilled.match(result)) {
+        toast.success(`Category "${result.payload}" created!`);
+        if (isCreating) {
+          setNewCategory(result.payload);
+        }
+        if (editingId) {
+          setEditCategory(result.payload);
+        }
+        setNewCategoryName('');
+        setIsCategoryModalOpen(false);
+      } else {
+        toast.error((result.payload as string) || 'Failed to create category');
+      }
+    } finally {
+      setCreatingCategoryLoading(false);
+    }
+  };
+
   if (error) {
     return (
       <Alert variant="destructive">
@@ -104,11 +167,16 @@ export default function PromptsPage() {
     );
   }
 
-  const filteredPrompts = prompts.filter(p => 
-    p.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    p.category.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    p.content.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredPrompts = prompts.filter(p => {
+    const matchesSearch = 
+      p.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      p.category.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      p.content.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = 
+      selectedCategory === 'all' || 
+      p.category.toLowerCase() === selectedCategory.toLowerCase();
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <div className="space-y-6">
@@ -118,31 +186,106 @@ export default function PromptsPage() {
           <h1 className="text-xl font-semibold tracking-tight">Prompt Library</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Manage your reusable prompts for content generation.</p>
         </div>
-        <div className="flex w-full sm:w-auto items-center gap-2">
+
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           {!isCreating && (
-            <div className="relative w-full sm:w-56">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <div className="relative flex-1 sm:w-48 min-w-[140px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <Input 
                 placeholder="Search prompts..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
+                className="pl-8.5 h-9 text-xs sm:text-sm"
               />
             </div>
           )}
+
+          {/* Category Dropdown and Create Category option */}
           {!isCreating && (
-            <Button onClick={() => setIsCreating(true)} className="shrink-0">
+            <div className="flex items-center gap-1.5 shrink-0">
+              <div className="relative">
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => {
+                    if (e.target.value === '__create_new__') {
+                      setNewCategoryName('');
+                      setIsCategoryModalOpen(true);
+                    } else {
+                      dispatch(setSelectedCategory(e.target.value));
+                    }
+                  }}
+                  className="h-9 rounded-md border border-input bg-background/80 hover:bg-muted/40 px-3 py-1 text-xs sm:text-sm font-medium shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer pr-8 appearance-none min-w-[140px] sm:min-w-[160px]"
+                  title="Filter prompts by category"
+                  aria-label="Filter prompts by category"
+                >
+                  <option value="all">All Categories ({prompts.length})</option>
+                  <option disabled>──────────</option>
+                  {categories.map((cat) => {
+                    const count = prompts.filter((p) => p.category?.toLowerCase() === cat.toLowerCase()).length;
+                    return (
+                      <option key={cat} value={cat}>
+                        {cat} {count > 0 ? `(${count})` : ''}
+                      </option>
+                    );
+                  })}
+                  <option disabled>──────────</option>
+                  <option value="__create_new__">+ Create new category...</option>
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 pointer-events-none text-muted-foreground" />
+              </div>
+
+              {/* Near the dropdown: option to create a new category */}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setNewCategoryName('');
+                  setIsCategoryModalOpen(true);
+                }}
+                className="h-9 px-2.5 text-xs font-medium gap-1.5 shrink-0 hover:border-primary/50"
+                title="Create a new category"
+              >
+                <FolderPlus className="w-3.5 h-3.5 text-primary" />
+                <span className="hidden sm:inline">New Category</span>
+              </Button>
+            </div>
+          )}
+
+          {!isCreating && (
+            <Button onClick={handleOpenCreate} className="h-9 shrink-0 text-xs sm:text-sm font-medium shadow-xs">
               <Plus className="w-4 h-4 mr-1.5" /> Add Prompt
             </Button>
           )}
         </div>
       </div>
 
+      {/* Active Category Filter Indicator */}
+      {selectedCategory !== 'all' && !isCreating && (
+        <div className="flex items-center gap-2 text-xs bg-muted/40 border border-border/60 rounded-lg px-3 py-1.5">
+          <Tag className="w-3.5 h-3.5 text-primary shrink-0" />
+          <span className="text-muted-foreground">Category:</span>
+          <span className="font-medium text-foreground bg-primary/10 text-primary px-2 py-0.5 rounded-full text-[11px]">
+            {selectedCategory}
+          </span>
+          <span className="text-muted-foreground">({filteredPrompts.length} prompt{filteredPrompts.length !== 1 ? 's' : ''})</span>
+          <button
+            onClick={() => dispatch(setSelectedCategory('all'))}
+            className="ml-auto text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 hover:underline cursor-pointer"
+          >
+            <X className="w-3.5 h-3.5" /> Show all
+          </button>
+        </div>
+      )}
+
       {/* Create Form */}
       {isCreating && (
-        <Card>
+        <Card className="border-primary/20 shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Create New Prompt</CardTitle>
+            <CardDescription className="text-xs">
+              Select or create a category, then enter your prompt details.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleCreate} className="space-y-4">
@@ -158,13 +301,43 @@ export default function PromptsPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">Category</label>
-                  <Input 
-                    placeholder="e.g. Tweets, Video, Midjourney..." 
-                    value={newCategory} 
-                    onChange={e => setNewCategory(e.target.value)} 
-                    disabled={actionLoading}
-                  />
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-medium text-muted-foreground">Category</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNewCategoryName('');
+                        setIsCategoryModalOpen(true);
+                      }}
+                      className="text-[11px] text-primary hover:underline inline-flex items-center gap-1 font-medium cursor-pointer"
+                    >
+                      <FolderPlus className="w-3 h-3" /> New category
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <select
+                      value={newCategory}
+                      onChange={(e) => {
+                        if (e.target.value === '__create_new__') {
+                          setNewCategoryName('');
+                          setIsCategoryModalOpen(true);
+                        } else {
+                          setNewCategory(e.target.value);
+                        }
+                      }}
+                      disabled={actionLoading || categoriesLoading}
+                      className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer pr-8 appearance-none"
+                    >
+                      {categories.map((cat) => (
+                        <option key={cat} value={cat}>
+                          {cat}
+                        </option>
+                      ))}
+                      <option disabled>──────────</option>
+                      <option value="__create_new__">+ Create new category...</option>
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 pointer-events-none text-muted-foreground" />
+                  </div>
                 </div>
               </div>
               <div className="space-y-1.5">
@@ -189,7 +362,7 @@ export default function PromptsPage() {
         </Card>
       )}
 
-      {/* Prompt Cards */}
+      {/* Prompt Cards Grid */}
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3].map(i => (
@@ -209,9 +382,26 @@ export default function PromptsPage() {
       ) : filteredPrompts.length === 0 && !isCreating ? (
         <div className="border border-dashed border-border rounded-lg py-12 text-center">
           <p className="text-sm text-muted-foreground mb-3">
-            {searchQuery ? 'No prompts match your search.' : 'No prompts yet. Start building your library!'}
+            {searchQuery 
+              ? 'No prompts match your search.' 
+              : selectedCategory !== 'all' 
+              ? `No prompts found in category "${selectedCategory}".` 
+              : 'No prompts yet. Start building your library!'}
           </p>
-          {!searchQuery && <Button onClick={() => setIsCreating(true)} variant="outline" size="sm">Create your first prompt</Button>}
+          {selectedCategory !== 'all' && !searchQuery ? (
+            <div className="flex items-center justify-center gap-2">
+              <Button onClick={() => dispatch(setSelectedCategory('all'))} variant="outline" size="sm">
+                View all prompts
+              </Button>
+              <Button onClick={handleOpenCreate} size="sm">
+                Add prompt to {selectedCategory}
+              </Button>
+            </div>
+          ) : !searchQuery ? (
+            <Button onClick={handleOpenCreate} variant="outline" size="sm">
+              Create your first prompt
+            </Button>
+          ) : null}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -220,7 +410,31 @@ export default function PromptsPage() {
               {editingId === p.id ? (
                 <CardContent className="p-4 space-y-3 flex-1 flex flex-col">
                   <Input value={editTitle} onChange={e => setEditTitle(e.target.value)} placeholder="Title" />
-                  <Input value={editCategory} onChange={e => setEditCategory(e.target.value)} placeholder="Category" />
+                  
+                  <div className="relative">
+                    <select
+                      value={editCategory}
+                      onChange={(e) => {
+                        if (e.target.value === '__create_new__') {
+                          setNewCategoryName('');
+                          setIsCategoryModalOpen(true);
+                        } else {
+                          setEditCategory(e.target.value);
+                        }
+                      }}
+                      className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs cursor-pointer pr-8 appearance-none"
+                    >
+                      {categories.map((cat) => (
+                        <option key={cat} value={cat}>
+                          {cat}
+                        </option>
+                      ))}
+                      <option disabled>──────────</option>
+                      <option value="__create_new__">+ Create new category...</option>
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 pointer-events-none text-muted-foreground" />
+                  </div>
+
                   <Textarea 
                     value={editContent} 
                     onChange={e => setEditContent(e.target.value)} 
@@ -237,9 +451,14 @@ export default function PromptsPage() {
                     <div className="min-w-0 flex-1">
                       <CardTitle className="text-sm font-medium truncate" title={p.title}>{p.title}</CardTitle>
                       <CardDescription className="mt-1.5">
-                        <span className="inline-block px-2 py-0.5 rounded-full bg-muted text-muted-foreground text-xs font-medium">
+                        <button
+                          type="button"
+                          onClick={() => dispatch(setSelectedCategory(p.category))}
+                          className="inline-block px-2 py-0.5 rounded-full bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground text-xs font-medium cursor-pointer transition-colors"
+                          title={`Filter by category "${p.category}"`}
+                        >
                           {p.category}
-                        </span>
+                        </button>
                       </CardDescription>
                     </div>
                     <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground" onClick={() => handleCopy(p.content)} title="Copy Prompt">
@@ -263,6 +482,80 @@ export default function PromptsPage() {
               )}
             </Card>
           ))}
+        </div>
+      )}
+
+      {/* Create New Category Modal */}
+      {isCategoryModalOpen && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in-0 duration-150"
+          onClick={() => !creatingCategoryLoading && setIsCategoryModalOpen(false)}
+        >
+          <div 
+            className="bg-card border border-border w-full max-w-sm rounded-xl p-5 shadow-2xl space-y-4 animate-in zoom-in-95 duration-150"
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-primary/10 text-primary shrink-0">
+                  <FolderPlus className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-semibold text-foreground">Create New Category</h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">Organize your prompts together under this category.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCategoryModalOpen(false)}
+                disabled={creatingCategoryLoading}
+                className="text-muted-foreground hover:text-foreground p-1 rounded-md transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateCategorySubmit} className="space-y-3.5">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Category Name</label>
+                <Input
+                  placeholder="e.g. YouTube Shorts, Threads, Midjourney..."
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  disabled={creatingCategoryLoading}
+                  autoFocus
+                  maxLength={50}
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsCategoryModalOpen(false)}
+                  disabled={creatingCategoryLoading}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={!newCategoryName.trim() || creatingCategoryLoading}
+                >
+                  {creatingCategoryLoading ? (
+                    <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                  ) : (
+                    <Plus className="w-3.5 h-3.5 mr-1.5" />
+                  )}
+                  Create Category
+                </Button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
