@@ -184,7 +184,6 @@ export default function PromptsPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Prompt Library</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Manage your reusable prompts for content generation.</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
