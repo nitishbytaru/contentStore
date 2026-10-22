@@ -22,6 +22,16 @@ export interface Idea {
   baseArticle: string;
   mediumArticle: string;
   youtubeScript: string;
+  articleDraftedDone?: boolean;
+  articleDraftedAt?: string;
+  articlePublishedDone?: boolean;
+  articlePublishedAt?: string;
+  videoShootingDone?: boolean;
+  videoShootingAt?: string;
+  videoEditingDone?: boolean;
+  videoEditingAt?: string;
+  videoUploadedDone?: boolean;
+  videoUploadedAt?: string;
 }
 
 interface IdeasState {

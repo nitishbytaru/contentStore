@@ -8,13 +8,17 @@ const HEADERS = [
   'baseArticle', 'mediumArticle', 'youtubeScript',
   'eligibleMedium', 'eligibleSubstack', 'eligibleYoutube', 'eligibleInstagram',
   'ineligibleMedium', 'ineligibleSubstack', 'ineligibleYoutube', 'ineligibleInstagram',
-  'publishedMedium', 'publishedSubstack', 'publishedYoutube', 'publishedInstagram'
+  'publishedMedium', 'publishedSubstack', 'publishedYoutube', 'publishedInstagram',
+  'articleDraftedDone', 'articleDraftedAt', 'articlePublishedDone', 'articlePublishedAt',
+  'videoShootingDone', 'videoShootingAt', 'videoEditingDone', 'videoEditingAt', 'videoUploadedDone', 'videoUploadedAt'
 ];
 
 const BOOLEAN_FIELDS = [
   'eligibleMedium', 'eligibleSubstack', 'eligibleYoutube', 'eligibleInstagram',
   'ineligibleMedium', 'ineligibleSubstack', 'ineligibleYoutube', 'ineligibleInstagram',
-  'publishedMedium', 'publishedSubstack', 'publishedYoutube', 'publishedInstagram'
+  'publishedMedium', 'publishedSubstack', 'publishedYoutube', 'publishedInstagram',
+  'articleDraftedDone', 'articlePublishedDone',
+  'videoShootingDone', 'videoEditingDone', 'videoUploadedDone'
 ];
 
 // Helper to get the correct sheet and ensure headers exist
@@ -120,7 +124,17 @@ export async function POST(request: Request) {
       publishedMedium: false,
       publishedSubstack: false,
       publishedYoutube: false,
-      publishedInstagram: false
+      publishedInstagram: false,
+      articleDraftedDone: false,
+      articleDraftedAt: '',
+      articlePublishedDone: false,
+      articlePublishedAt: '',
+      videoShootingDone: false,
+      videoShootingAt: '',
+      videoEditingDone: false,
+      videoEditingAt: '',
+      videoUploadedDone: false,
+      videoUploadedAt: ''
     };
 
     await sheet.addRow(newIdea);

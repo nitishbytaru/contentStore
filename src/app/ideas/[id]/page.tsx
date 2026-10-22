@@ -4,12 +4,14 @@ import { useEffect, useState, useMemo, useRef, use } from 'react';
 import Link from 'next/link';
 import { 
   ArrowLeft, ArrowRight, Save, Copy, Loader2, Tv, FileText, Video, 
-  BookOpen, Sparkles, Settings2, Check, X 
+  BookOpen, Sparkles, Settings2, Check, X, Calendar, Clock, Film, 
+  Scissors, Upload, CheckCircle2, Edit3 
 } from 'lucide-react';
 import { toast } from 'sonner';
 import ScriptPrompter from '@/components/ScriptPrompter';
 
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -42,6 +44,46 @@ interface IdeaDetails {
   publishedSubstack: boolean;
   publishedYoutube: boolean;
   publishedInstagram: boolean;
+  articleDraftedDone?: boolean;
+  articleDraftedAt?: string;
+  articlePublishedDone?: boolean;
+  articlePublishedAt?: string;
+  videoShootingDone?: boolean;
+  videoShootingAt?: string;
+  videoEditingDone?: boolean;
+  videoEditingAt?: string;
+  videoUploadedDone?: boolean;
+  videoUploadedAt?: string;
+}
+
+// Helpers for date/time conversion
+function toDateTimeLocalValue(isoString?: string): string {
+  if (!isoString) {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  }
+  const date = new Date(isoString);
+  if (isNaN(date.getTime())) return '';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const yyyy = date.getFullYear();
+  const mm = pad(date.getMonth() + 1);
+  const dd = pad(date.getDate());
+  const hh = pad(date.getHours());
+  const min = pad(date.getMinutes());
+  return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+}
+
+function formatDateTimeDisplay(isoString?: string): string {
+  if (!isoString) return '';
+  const d = new Date(isoString);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleString(undefined, { 
+    month: 'short', 
+    day: 'numeric', 
+    hour: 'numeric', 
+    minute: '2-digit' 
+  });
 }
 
 type OnboardingStep = 'RESEARCH' | 'QUESTION_ARTICLE' | 'QUESTION_VIDEO' | 'WORKSPACE';
@@ -61,6 +103,19 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
   const [activeContentTab, setActiveContentTab] = useState<string>('baseArticle');
   const [isPrompterOpen, setIsPrompterOpen] = useState(false);
   const [isFormatModalOpen, setIsFormatModalOpen] = useState(false);
+
+  // Video Stage Modal state
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [tempShootingDone, setTempShootingDone] = useState(false);
+  const [tempShootingAt, setTempShootingAt] = useState('');
+  const [tempEditingDone, setTempEditingDone] = useState(false);
+  const [tempEditingAt, setTempEditingAt] = useState('');
+  const [tempUploadedDone, setTempUploadedDone] = useState(false);
+  const [tempUploadedAt, setTempUploadedAt] = useState('');
+
+  // Inline date editing state
+  const [editingDateKey, setEditingDateKey] = useState<keyof IdeaDetails | null>(null);
+  const [editingDateValue, setEditingDateValue] = useState<string>('');
 
   // Ref to auto-expand video script textarea so it is not scrollable and shows all text at a stretch
   const videoScriptRef = useRef<HTMLTextAreaElement | null>(null);
@@ -313,22 +368,45 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
     }
   };
 
+  // Toggle Article Drafted state
+  const handleToggleDraftedArticle = async () => {
+    if (!idea) return;
+    const newDone = !idea.articleDraftedDone;
+    try {
+      setSaving(true);
+      const updatedIdea: IdeaDetails = {
+        ...idea,
+        articleDraftedDone: newDone,
+        articleDraftedAt: newDone ? (idea.articleDraftedAt || new Date().toISOString()) : '',
+      };
+      setIdea(updatedIdea);
+      await dispatch(updateIdea(updatedIdea));
+      toast.success(newDone ? 'Article marked as Drafted! ✓' : 'Article draft status cleared.');
+    } catch (err: any) {
+      toast.error('Failed to update article draft status: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // Toggle Article Published state
   const handleTogglePublishArticle = async () => {
     if (!idea) return;
-    const currentPublished = Boolean(idea.publishedMedium || idea.publishedSubstack);
+    const currentPublished = Boolean(idea.articlePublishedDone || idea.publishedMedium || idea.publishedSubstack);
     const newPublished = !currentPublished;
 
     try {
       setSaving(true);
       const updatedIdea: IdeaDetails = {
         ...idea,
+        articlePublishedDone: newPublished,
+        articlePublishedAt: newPublished ? (idea.articlePublishedAt || new Date().toISOString()) : '',
         publishedMedium: newPublished,
         publishedSubstack: newPublished,
       };
       setIdea(updatedIdea);
       await dispatch(updateIdea(updatedIdea));
-      toast.success(newPublished ? 'Article marked as published! ✓' : 'Article marked as unpublished.');
+      toast.success(newPublished ? 'Article marked as Published! ✓' : 'Article marked as unpublished.');
     } catch (err: any) {
       toast.error('Failed to update article status: ' + err.message);
     } finally {
@@ -336,24 +414,125 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
     }
   };
 
-  // Toggle Video Published state
-  const handleTogglePublishVideo = async () => {
+  // Open Video Stages update modal
+  const handleOpenVideoModal = () => {
     if (!idea) return;
-    const currentPublished = Boolean(idea.publishedYoutube || idea.publishedInstagram);
-    const newPublished = !currentPublished;
+    setTempShootingDone(Boolean(idea.videoShootingDone));
+    setTempShootingAt(toDateTimeLocalValue(idea.videoShootingAt));
+    setTempEditingDone(Boolean(idea.videoEditingDone));
+    setTempEditingAt(toDateTimeLocalValue(idea.videoEditingAt));
+    setTempUploadedDone(Boolean(idea.videoUploadedDone || idea.publishedYoutube || idea.publishedInstagram));
+    setTempUploadedAt(toDateTimeLocalValue(idea.videoUploadedAt));
+    setIsVideoModalOpen(true);
+  };
 
+  // Save Video Stages from modal
+  const handleSaveVideoModal = async () => {
+    if (!idea) return;
     try {
       setSaving(true);
       const updatedIdea: IdeaDetails = {
         ...idea,
-        publishedYoutube: newPublished,
-        publishedInstagram: newPublished,
+        videoShootingDone: tempShootingDone,
+        videoShootingAt: tempShootingDone ? (tempShootingAt ? new Date(tempShootingAt).toISOString() : new Date().toISOString()) : '',
+        videoEditingDone: tempEditingDone,
+        videoEditingAt: tempEditingDone ? (tempEditingAt ? new Date(tempEditingAt).toISOString() : new Date().toISOString()) : '',
+        videoUploadedDone: tempUploadedDone,
+        videoUploadedAt: tempUploadedDone ? (tempUploadedAt ? new Date(tempUploadedAt).toISOString() : new Date().toISOString()) : '',
+        publishedYoutube: tempUploadedDone,
+        publishedInstagram: tempUploadedDone,
       };
       setIdea(updatedIdea);
       await dispatch(updateIdea(updatedIdea));
-      toast.success(newPublished ? 'Video marked as published! ✓' : 'Video marked as unpublished.');
+      setIsVideoModalOpen(false);
+      toast.success('Video stages and timestamps updated successfully! ✓');
     } catch (err: any) {
-      toast.error('Failed to update video status: ' + err.message);
+      toast.error('Failed to update video stages: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Quick toggles for video stages
+  const handleQuickToggleShooting = async () => {
+    if (!idea) return;
+    const newDone = !idea.videoShootingDone;
+    try {
+      setSaving(true);
+      const updatedIdea: IdeaDetails = {
+        ...idea,
+        videoShootingDone: newDone,
+        videoShootingAt: newDone ? (idea.videoShootingAt || new Date().toISOString()) : '',
+      };
+      setIdea(updatedIdea);
+      await dispatch(updateIdea(updatedIdea));
+      toast.success(newDone ? 'Shooting marked as completed! ✓' : 'Shooting status cleared.');
+    } catch (err: any) {
+      toast.error('Failed to update shooting status: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleQuickToggleEditing = async () => {
+    if (!idea) return;
+    const newDone = !idea.videoEditingDone;
+    try {
+      setSaving(true);
+      const updatedIdea: IdeaDetails = {
+        ...idea,
+        videoEditingDone: newDone,
+        videoEditingAt: newDone ? (idea.videoEditingAt || new Date().toISOString()) : '',
+      };
+      setIdea(updatedIdea);
+      await dispatch(updateIdea(updatedIdea));
+      toast.success(newDone ? 'Editing marked as completed! ✓' : 'Editing status cleared.');
+    } catch (err: any) {
+      toast.error('Failed to update editing status: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleQuickToggleUploaded = async () => {
+    if (!idea) return;
+    const currentUploaded = Boolean(idea.videoUploadedDone || idea.publishedYoutube || idea.publishedInstagram);
+    const newDone = !currentUploaded;
+    try {
+      setSaving(true);
+      const updatedIdea: IdeaDetails = {
+        ...idea,
+        videoUploadedDone: newDone,
+        videoUploadedAt: newDone ? (idea.videoUploadedAt || new Date().toISOString()) : '',
+        publishedYoutube: newDone,
+        publishedInstagram: newDone,
+      };
+      setIdea(updatedIdea);
+      await dispatch(updateIdea(updatedIdea));
+      toast.success(newDone ? 'Video marked as Uploaded / Published! ✓' : 'Upload status cleared.');
+    } catch (err: any) {
+      toast.error('Failed to update upload status: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Save inline timestamp edit
+  const handleSaveInlineDate = async (field: keyof IdeaDetails) => {
+    if (!idea) return;
+    try {
+      setSaving(true);
+      const isoDate = editingDateValue ? new Date(editingDateValue).toISOString() : '';
+      const updatedIdea: IdeaDetails = {
+        ...idea,
+        [field]: isoDate,
+      };
+      setIdea(updatedIdea);
+      await dispatch(updateIdea(updatedIdea));
+      setEditingDateKey(null);
+      toast.success('Timestamp updated successfully!');
+    } catch (err: any) {
+      toast.error('Failed to update timestamp: ' + err.message);
     } finally {
       setSaving(false);
     }
@@ -816,61 +995,35 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
                       </div>
 
                       <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
-                        {/* Publish Status Toggle for Article */}
-                        {tab.value === 'mediumArticle' && (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={handleTogglePublishArticle}
-                            disabled={saving}
-                            className={cn(
-                              "h-7.5 px-2.5 sm:px-3 text-xs font-medium gap-1.5 transition-colors cursor-pointer",
-                              (idea.publishedMedium || idea.publishedSubstack)
-                                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 font-semibold"
-                                : "border-border/80 text-muted-foreground hover:text-foreground hover:bg-muted"
-                            )}
-                            title="Toggle whether the article is published"
-                          >
-                            <Check className={cn("h-3.5 w-3.5", (idea.publishedMedium || idea.publishedSubstack) ? "text-emerald-500" : "opacity-40")} />
-                            <span>{(idea.publishedMedium || idea.publishedSubstack) ? 'Article Published ✓' : 'Mark as Published'}</span>
-                          </Button>
-                        )}
-
-                        {/* Publish Status Toggle for Video */}
-                        {isVideoScript && (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={handleTogglePublishVideo}
-                            disabled={saving}
-                            className={cn(
-                              "h-7.5 px-2.5 sm:px-3 text-xs font-medium gap-1.5 transition-colors cursor-pointer",
-                              (idea.publishedYoutube || idea.publishedInstagram)
-                                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 font-semibold"
-                                : "border-border/80 text-muted-foreground hover:text-foreground hover:bg-muted"
-                            )}
-                            title="Toggle whether the video is published"
-                          >
-                            <Check className={cn("h-3.5 w-3.5", (idea.publishedYoutube || idea.publishedInstagram) ? "text-emerald-500" : "opacity-40")} />
-                            <span>{(idea.publishedYoutube || idea.publishedInstagram) ? 'Video Published ✓' : 'Mark as Published'}</span>
-                          </Button>
-                        )}
-
+                        {/* Video Stage Prompt button */}
                         {isVideoScript && (
                           <Button
                             type="button"
                             size="sm"
                             variant="default"
-                            onClick={() => setIsPrompterOpen(true)}
+                            onClick={handleOpenVideoModal}
                             className="h-7.5 px-3 text-xs font-semibold gap-1.5 bg-rose-600 hover:bg-rose-700 text-white shadow-xs cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]"
+                            title="Update Shooting, Editing, and Uploaded stages"
+                          >
+                            <Film className="h-3.5 w-3.5" />
+                            Update Video Stages
+                          </Button>
+                        )}
+
+                        {isVideoScript && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setIsPrompterOpen(true)}
+                            className="h-7.5 px-2.5 text-xs font-medium gap-1.5 border-border/70 hover:bg-muted"
                             title="Open full-screen prompter for recording from a distance"
                           >
-                            <Tv className="h-3.5 w-3.5" />
+                            <Tv className="h-3.5 w-3.5 text-rose-500" />
                             Prompter
                           </Button>
                         )}
+
                         <Button 
                           type="button"
                           size="sm" 
@@ -884,6 +1037,205 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
                         </Button>
                       </div>
                     </div>
+
+                    {/* Article Stage Progression Banner */}
+                    {tab.value === 'mediumArticle' && (
+                      <div className="mb-3 p-2.5 sm:p-3 rounded-xl border border-border/75 bg-muted/25 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                            Article Stages:
+                          </span>
+
+                          {/* Stage 1: Drafted */}
+                          <div className={cn(
+                            "inline-flex items-center gap-1.5 py-1 px-2.5 rounded-lg border text-xs transition-colors",
+                            idea.articleDraftedDone 
+                              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-medium" 
+                              : "bg-card border-border/70 text-muted-foreground"
+                          )}>
+                            <button
+                              type="button"
+                              onClick={handleToggleDraftedArticle}
+                              className="flex items-center gap-1.5 cursor-pointer hover:opacity-85 font-semibold"
+                            >
+                              <span className={cn("w-2 h-2 rounded-full", idea.articleDraftedDone ? "bg-emerald-500" : "bg-muted-foreground/40")} />
+                              <span>{idea.articleDraftedDone ? "1. Drafted ✓" : "1. Mark as Drafted"}</span>
+                            </button>
+                            {idea.articleDraftedDone && (
+                              <div className="flex items-center gap-1 pl-1.5 border-l border-border/60 text-[11px]">
+                                <span className="opacity-80">{formatDateTimeDisplay(idea.articleDraftedAt) || 'Recorded'}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingDateKey('articleDraftedAt');
+                                    setEditingDateValue(toDateTimeLocalValue(idea.articleDraftedAt));
+                                  }}
+                                  className="text-primary hover:underline p-0.5 ml-0.5 cursor-pointer"
+                                  title="Edit date & time"
+                                >
+                                  <Edit3 className="w-3 h-3" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Stage 2: Published */}
+                          <div className={cn(
+                            "inline-flex items-center gap-1.5 py-1 px-2.5 rounded-lg border text-xs transition-colors",
+                            (idea.articlePublishedDone || idea.publishedMedium || idea.publishedSubstack)
+                              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-medium" 
+                              : "bg-card border-border/70 text-muted-foreground"
+                          )}>
+                            <button
+                              type="button"
+                              onClick={handleTogglePublishArticle}
+                              className="flex items-center gap-1.5 cursor-pointer hover:opacity-85 font-semibold"
+                            >
+                              <span className={cn("w-2 h-2 rounded-full", (idea.articlePublishedDone || idea.publishedMedium || idea.publishedSubstack) ? "bg-emerald-500" : "bg-muted-foreground/40")} />
+                              <span>{(idea.articlePublishedDone || idea.publishedMedium || idea.publishedSubstack) ? "2. Published ✓" : "2. Mark as Published"}</span>
+                            </button>
+                            {(idea.articlePublishedDone || idea.publishedMedium || idea.publishedSubstack) && (
+                              <div className="flex items-center gap-1 pl-1.5 border-l border-border/60 text-[11px]">
+                                <span className="opacity-80">{formatDateTimeDisplay(idea.articlePublishedAt) || 'Recorded'}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingDateKey('articlePublishedAt');
+                                    setEditingDateValue(toDateTimeLocalValue(idea.articlePublishedAt));
+                                  }}
+                                  className="text-primary hover:underline p-0.5 ml-0.5 cursor-pointer"
+                                  title="Edit date & time"
+                                >
+                                  <Edit3 className="w-3 h-3" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Video Stage Progression Banner */}
+                    {isVideoScript && (
+                      <div className="mb-3 p-2.5 sm:p-3 rounded-xl border border-border/75 bg-muted/25 flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                            Video Stages:
+                          </span>
+
+                          {/* Stage 1: Shooting */}
+                          <div className={cn(
+                            "inline-flex items-center gap-1.5 py-1 px-2.5 rounded-lg border text-xs transition-colors",
+                            idea.videoShootingDone
+                              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-medium" 
+                              : "bg-card border-border/70 text-muted-foreground"
+                          )}>
+                            <button
+                              type="button"
+                              onClick={handleQuickToggleShooting}
+                              className="flex items-center gap-1.5 cursor-pointer hover:opacity-85 font-semibold"
+                            >
+                              <Film className="w-3 h-3 opacity-70" />
+                              <span>{idea.videoShootingDone ? "1. Shooting ✓" : "1. Shooting Pending"}</span>
+                            </button>
+                            {idea.videoShootingDone && (
+                              <div className="flex items-center gap-1 pl-1.5 border-l border-border/60 text-[11px]">
+                                <span className="opacity-80">{formatDateTimeDisplay(idea.videoShootingAt) || 'Recorded'}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingDateKey('videoShootingAt');
+                                    setEditingDateValue(toDateTimeLocalValue(idea.videoShootingAt));
+                                  }}
+                                  className="text-primary hover:underline p-0.5 ml-0.5 cursor-pointer"
+                                  title="Edit date & time"
+                                >
+                                  <Edit3 className="w-3 h-3" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Stage 2: Editing */}
+                          <div className={cn(
+                            "inline-flex items-center gap-1.5 py-1 px-2.5 rounded-lg border text-xs transition-colors",
+                            idea.videoEditingDone
+                              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-medium" 
+                              : "bg-card border-border/70 text-muted-foreground"
+                          )}>
+                            <button
+                              type="button"
+                              onClick={handleQuickToggleEditing}
+                              className="flex items-center gap-1.5 cursor-pointer hover:opacity-85 font-semibold"
+                            >
+                              <Scissors className="w-3 h-3 opacity-70" />
+                              <span>{idea.videoEditingDone ? "2. Editing ✓" : "2. Editing Pending"}</span>
+                            </button>
+                            {idea.videoEditingDone && (
+                              <div className="flex items-center gap-1 pl-1.5 border-l border-border/60 text-[11px]">
+                                <span className="opacity-80">{formatDateTimeDisplay(idea.videoEditingAt) || 'Recorded'}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingDateKey('videoEditingAt');
+                                    setEditingDateValue(toDateTimeLocalValue(idea.videoEditingAt));
+                                  }}
+                                  className="text-primary hover:underline p-0.5 ml-0.5 cursor-pointer"
+                                  title="Edit date & time"
+                                >
+                                  <Edit3 className="w-3 h-3" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Stage 3: Uploaded */}
+                          <div className={cn(
+                            "inline-flex items-center gap-1.5 py-1 px-2.5 rounded-lg border text-xs transition-colors",
+                            (idea.videoUploadedDone || idea.publishedYoutube || idea.publishedInstagram)
+                              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-medium" 
+                              : "bg-card border-border/70 text-muted-foreground"
+                          )}>
+                            <button
+                              type="button"
+                              onClick={handleQuickToggleUploaded}
+                              className="flex items-center gap-1.5 cursor-pointer hover:opacity-85 font-semibold"
+                            >
+                              <Upload className="w-3 h-3 opacity-70" />
+                              <span>{(idea.videoUploadedDone || idea.publishedYoutube || idea.publishedInstagram) ? "3. Uploaded ✓" : "3. Upload Pending"}</span>
+                            </button>
+                            {(idea.videoUploadedDone || idea.publishedYoutube || idea.publishedInstagram) && (
+                              <div className="flex items-center gap-1 pl-1.5 border-l border-border/60 text-[11px]">
+                                <span className="opacity-80">{formatDateTimeDisplay(idea.videoUploadedAt) || 'Recorded'}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingDateKey('videoUploadedAt');
+                                    setEditingDateValue(toDateTimeLocalValue(idea.videoUploadedAt));
+                                  }}
+                                  className="text-primary hover:underline p-0.5 ml-0.5 cursor-pointer"
+                                  title="Edit date & time"
+                                >
+                                  <Edit3 className="w-3 h-3" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={handleOpenVideoModal}
+                          className="h-7 text-xs font-semibold gap-1 text-rose-600 hover:text-rose-700 hover:bg-rose-500/10 p-1.5 shrink-0"
+                          title="Open full stages dialog"
+                        >
+                          <Film className="w-3.5 h-3.5" />
+                          Update Stages &amp; Timestamps
+                        </Button>
+                      </div>
+                    )}
 
                     <div className="relative group w-full min-w-0">
                       {isVideoScript ? (
@@ -992,6 +1344,257 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
             <div className="flex justify-end pt-2 border-t border-border/40">
               <Button size="sm" onClick={() => setIsFormatModalOpen(false)}>
                 Done
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Video Production Stages Update Modal */}
+      {isVideoModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-5 sm:p-6 shadow-xl space-y-5 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-border/50 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-rose-500/10 text-rose-500">
+                  <Film className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-foreground">Update Video Production Stages</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Answer the stage questions and adjust the recorded date &amp; time anytime.
+                  </p>
+                </div>
+              </div>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                onClick={() => setIsVideoModalOpen(false)}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Question 1: Shooting Completed? */}
+              <div className={cn(
+                "p-3.5 rounded-xl border transition-all space-y-3",
+                tempShootingDone ? "border-emerald-500/40 bg-emerald-500/5" : "border-border/70 bg-muted/20"
+              )}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className={cn("p-1.5 rounded-lg", tempShootingDone ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-muted text-muted-foreground")}>
+                      <Film className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold">1. Is shooting completed?</h4>
+                      <p className="text-xs text-muted-foreground">Video footage recording finished</p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={tempShootingDone ? "default" : "outline"}
+                    onClick={() => {
+                      const next = !tempShootingDone;
+                      setTempShootingDone(next);
+                      if (next && !tempShootingAt) {
+                        setTempShootingAt(toDateTimeLocalValue());
+                      }
+                    }}
+                    className={cn("h-8 text-xs font-semibold gap-1", tempShootingDone && "bg-emerald-600 hover:bg-emerald-700 text-white")}
+                  >
+                    {tempShootingDone ? <Check className="w-3.5 h-3.5" /> : null}
+                    {tempShootingDone ? "Completed ✓" : "Mark Done"}
+                  </Button>
+                </div>
+
+                {tempShootingDone && (
+                  <div className="pt-2 border-t border-border/40 space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5" /> Shooting Date &amp; Time (editable at your will):
+                    </label>
+                    <Input
+                      type="datetime-local"
+                      value={tempShootingAt}
+                      onChange={(e) => setTempShootingAt(e.target.value)}
+                      className="h-8 text-xs bg-background"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Question 2: Editing Completed? */}
+              <div className={cn(
+                "p-3.5 rounded-xl border transition-all space-y-3",
+                tempEditingDone ? "border-emerald-500/40 bg-emerald-500/5" : "border-border/70 bg-muted/20"
+              )}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className={cn("p-1.5 rounded-lg", tempEditingDone ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-muted text-muted-foreground")}>
+                      <Scissors className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold">2. Is editing completed?</h4>
+                      <p className="text-xs text-muted-foreground">Cut, sound, color &amp; graphics finalized</p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={tempEditingDone ? "default" : "outline"}
+                    onClick={() => {
+                      const next = !tempEditingDone;
+                      setTempEditingDone(next);
+                      if (next && !tempEditingAt) {
+                        setTempEditingAt(toDateTimeLocalValue());
+                      }
+                    }}
+                    className={cn("h-8 text-xs font-semibold gap-1", tempEditingDone && "bg-emerald-600 hover:bg-emerald-700 text-white")}
+                  >
+                    {tempEditingDone ? <Check className="w-3.5 h-3.5" /> : null}
+                    {tempEditingDone ? "Completed ✓" : "Mark Done"}
+                  </Button>
+                </div>
+
+                {tempEditingDone && (
+                  <div className="pt-2 border-t border-border/40 space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5" /> Editing Date &amp; Time (editable at your will):
+                    </label>
+                    <Input
+                      type="datetime-local"
+                      value={tempEditingAt}
+                      onChange={(e) => setTempEditingAt(e.target.value)}
+                      className="h-8 text-xs bg-background"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Question 3: Uploaded? */}
+              <div className={cn(
+                "p-3.5 rounded-xl border transition-all space-y-3",
+                tempUploadedDone ? "border-emerald-500/40 bg-emerald-500/5" : "border-border/70 bg-muted/20"
+              )}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className={cn("p-1.5 rounded-lg", tempUploadedDone ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-muted text-muted-foreground")}>
+                      <Upload className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold">3. Is video uploaded?</h4>
+                      <p className="text-xs text-muted-foreground">Published / scheduled to YouTube or channel</p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={tempUploadedDone ? "default" : "outline"}
+                    onClick={() => {
+                      const next = !tempUploadedDone;
+                      setTempUploadedDone(next);
+                      if (next && !tempUploadedAt) {
+                        setTempUploadedAt(toDateTimeLocalValue());
+                      }
+                    }}
+                    className={cn("h-8 text-xs font-semibold gap-1", tempUploadedDone && "bg-emerald-600 hover:bg-emerald-700 text-white")}
+                  >
+                    {tempUploadedDone ? <Check className="w-3.5 h-3.5" /> : null}
+                    {tempUploadedDone ? "Uploaded ✓" : "Mark Done"}
+                  </Button>
+                </div>
+
+                {tempUploadedDone && (
+                  <div className="pt-2 border-t border-border/40 space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5" /> Upload Date &amp; Time (editable at your will):
+                    </label>
+                    <Input
+                      type="datetime-local"
+                      value={tempUploadedAt}
+                      onChange={(e) => setTempUploadedAt(e.target.value)}
+                      className="h-8 text-xs bg-background"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-border/50">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsVideoModalOpen(false)}
+                disabled={saving}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleSaveVideoModal}
+                disabled={saving}
+                className="bg-rose-600 hover:bg-rose-700 text-white font-semibold px-4"
+              >
+                {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : null}
+                Save Video Stages
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Inline Date & Time Editor Modal */}
+      {editingDateKey && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-border/50 pb-2.5">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-primary" />
+                <h4 className="text-sm font-semibold">Update Timestamp</h4>
+              </div>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                onClick={() => setEditingDateKey(null)}
+              >
+                <X className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">
+                Select or adjust custom date and time:
+              </label>
+              <Input
+                type="datetime-local"
+                value={editingDateValue}
+                onChange={(e) => setEditingDateValue(e.target.value)}
+                className="h-9 text-xs"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-border/40">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setEditingDateKey(null)}
+                disabled={saving}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => handleSaveInlineDate(editingDateKey)}
+                disabled={saving}
+                className="font-medium px-3.5"
+              >
+                {saving ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
+                Save Time
               </Button>
             </div>
           </div>

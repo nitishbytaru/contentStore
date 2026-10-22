@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TrendingUp, CheckCircle, FileText, Target, AlertCircle, Calendar, Clock, Timer, Hourglass, Sparkles, Layers } from 'lucide-react';
+import { TrendingUp, CheckCircle, FileText, Target, AlertCircle, Calendar, Clock, Timer, Hourglass, Sparkles, Layers, Film, Scissors, Upload, Video } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend,
   PieChart, Pie, Cell,
@@ -50,7 +50,7 @@ export function AnalyticsDashboard() {
 
     ideas.forEach(idea => {
       // Channel 1: Articles (Medium & Substack)
-      const isArticlesPublished = Boolean(idea.publishedMedium || idea.publishedSubstack);
+      const isArticlesPublished = Boolean(idea.articlePublishedDone || idea.publishedMedium || idea.publishedSubstack);
       const isArticlesSkipped = !isArticlesPublished && Boolean(idea.ineligibleMedium || idea.ineligibleSubstack);
       const isArticlesPending = !isArticlesPublished && !isArticlesSkipped && Boolean(idea.eligibleMedium || idea.eligibleSubstack);
 
@@ -59,7 +59,7 @@ export function AnalyticsDashboard() {
       else if (isArticlesPending) channelCounts['Articles'].pending++;
 
       // Channel 2: Videos (YouTube & Instagram)
-      const isVideosPublished = Boolean(idea.publishedYoutube || idea.publishedInstagram);
+      const isVideosPublished = Boolean(idea.videoUploadedDone || idea.publishedYoutube || idea.publishedInstagram);
       const isVideosSkipped = !isVideosPublished && Boolean(idea.ineligibleYoutube || idea.ineligibleInstagram);
       const isVideosPending = !isVideosPublished && !isVideosSkipped && Boolean(idea.eligibleYoutube || idea.eligibleInstagram);
 
@@ -137,8 +137,21 @@ export function AnalyticsDashboard() {
       'YouTube Posts': counts.youtube,
     }));
 
+    const videoPipeline = {
+      scripted: ideas.filter(i => Boolean(i.youtubeScript && i.youtubeScript.trim())).length,
+      shootingDone: ideas.filter(i => Boolean(i.videoShootingDone)).length,
+      editingDone: ideas.filter(i => Boolean(i.videoEditingDone)).length,
+      uploaded: ideas.filter(i => Boolean(i.videoUploadedDone || i.publishedYoutube || i.publishedInstagram)).length,
+    };
+
+    const articlePipeline = {
+      drafted: ideas.filter(i => Boolean(i.articleDraftedDone || (i.mediumArticle && i.mediumArticle.trim()))).length,
+      published: ideas.filter(i => Boolean(i.articlePublishedDone || i.publishedMedium || i.publishedSubstack)).length,
+    };
+
     return {
-      totalIdeas, activeIdeas, fullyPublished, completionRate, barChartData, pieChartData, timelineData
+      totalIdeas, activeIdeas, fullyPublished, completionRate, barChartData, pieChartData, timelineData,
+      videoPipeline, articlePipeline
     };
   }, [ideas]);
 
@@ -193,7 +206,10 @@ export function AnalyticsDashboard() {
     );
   }
 
-  const { totalIdeas, activeIdeas, fullyPublished, completionRate, barChartData, pieChartData, timelineData } = analyticsData;
+  const { 
+    totalIdeas, activeIdeas, fullyPublished, completionRate, barChartData, 
+    pieChartData, timelineData, videoPipeline, articlePipeline 
+  } = analyticsData;
 
   const tooltipStyle = { 
     backgroundColor: 'var(--card)', 
@@ -351,6 +367,90 @@ export function AnalyticsDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Production Pipeline & Milestones */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <Layers className="w-4 h-4 text-primary" />
+                Production Milestones &amp; Pipeline
+              </CardTitle>
+              <CardDescription className="text-xs mt-0.5">
+                Current progress through video production and article publishing stages
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Video Stages Funnel */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-rose-500 flex items-center gap-1.5">
+                <Video className="w-3.5 h-3.5" /> Video Pipeline
+              </span>
+              <span className="text-muted-foreground text-[11px]">
+                {videoPipeline.uploaded} of {videoPipeline.scripted} published
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <div className="p-2.5 rounded-xl border border-border/70 bg-card">
+                <p className="text-[10px] uppercase font-semibold text-muted-foreground">1. Scripted</p>
+                <p className="text-lg font-bold text-foreground mt-0.5">{videoPipeline.scripted}</p>
+                <p className="text-[10px] text-muted-foreground">scripts drafted</p>
+              </div>
+              <div className="p-2.5 rounded-xl border border-border/70 bg-card">
+                <p className="text-[10px] uppercase font-semibold text-muted-foreground flex items-center gap-1">
+                  <Film className="w-3 h-3 text-rose-500" /> 2. Shot
+                </p>
+                <p className="text-lg font-bold text-foreground mt-0.5">{videoPipeline.shootingDone}</p>
+                <p className="text-[10px] text-muted-foreground">shooting finished</p>
+              </div>
+              <div className="p-2.5 rounded-xl border border-border/70 bg-card">
+                <p className="text-[10px] uppercase font-semibold text-muted-foreground flex items-center gap-1">
+                  <Scissors className="w-3 h-3 text-rose-500" /> 3. Edited
+                </p>
+                <p className="text-lg font-bold text-foreground mt-0.5">{videoPipeline.editingDone}</p>
+                <p className="text-[10px] text-muted-foreground">editing finalized</p>
+              </div>
+              <div className="p-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
+                <p className="text-[10px] uppercase font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                  <Upload className="w-3 h-3" /> 4. Uploaded
+                </p>
+                <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">{videoPipeline.uploaded}</p>
+                <p className="text-[10px] text-muted-foreground">live / published</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Article Stages Funnel */}
+          <div className="space-y-2 pt-2 border-t border-border/50">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                <FileText className="w-3.5 h-3.5" /> Article Pipeline
+              </span>
+              <span className="text-muted-foreground text-[11px]">
+                {articlePipeline.published} of {articlePipeline.drafted} published
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2.5">
+              <div className="p-2.5 rounded-xl border border-border/70 bg-card">
+                <p className="text-[10px] uppercase font-semibold text-muted-foreground">1. Drafted</p>
+                <p className="text-lg font-bold text-foreground mt-0.5">{articlePipeline.drafted}</p>
+                <p className="text-[10px] text-muted-foreground">articles written</p>
+              </div>
+              <div className="p-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
+                <p className="text-[10px] uppercase font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3" /> 2. Published
+                </p>
+                <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">{articlePipeline.published}</p>
+                <p className="text-[10px] text-muted-foreground">live on Medium/Substack</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Time Spent on Each Topic */}
       <div className="space-y-4 pt-2">

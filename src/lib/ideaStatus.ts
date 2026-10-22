@@ -25,6 +25,16 @@ export type IdeaChecklistFields = {
   baseArticle?: string;
   mediumArticle?: string;
   youtubeScript?: string;
+  articleDraftedDone?: boolean;
+  articleDraftedAt?: string;
+  articlePublishedDone?: boolean;
+  articlePublishedAt?: string;
+  videoShootingDone?: boolean;
+  videoShootingAt?: string;
+  videoEditingDone?: boolean;
+  videoEditingAt?: string;
+  videoUploadedDone?: boolean;
+  videoUploadedAt?: string;
 };
 
 /**
@@ -52,18 +62,18 @@ export const isIdeaPending = (idea: IdeaChecklistFields): boolean => {
 export const isIdeaForArticles = (idea: IdeaChecklistFields): boolean => {
   if (isIdeaCompleted(idea)) return false;
   const isArticleRequired = Boolean(idea.eligibleMedium || idea.eligibleSubstack);
-  const isArticlePublished = Boolean(idea.publishedMedium || idea.publishedSubstack);
+  const isArticlePublished = Boolean(idea.articlePublishedDone || idea.publishedMedium || idea.publishedSubstack);
   return isArticleRequired && !isArticlePublished;
 };
 
 /**
  * Stage 3: Videos
- * Ideas where the user chose to create a video and the video script is in progress (not published yet).
+ * Ideas where the user chose to create a video and the video script is in progress (not published/uploaded yet).
  */
 export const isIdeaForVideos = (idea: IdeaChecklistFields): boolean => {
   if (isIdeaCompleted(idea)) return false;
   const isVideoRequired = Boolean(idea.eligibleYoutube || idea.eligibleInstagram);
-  const isVideoPublished = Boolean(idea.publishedYoutube || idea.publishedInstagram);
+  const isVideoPublished = Boolean(idea.videoUploadedDone || idea.publishedYoutube || idea.publishedInstagram);
   return isVideoRequired && !isVideoPublished;
 };
 
@@ -74,8 +84,8 @@ export const isIdeaForVideos = (idea: IdeaChecklistFields): boolean => {
 export const canCompleteIdea = (idea: IdeaChecklistFields): { allowed: boolean; reason?: string } => {
   const isArticleRequired = Boolean(idea.eligibleMedium || idea.eligibleSubstack);
   const isVideoRequired = Boolean(idea.eligibleYoutube || idea.eligibleInstagram);
-  const isArticlePublished = Boolean(idea.publishedMedium || idea.publishedSubstack);
-  const isVideoPublished = Boolean(idea.publishedYoutube || idea.publishedInstagram);
+  const isArticlePublished = Boolean(idea.articlePublishedDone || idea.publishedMedium || idea.publishedSubstack);
+  const isVideoPublished = Boolean(idea.videoUploadedDone || idea.publishedYoutube || idea.publishedInstagram);
 
   // If neither format was selected yet
   if (!isArticleRequired && !isVideoRequired) {
@@ -117,8 +127,8 @@ export const getIdeaPublishStatus = (i: IdeaChecklistFields): PublishStatus => {
 
   const isArticleRequired = Boolean(i.eligibleMedium || i.eligibleSubstack);
   const isVideoRequired = Boolean(i.eligibleYoutube || i.eligibleInstagram);
-  const isArticlePublished = Boolean(i.publishedMedium || i.publishedSubstack);
-  const isVideoPublished = Boolean(i.publishedYoutube || i.publishedInstagram);
+  const isArticlePublished = Boolean(i.articlePublishedDone || i.publishedMedium || i.publishedSubstack);
+  const isVideoPublished = Boolean(i.videoUploadedDone || i.publishedYoutube || i.publishedInstagram);
 
   // Stage 1: Pending (No formats selected yet / awaiting research)
   if (!isArticleRequired && !isVideoRequired) {
@@ -164,9 +174,10 @@ export const getIdeaPublishStatus = (i: IdeaChecklistFields): PublishStatus => {
 
   // Article in progress
   if (isArticleRequired && !isArticlePublished) {
+    const label = i.articleDraftedDone ? 'Article Drafted' : 'Writing Article';
     return {
       status: 'articles',
-      label: 'Writing Article',
+      label,
       badgeClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
       dotClass: 'bg-amber-500',
       borderClass: 'border-l-amber-500',
@@ -176,9 +187,16 @@ export const getIdeaPublishStatus = (i: IdeaChecklistFields): PublishStatus => {
   }
 
   // Video in progress
+  let videoLabel = 'Writing Video';
+  if (i.videoEditingDone) {
+    videoLabel = 'Editing Done';
+  } else if (i.videoShootingDone) {
+    videoLabel = 'Shooting Done';
+  }
+
   return {
     status: 'videos',
-    label: 'Writing Video',
+    label: videoLabel,
     badgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
     dotClass: 'bg-rose-500',
     borderClass: 'border-l-rose-500',
