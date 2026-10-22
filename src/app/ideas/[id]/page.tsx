@@ -2,15 +2,14 @@
 
 import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Save, Copy, Loader2, Sparkles, Tv } from 'lucide-react';
+import { ArrowLeft, Save, Copy, Loader2, Tv } from 'lucide-react';
 import { toast } from 'sonner';
 import ScriptPrompter from '@/components/ScriptPrompter';
 
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchIdeas, updateIdea } from '@/store/slices/ideasSlice';
@@ -79,15 +78,6 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
   const handleSave = async () => {
     if (!idea) return;
 
-    const isXSelected = idea.eligibleX || idea.ineligibleX;
-    const isArticlesSelected = idea.eligibleMedium || idea.ineligibleMedium;
-    const isVideosSelected = idea.eligibleYoutube || idea.ineligibleYoutube;
-
-    if (!isXSelected || !isArticlesSelected || !isVideosSelected) {
-      toast.error('Please select Eligible or Ineligible for all sections in the Publishing Checklist.');
-      return;
-    }
-
     try {
       setSaving(true);
       const result = await dispatch(updateIdea(idea));
@@ -116,33 +106,14 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
     toast.success('Copied to clipboard!');
   };
 
-  const handleCheckboxChange = (fields: (keyof IdeaDetails)[], checked: boolean) => {
-    setIdea(prev => {
-      if (!prev) return prev;
-      const updates: Partial<IdeaDetails> = {};
-      fields.forEach(f => {
-        (updates[f] as boolean) = checked;
-      });
-      return { ...prev, ...updates };
-    });
-  };
-
   if (loading || storeLoading) {
     return (
       <div className="space-y-6 pt-2 w-full max-w-full min-w-0">
         <Skeleton className="h-5 w-32" />
         <Skeleton className="h-20 w-full rounded-xl" />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full min-w-0">
-          <div className="lg:col-span-2 space-y-4 w-full min-w-0">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-[400px] w-full rounded-lg" />
-          </div>
-          <div className="space-y-4 w-full min-w-0">
-            <Skeleton className="h-8 w-40" />
-            <Skeleton className="h-24 w-full rounded-lg" />
-            <Skeleton className="h-24 w-full rounded-lg" />
-            <Skeleton className="h-24 w-full rounded-lg" />
-          </div>
+        <div className="space-y-4 w-full min-w-0">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-[480px] w-full rounded-lg" />
         </div>
       </div>
     );
@@ -161,12 +132,6 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
     { value: 'mediumArticle', label: 'Article', placeholder: 'Draft your article here...' },
     { value: 'youtubeScript', label: 'Video Script', placeholder: 'Long-form video script...' },
   ] as const;
-
-  const platforms = [
-    { eligibleIds: ['eligibleX'], publishedIds: ['publishedX'], ineligibleIds: ['ineligibleX'], label: 'X (Twitter)' },
-    { eligibleIds: ['eligibleMedium', 'eligibleSubstack'], publishedIds: ['publishedMedium', 'publishedSubstack'], ineligibleIds: ['ineligibleMedium', 'ineligibleSubstack'], label: 'Articles (Medium & Substack)' },
-    { eligibleIds: ['eligibleYoutube', 'eligibleInstagram'], publishedIds: ['publishedYoutube', 'publishedInstagram'], ineligibleIds: ['ineligibleYoutube', 'ineligibleInstagram'], label: 'Videos (YouTube & Instagram)' },
-  ];
 
   const publishStatus = idea ? getIdeaPublishStatus(idea) : null;
 
@@ -225,204 +190,105 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
         </h1>
       </div>
 
-      {/* Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full min-w-0">
-        {/* Main Content Area */}
-        <div className="lg:col-span-2 w-full min-w-0">
-          <Card className="w-full min-w-0 overflow-hidden shadow-xs border-border/70">
-            <CardContent className="p-3.5 sm:p-6 w-full min-w-0 overflow-hidden">
-              <Tabs value={activeContentTab} onValueChange={(val) => val && setActiveContentTab(val)} className="w-full min-w-0">
-                <TabsList className="grid grid-cols-3 w-full rounded-xl p-1 bg-muted/60 mb-4 border border-border/50 h-auto min-w-0 gap-1">
-                  {contentTabs.map(tab => {
-                    const isActive = activeContentTab === tab.value;
-                    return (
-                      <TabsTrigger
-                        key={tab.value}
-                        value={tab.value}
-                        className={cn(
-                          "text-xs sm:text-sm py-2 px-1 sm:px-3 text-center truncate min-w-0 font-medium rounded-lg transition-all",
-                          isActive
-                            ? "bg-background text-foreground shadow-sm font-semibold border border-border/70"
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                        )}
-                      >
-                        {tab.label}
-                      </TabsTrigger>
-                    );
-                  })}
-                </TabsList>
-
+      {/* Main Content Area */}
+      <div className="w-full min-w-0">
+        <Card className="w-full min-w-0 overflow-hidden shadow-xs border-border/70">
+          <CardContent className="p-3.5 sm:p-6 w-full min-w-0 overflow-hidden">
+            <Tabs value={activeContentTab} onValueChange={(val) => val && setActiveContentTab(val)} className="w-full min-w-0">
+              <TabsList className="grid grid-cols-3 w-full rounded-xl p-1 bg-muted/60 mb-4 border border-border/50 h-auto min-w-0 gap-1">
                 {contentTabs.map(tab => {
-                  const isVideoScript = tab.value === 'youtubeScript';
-                  const contentText = (idea[tab.value as keyof IdeaDetails] as string) || '';
-                  const wordCount = contentText.trim().split(/\s+/).filter(Boolean).length;
-                  const readingTimeMins = Math.max(1, Math.round(wordCount / 130));
-
+                  const isActive = activeContentTab === tab.value;
                   return (
-                    <TabsContent
+                    <TabsTrigger
                       key={tab.value}
                       value={tab.value}
-                      className="focus-visible:outline-none focus-visible:ring-0 mt-0 w-full min-w-0"
+                      className={cn(
+                        "text-xs sm:text-sm py-2 px-1 sm:px-3 text-center truncate min-w-0 font-medium rounded-lg transition-all",
+                        isActive
+                          ? "bg-background text-foreground shadow-sm font-semibold border border-border/70"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      )}
                     >
-                      {/* Section Toolbar / Info Bar */}
-                      <div className="flex items-center justify-between gap-2 mb-2 px-1">
-                        <div className="flex items-center gap-2 min-w-0">
-                          {isVideoScript ? (
-                            <span className="text-xs font-semibold text-primary flex items-center gap-1.5 shrink-0">
-                              <Tv className="w-3.5 h-3.5" />
-                              Video Script
-                            </span>
-                          ) : (
-                            <span className="text-xs font-medium text-muted-foreground truncate">
-                              {tab.label}
-                            </span>
-                          )}
-                          {wordCount > 0 && (
-                            <span className="text-[11px] text-muted-foreground bg-muted/80 px-2 py-0.5 rounded-full font-mono shrink-0">
-                              {wordCount} words {isVideoScript ? `• ~${readingTimeMins}m read` : ''}
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          {isVideoScript && (
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="default"
-                              onClick={() => setIsPrompterOpen(true)}
-                              className="h-7.5 px-3 text-xs font-semibold gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]"
-                              title="Open full-screen prompter for recording from a distance"
-                            >
-                              <Tv className="h-3.5 w-3.5" />
-                              Prompter
-                            </Button>
-                          )}
-                          <Button 
-                            type="button"
-                            size="sm" 
-                            variant="outline" 
-                            className="h-7.5 px-2.5 text-xs gap-1.5 text-muted-foreground hover:text-foreground border-border/70 hover:bg-muted"
-                            onClick={() => handleCopyContent(contentText)}
-                            title="Copy content"
-                          >
-                            <Copy className="h-3 w-3" />
-                            <span className="hidden sm:inline text-xs">Copy</span>
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="relative group w-full min-w-0">
-                        <Textarea 
-                          placeholder={tab.placeholder}
-                          value={contentText}
-                          onChange={(e) => handleTextChange(tab.value as keyof IdeaDetails, e.target.value)}
-                          className="h-[380px] sm:h-[480px] md:h-[520px] max-h-[65vh] w-full max-w-full resize-none sm:resize-y text-sm p-3.5 sm:p-4 leading-relaxed break-words overflow-x-hidden overflow-y-auto overscroll-contain"
-                        />
-                      </div>
-                    </TabsContent>
+                      {tab.label}
+                    </TabsTrigger>
                   );
                 })}
-              </Tabs>
-            </CardContent>
-          </Card>
-        </div>
+              </TabsList>
 
-        {/* Sidebar: Publishing Checklist */}
-        <div className="w-full min-w-0">
-          <Card className="w-full min-w-0 overflow-hidden lg:sticky lg:top-20 shadow-xs border-border/70">
-            <CardHeader className="pb-3 px-4 sm:px-6">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-primary" />
-                <span>Publishing Checklist</span>
-              </CardTitle>
-              <CardDescription className="text-xs">Track where this content is live</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 px-4 sm:px-6">
-              {platforms.map((platform, idx) => {
-                const isEligible = idea[platform.eligibleIds[0] as keyof IdeaDetails] as boolean;
-                const isPublished = idea[platform.publishedIds[0] as keyof IdeaDetails] as boolean;
-                const isIneligible = idea[platform.ineligibleIds[0] as keyof IdeaDetails] as boolean;
+              {contentTabs.map(tab => {
+                const isVideoScript = tab.value === 'youtubeScript';
+                const contentText = (idea[tab.value as keyof IdeaDetails] as string) || '';
+                const wordCount = contentText.trim().split(/\s+/).filter(Boolean).length;
+                const readingTimeMins = Math.max(1, Math.round(wordCount / 130));
+
                 return (
-                  <div
-                    key={idx}
-                    className={`rounded-lg border p-3 space-y-2.5 transition-colors w-full min-w-0 ${
-                      isIneligible ? 'bg-muted/30 border-muted' : 'border-border/50 hover:border-border'
-                    }`}
+                  <TabsContent
+                    key={tab.value}
+                    value={tab.value}
+                    className="focus-visible:outline-none focus-visible:ring-0 mt-0 w-full min-w-0"
                   >
-                    <p
-                      className={`text-sm font-medium break-words ${
-                        isIneligible ? 'text-muted-foreground line-through' : 'text-foreground'
-                      }`}
-                    >
-                      {platform.label}
-                    </p>
-                    
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <Checkbox
-                        id={`ineligible-${idx}`}
-                        checked={isIneligible}
-                        onCheckedChange={(checked) => {
-                          handleCheckboxChange(platform.ineligibleIds as (keyof IdeaDetails)[], checked as boolean);
-                          if (checked) {
-                            handleCheckboxChange(platform.eligibleIds as (keyof IdeaDetails)[], false);
-                            handleCheckboxChange(platform.publishedIds as (keyof IdeaDetails)[], false);
-                          }
-                        }}
-                        className="h-4 w-4 shrink-0 data-[state=checked]:bg-destructive data-[state=checked]:border-destructive"
-                      />
-                      <label
-                        htmlFor={`ineligible-${idx}`}
-                        className="text-xs font-medium cursor-pointer text-muted-foreground hover:text-destructive transition-colors truncate"
-                      >
-                        Ineligible (Skip)
-                      </label>
+                    {/* Section Toolbar / Info Bar */}
+                    <div className="flex items-center justify-between gap-2 mb-2 px-1">
+                      <div className="flex items-center gap-2 min-w-0">
+                        {isVideoScript ? (
+                          <span className="text-xs font-semibold text-primary flex items-center gap-1.5 shrink-0">
+                            <Tv className="w-3.5 h-3.5" />
+                            Video Script
+                          </span>
+                        ) : (
+                          <span className="text-xs font-medium text-muted-foreground truncate">
+                            {tab.label}
+                          </span>
+                        )}
+                        {wordCount > 0 && (
+                          <span className="text-[11px] text-muted-foreground bg-muted/80 px-2 py-0.5 rounded-full font-mono shrink-0">
+                            {wordCount} words {isVideoScript ? `• ~${readingTimeMins}m read` : ''}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {isVideoScript && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="default"
+                            onClick={() => setIsPrompterOpen(true)}
+                            className="h-7.5 px-3 text-xs font-semibold gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]"
+                            title="Open full-screen prompter for recording from a distance"
+                          >
+                            <Tv className="h-3.5 w-3.5" />
+                            Prompter
+                          </Button>
+                        )}
+                        <Button 
+                          type="button"
+                          size="sm" 
+                          variant="outline" 
+                          className="h-7.5 px-2.5 text-xs gap-1.5 text-muted-foreground hover:text-foreground border-border/70 hover:bg-muted"
+                          onClick={() => handleCopyContent(contentText)}
+                          title="Copy content"
+                        >
+                          <Copy className="h-3 w-3" />
+                          <span className="hidden sm:inline text-xs">Copy</span>
+                        </Button>
+                      </div>
                     </div>
 
-                    <div className={`flex items-center gap-2.5 min-w-0 ${isIneligible ? 'opacity-40 pointer-events-none' : ''}`}>
-                      <Checkbox
-                        id={`eligible-${idx}`}
-                        checked={isEligible}
-                        disabled={isIneligible}
-                        onCheckedChange={(checked) => {
-                          handleCheckboxChange(platform.eligibleIds as (keyof IdeaDetails)[], checked as boolean);
-                          if (checked) {
-                            handleCheckboxChange(platform.ineligibleIds as (keyof IdeaDetails)[], false);
-                          } else {
-                            handleCheckboxChange(platform.publishedIds as (keyof IdeaDetails)[], false);
-                          }
-                        }}
-                        className="h-4 w-4 shrink-0 data-[state=checked]:bg-primary"
+                    <div className="relative group w-full min-w-0">
+                      <Textarea 
+                        placeholder={tab.placeholder}
+                        value={contentText}
+                        onChange={(e) => handleTextChange(tab.value as keyof IdeaDetails, e.target.value)}
+                        className="h-[420px] sm:h-[500px] md:h-[560px] max-h-[70vh] w-full max-w-full resize-none sm:resize-y text-sm p-3.5 sm:p-5 leading-relaxed break-words overflow-x-hidden overflow-y-auto overscroll-contain"
                       />
-                      <label
-                        htmlFor={`eligible-${idx}`}
-                        className="text-xs font-medium cursor-pointer text-muted-foreground hover:text-primary transition-colors truncate"
-                      >
-                        Eligible
-                      </label>
                     </div>
-
-                    <div className={`flex items-center gap-2.5 min-w-0 ${!isEligible || isIneligible ? 'opacity-40 pointer-events-none' : ''}`}>
-                      <Checkbox
-                        id={`published-${idx}`}
-                        checked={isPublished}
-                        disabled={!isEligible || isIneligible}
-                        onCheckedChange={(checked) => handleCheckboxChange(platform.publishedIds as (keyof IdeaDetails)[], checked as boolean)}
-                        className="h-4 w-4 shrink-0 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
-                      />
-                      <label
-                        htmlFor={`published-${idx}`}
-                        className="text-xs font-medium cursor-pointer text-muted-foreground hover:text-green-500 transition-colors truncate"
-                      >
-                        Published
-                      </label>
-                    </div>
-                  </div>
+                  </TabsContent>
                 );
               })}
-            </CardContent>
-          </Card>
-        </div>
+            </Tabs>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Fullscreen Video Script Prompter */}
