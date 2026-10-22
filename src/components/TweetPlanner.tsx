@@ -44,39 +44,11 @@ export function IdeasPlanner() {
   const [editIdeaText, setEditIdeaText] = useState('');
   const [actionItemId, setActionItemId] = useState<string | null>(null);
 
-  // Quick add idea state
-  const [quickIdeaText, setQuickIdeaText] = useState('');
-  const [isQuickAdding, setIsQuickAdding] = useState(false);
-
   useEffect(() => {
     if (!hasFetched) {
       dispatch(fetchIdeas());
     }
   }, [dispatch, hasFetched]);
-
-  const handleQuickAddIdea = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = quickIdeaText.trim();
-    if (!trimmed) return;
-
-    setIsQuickAdding(true);
-    try {
-      const result = await dispatch(addIdea(trimmed));
-      if (addIdea.rejected.match(result)) {
-        toast.error('Failed to create idea: ' + (result.payload as string));
-      } else {
-        toast.success('Idea added to Pending!', {
-          action: {
-            label: 'Open Editor',
-            onClick: () => router.push(`/ideas/${result.payload.id}`),
-          },
-        });
-        setQuickIdeaText('');
-      }
-    } finally {
-      setIsQuickAdding(false);
-    }
-  };
 
   const handleDeleteIdea = async (id: string) => {
     if (!confirm('Are you sure you want to delete this idea?')) return;
@@ -372,71 +344,41 @@ export function IdeasPlanner() {
     } else {
       if (typeFilter === 'video') return 'No video scripts currently in progress. Open an idea and choose "Yes" for video to start scripting!';
       if (typeFilter === 'article') return 'No articles currently in progress. Open an idea and choose "Yes" for article to start drafting!';
-      if (typeFilter === 'research') return 'No ideas pending research right now. Drop a new idea above to get started!';
-      return 'No pending ideas right now. Drop a new idea above to start brainstorming!';
+      if (typeFilter === 'research') return 'No ideas pending research right now. Click "New Idea" to get started!';
+      return 'No pending ideas right now. Click "New Idea" to start brainstorming!';
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* Quick Add Idea Bar & Search Controls */}
-      <div className="space-y-3">
-        {/* Quick Add Idea Input */}
-        <form onSubmit={handleQuickAddIdea} className="flex items-center gap-2 w-full">
-          <div className="relative flex-1">
-            <Input 
-              placeholder="What's your next content idea? Type and press Enter to add to Pending..."
-              value={quickIdeaText}
-              onChange={(e) => setQuickIdeaText(e.target.value)}
-              disabled={isQuickAdding}
-              className="h-10 text-xs sm:text-sm bg-card border-border/80 focus-visible:ring-primary shadow-xs pl-3.5 pr-9"
-            />
-            {quickIdeaText && (
-              <button
-                type="button"
-                onClick={() => setQuickIdeaText('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-          <Button 
-            type="submit"
-            disabled={!quickIdeaText.trim() || isQuickAdding}
-            className="h-10 px-4 font-medium shrink-0 gap-1.5 shadow-xs"
-          >
-            {isQuickAdding ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Plus className="w-4 h-4" />
-            )}
-            <span className="hidden sm:inline">Add to Pending</span>
-            <span className="sm:hidden">Add</span>
-          </Button>
-        </form>
-
-        {/* Search & Actions Bar */}
-        <div className="flex items-center justify-between gap-2.5 sm:gap-3 w-full">
-          <div className="relative flex-1 sm:max-w-sm min-w-0">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search ideas..." 
-              value={searchQuery}
-              onChange={(e) => dispatch(setSearchQuery(e.target.value))}
-              className="pl-9 h-9 w-full text-xs sm:text-sm"
-            />
-          </div>
-          <Button 
-            variant="outline"
-            onClick={() => router.push('/ideas/new')} 
-            className="shrink-0 h-9 px-3 text-xs font-medium gap-1.5"
-            title="Open Dedicated Idea Creator"
-          >
-            <ExternalLink className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">New Idea Page</span>
-          </Button>
+      {/* Search & Actions Bar */}
+      <div className="flex items-center justify-between gap-2.5 sm:gap-3 w-full">
+        <div className="relative flex-1 sm:max-w-md min-w-0">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input 
+            placeholder="Search ideas..." 
+            value={searchQuery}
+            onChange={(e) => dispatch(setSearchQuery(e.target.value))}
+            className="pl-9 h-10 w-full text-xs sm:text-sm bg-card border-border/80 focus-visible:ring-primary shadow-2xs"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => dispatch(setSearchQuery(''))}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
+        <Button 
+          onClick={() => router.push('/ideas/new')} 
+          className="shrink-0 h-10 px-4 text-xs sm:text-sm font-semibold gap-1.5 shadow-xs cursor-pointer"
+          title="Open Dedicated Idea Creator"
+        >
+          <Plus className="h-4 w-4" />
+          <span>New Idea</span>
+        </Button>
       </div>
 
       {/* Mobile-Only Session Timer */}

@@ -16,6 +16,13 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { toast } from 'sonner';
 import { cn } from 'cn';
 import { useSelector } from 'react-redux';
@@ -396,18 +403,22 @@ export function MobileTimer() {
                     </div>
                   )}
                 </div>
-                <select
-                  value={selectedTopicId}
-                  onChange={(e) => setSelectedTopicId(e.target.value)}
-                  className="w-full text-xs bg-background/80 border border-border/80 rounded-md px-2.5 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary truncate"
+                <Select
+                  value={selectedTopicId || 'none'}
+                  onValueChange={(val) => setSelectedTopicId(val === 'none' ? '' : (val || ''))}
                 >
-                  <option value="">-- General Focus (No specific topic) --</option>
-                  {ideas.map((idea) => (
-                    <option key={idea.id} value={idea.id}>
-                      {idea.idea || 'Untitled Topic'}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full text-xs h-8 bg-background/80 border-border/80 text-foreground">
+                    <SelectValue placeholder="-- General Focus (No specific topic) --" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">-- General Focus (No specific topic) --</SelectItem>
+                    {ideas.map((idea) => (
+                      <SelectItem key={idea.id} value={idea.id}>
+                        {idea.idea || 'Untitled Topic'}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <p className="text-[10px] text-muted-foreground/80 flex items-center gap-1 pt-0.5">

@@ -19,6 +19,21 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { 
   Copy, Plus, Trash2, Edit, Save, X, AlertCircle, Search, Loader2, 
   ChevronDown, FolderPlus, Tag 
@@ -202,36 +217,37 @@ export default function PromptsPage() {
           {/* Category Dropdown and Create Category option */}
           {!isCreating && (
             <div className="flex items-center gap-1.5 shrink-0">
-              <div className="relative">
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => {
-                    if (e.target.value === '__create_new__') {
-                      setNewCategoryName('');
-                      setIsCategoryModalOpen(true);
-                    } else {
-                      dispatch(setSelectedCategory(e.target.value));
-                    }
-                  }}
-                  className="h-9 rounded-md border border-input bg-background/80 hover:bg-muted/40 px-3 py-1 text-xs sm:text-sm font-medium shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer pr-8 appearance-none min-w-[140px] sm:min-w-[160px]"
-                  title="Filter prompts by category"
-                  aria-label="Filter prompts by category"
-                >
-                  <option value="all">All Categories ({prompts.length})</option>
-                  <option disabled>──────────</option>
+              <Select
+                value={selectedCategory}
+                onValueChange={(val) => {
+                  if (val === '__create_new__') {
+                    setNewCategoryName('');
+                    setIsCategoryModalOpen(true);
+                  } else if (val) {
+                    dispatch(setSelectedCategory(val));
+                  }
+                }}
+              >
+                <SelectTrigger className="h-9 min-w-[150px] sm:min-w-[180px] bg-background text-xs sm:text-sm font-medium">
+                  <SelectValue placeholder="All Categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories ({prompts.length})</SelectItem>
+                  {categories.length > 0 && <SelectSeparator />}
                   {categories.map((cat) => {
                     const count = prompts.filter((p) => p.category?.toLowerCase() === cat.toLowerCase()).length;
                     return (
-                      <option key={cat} value={cat}>
+                      <SelectItem key={cat} value={cat}>
                         {cat} {count > 0 ? `(${count})` : ''}
-                      </option>
+                      </SelectItem>
                     );
                   })}
-                  <option disabled>──────────</option>
-                  <option value="__create_new__">+ Create new category...</option>
-                </select>
-                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 pointer-events-none text-muted-foreground" />
-              </div>
+                  <SelectSeparator />
+                  <SelectItem value="__create_new__" className="text-primary font-medium">
+                    + Create new category...
+                  </SelectItem>
+                </SelectContent>
+              </Select>
 
               {/* Near the dropdown: option to create a new category */}
               <Button
@@ -313,29 +329,34 @@ export default function PromptsPage() {
                       <FolderPlus className="w-3 h-3" /> New category
                     </button>
                   </div>
-                  <div className="relative">
-                    <select
+                  <div>
+                    <Select
                       value={newCategory}
-                      onChange={(e) => {
-                        if (e.target.value === '__create_new__') {
+                      onValueChange={(val) => {
+                        if (val === '__create_new__') {
                           setNewCategoryName('');
                           setIsCategoryModalOpen(true);
-                        } else {
-                          setNewCategory(e.target.value);
+                        } else if (val) {
+                          setNewCategory(val);
                         }
                       }}
                       disabled={actionLoading || categoriesLoading}
-                      className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer pr-8 appearance-none"
                     >
-                      {categories.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {cat}
-                        </option>
-                      ))}
-                      <option disabled>──────────</option>
-                      <option value="__create_new__">+ Create new category...</option>
-                    </select>
-                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 pointer-events-none text-muted-foreground" />
+                      <SelectTrigger className="w-full h-9 bg-background text-sm">
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat} value={cat}>
+                            {cat}
+                          </SelectItem>
+                        ))}
+                        <SelectSeparator />
+                        <SelectItem value="__create_new__" className="text-primary font-medium">
+                          + Create new category...
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>
@@ -410,28 +431,33 @@ export default function PromptsPage() {
                 <CardContent className="p-4 space-y-3 flex-1 flex flex-col">
                   <Input value={editTitle} onChange={e => setEditTitle(e.target.value)} placeholder="Title" />
                   
-                  <div className="relative">
-                    <select
+                  <div>
+                    <Select
                       value={editCategory}
-                      onChange={(e) => {
-                        if (e.target.value === '__create_new__') {
+                      onValueChange={(val) => {
+                        if (val === '__create_new__') {
                           setNewCategoryName('');
                           setIsCategoryModalOpen(true);
-                        } else {
-                          setEditCategory(e.target.value);
+                        } else if (val) {
+                          setEditCategory(val);
                         }
                       }}
-                      className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs cursor-pointer pr-8 appearance-none"
                     >
-                      {categories.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {cat}
-                        </option>
-                      ))}
-                      <option disabled>──────────</option>
-                      <option value="__create_new__">+ Create new category...</option>
-                    </select>
-                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 pointer-events-none text-muted-foreground" />
+                      <SelectTrigger className="w-full h-9 bg-background text-sm">
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat} value={cat}>
+                            {cat}
+                          </SelectItem>
+                        ))}
+                        <SelectSeparator />
+                        <SelectItem value="__create_new__" className="text-primary font-medium">
+                          + Create new category...
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <Textarea 
@@ -485,78 +511,61 @@ export default function PromptsPage() {
       )}
 
       {/* Create New Category Modal */}
-      {isCategoryModalOpen && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in-0 duration-150"
-          onClick={() => !creatingCategoryLoading && setIsCategoryModalOpen(false)}
-        >
-          <div 
-            className="bg-card border border-border w-full max-w-sm rounded-xl p-5 shadow-2xl space-y-4 animate-in zoom-in-95 duration-150"
-            role="dialog"
-            aria-modal="true"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-lg bg-primary/10 text-primary shrink-0">
-                  <FolderPlus className="w-4 h-4" />
-                </div>
-                <div>
-                  <h2 className="text-sm font-semibold text-foreground">Create New Category</h2>
-                  <p className="text-xs text-muted-foreground mt-0.5">Organize your prompts together under this category.</p>
-                </div>
+      <Dialog open={isCategoryModalOpen} onOpenChange={setIsCategoryModalOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-lg bg-primary/10 text-primary shrink-0">
+                <FolderPlus className="w-4 h-4" />
               </div>
-              <button
-                type="button"
-                onClick={() => setIsCategoryModalOpen(false)}
+              <div>
+                <DialogTitle className="text-sm font-semibold">Create New Category</DialogTitle>
+                <DialogDescription className="text-xs mt-0.5">
+                  Organize your prompts together under this category.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <form onSubmit={handleCreateCategorySubmit} className="space-y-3.5 pt-1">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Category Name</label>
+              <Input
+                placeholder="e.g. YouTube Shorts, Threads, Midjourney..."
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
                 disabled={creatingCategoryLoading}
-                className="text-muted-foreground hover:text-foreground p-1 rounded-md transition-colors"
-                aria-label="Close"
-              >
-                <X className="w-4 h-4" />
-              </button>
+                autoFocus
+                maxLength={50}
+              />
             </div>
 
-            <form onSubmit={handleCreateCategorySubmit} className="space-y-3.5">
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Category Name</label>
-                <Input
-                  placeholder="e.g. YouTube Shorts, Threads, Midjourney..."
-                  value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
-                  disabled={creatingCategoryLoading}
-                  autoFocus
-                  maxLength={50}
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-1">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsCategoryModalOpen(false)}
-                  disabled={creatingCategoryLoading}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={!newCategoryName.trim() || creatingCategoryLoading}
-                >
-                  {creatingCategoryLoading ? (
-                    <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                  ) : (
-                    <Plus className="w-3.5 h-3.5 mr-1.5" />
-                  )}
-                  Create Category
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            <div className="flex justify-end gap-2 pt-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsCategoryModalOpen(false)}
+                disabled={creatingCategoryLoading}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={!newCategoryName.trim() || creatingCategoryLoading}
+              >
+                {creatingCategoryLoading ? (
+                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                ) : (
+                  <Plus className="w-3.5 h-3.5 mr-1.5" />
+                )}
+                Create Category
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
