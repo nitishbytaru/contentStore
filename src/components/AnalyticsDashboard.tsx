@@ -70,10 +70,14 @@ export function AnalyticsDashboard() {
       // Completion calculation across 2 channels
       const isArticlesDone = isArticlesPublished || isArticlesSkipped;
       const isVideosDone = isVideosPublished || isVideosSkipped;
+      const isCompleted = idea.status === 'posted';
 
       const channelsDone = [isArticlesDone, isVideosDone].filter(Boolean).length;
-      if (channelsDone === 0) totallyUnpublished++;
-      if (channelsDone === 2) fullyPublished++;
+      if (isCompleted || channelsDone === 2) {
+        fullyPublished++;
+      } else if (channelsDone === 0) {
+        totallyUnpublished++;
+      }
     });
 
     const activeIdeas = totalIdeas - totallyUnpublished;

@@ -20,7 +20,13 @@ import {
 } from '@/store/slices/ideasSlice';
 import { RootState, AppDispatch } from '@/store';
 import { cn } from 'cn';
-import { getIdeaPublishStatus, isIdeaPending, isIdeaCompleted } from '@/lib/ideaStatus';
+import { 
+  getIdeaPublishStatus, 
+  isIdeaPending, 
+  isIdeaCompleted, 
+  isIdeaForArticles, 
+  isIdeaForVideos 
+} from '@/lib/ideaStatus';
 import { MobileTimer } from '@/components/MobileTimer';
 
 export function IdeasPlanner() {
@@ -114,8 +120,8 @@ export function IdeasPlanner() {
     });
   
   const pendingIdeas = filteredIdeas.filter(isIdeaPending);
-  const eligibleForArticles = filteredIdeas.filter(i => (i.eligibleMedium || i.eligibleSubstack) && !(i.publishedMedium && i.publishedSubstack));
-  const eligibleForVideos = filteredIdeas.filter(i => (i.eligibleYoutube || i.eligibleInstagram) && !(i.publishedYoutube && i.publishedInstagram));
+  const eligibleForArticles = filteredIdeas.filter(isIdeaForArticles);
+  const eligibleForVideos = filteredIdeas.filter(isIdeaForVideos);
   const completedIdeas = filteredIdeas.filter(isIdeaCompleted);
 
   if (error) {
@@ -185,17 +191,39 @@ export function IdeasPlanner() {
                       {idea.description}
                     </p>
                   )}
-                  {!hasBaseArticle && (
-                    <div>
+                  <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                    {!hasBaseArticle && (
                       <Link
                         href={`/ideas/${idea.id}`}
                         className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25 hover:bg-amber-500/20 transition-colors"
                       >
                         <FileText className="w-3 h-3 shrink-0 opacity-80" />
-                        No Research • Add notes
+                        Needs Research
                       </Link>
-                    </div>
-                  )}
+                    )}
+                    {Boolean(idea.eligibleMedium || idea.eligibleSubstack) && (
+                      <span className={cn(
+                        "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium border",
+                        (idea.publishedMedium || idea.publishedSubstack)
+                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
+                          : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25"
+                      )}>
+                        <FileText className="w-3 h-3 shrink-0" />
+                        Article: {(idea.publishedMedium || idea.publishedSubstack) ? 'Published ✓' : 'Drafting'}
+                      </span>
+                    )}
+                    {Boolean(idea.eligibleYoutube || idea.eligibleInstagram) && (
+                      <span className={cn(
+                        "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium border",
+                        (idea.publishedYoutube || idea.publishedInstagram)
+                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
+                          : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25"
+                      )}>
+                        <Video className="w-3 h-3 shrink-0" />
+                        Video: {(idea.publishedYoutube || idea.publishedInstagram) ? 'Published ✓' : 'Drafting'}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="shrink-0 pt-0.5">
                   <span className={cn(
@@ -416,7 +444,7 @@ export function IdeasPlanner() {
               ? renderEmptyState(
                   searchQuery 
                     ? 'No ideas match your search.' 
-                    : 'No ideas currently queued for Articles. Open any idea and check Medium/Substack eligibility.'
+                    : 'No articles currently in progress. Open any pending idea and choose "Yes" to write an article.'
                 )
               : eligibleForArticles.map((idea, idx) => renderIdeaCard(idea, idx))}
         </TabsContent>
@@ -427,7 +455,7 @@ export function IdeasPlanner() {
               ? renderEmptyState(
                   searchQuery 
                     ? 'No ideas match your search.' 
-                    : 'No ideas currently queued for Videos. Open any idea and check YouTube/Instagram eligibility.'
+                    : 'No video scripts currently in progress. Open any pending idea and choose "Yes" to create a video.'
                 )
               : eligibleForVideos.map((idea, idx) => renderIdeaCard(idea, idx))}
         </TabsContent>
@@ -438,7 +466,7 @@ export function IdeasPlanner() {
               ? renderEmptyState(
                   searchQuery 
                     ? 'No completed ideas match your search.' 
-                    : 'No completed ideas yet. Once an idea is published across all its platforms, it will appear here.'
+                    : 'No completed ideas yet. Once an article and/or video is published and marked complete, it will appear here.'
                 )
               : completedIdeas.map((idea, idx) => renderIdeaCard(idea, idx))}
         </TabsContent>

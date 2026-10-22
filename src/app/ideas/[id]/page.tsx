@@ -18,12 +18,15 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchIdeas, updateIdea } from '@/store/slices/ideasSlice';
 import { AppDispatch, RootState } from '@/store';
 import { cn } from 'cn';
-import { getIdeaPublishStatus } from '@/lib/ideaStatus';
+import { getIdeaPublishStatus, canCompleteIdea, isIdeaCompleted } from '@/lib/ideaStatus';
 
 interface IdeaDetails {
   id: string;
   idea: string;
   description?: string;
+  status?: 'pending' | 'posted';
+  datePosted?: string;
+  createdAt?: string;
   baseArticle: string;
   mediumArticle: string;
   youtubeScript: string;
@@ -310,6 +313,99 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
     }
   };
 
+  // Toggle Article Published state
+  const handleTogglePublishArticle = async () => {
+    if (!idea) return;
+    const currentPublished = Boolean(idea.publishedMedium || idea.publishedSubstack);
+    const newPublished = !currentPublished;
+
+    try {
+      setSaving(true);
+      const updatedIdea: IdeaDetails = {
+        ...idea,
+        publishedMedium: newPublished,
+        publishedSubstack: newPublished,
+      };
+      setIdea(updatedIdea);
+      await dispatch(updateIdea(updatedIdea));
+      toast.success(newPublished ? 'Article marked as published! ✓' : 'Article marked as unpublished.');
+    } catch (err: any) {
+      toast.error('Failed to update article status: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Toggle Video Published state
+  const handleTogglePublishVideo = async () => {
+    if (!idea) return;
+    const currentPublished = Boolean(idea.publishedYoutube || idea.publishedInstagram);
+    const newPublished = !currentPublished;
+
+    try {
+      setSaving(true);
+      const updatedIdea: IdeaDetails = {
+        ...idea,
+        publishedYoutube: newPublished,
+        publishedInstagram: newPublished,
+      };
+      setIdea(updatedIdea);
+      await dispatch(updateIdea(updatedIdea));
+      toast.success(newPublished ? 'Video marked as published! ✓' : 'Video marked as unpublished.');
+    } catch (err: any) {
+      toast.error('Failed to update video status: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Handle Mark as Completed (Top Right Corner)
+  const handleCompleteIdea = async () => {
+    if (!idea) return;
+
+    const alreadyCompleted = isIdeaCompleted(idea);
+    if (alreadyCompleted) {
+      try {
+        setSaving(true);
+        const updatedIdea: IdeaDetails = {
+          ...idea,
+          status: 'pending',
+          datePosted: '',
+        };
+        setIdea(updatedIdea);
+        await dispatch(updateIdea(updatedIdea));
+        toast.info('Idea moved back to in-progress.');
+      } catch (err: any) {
+        toast.error('Failed to update status: ' + err.message);
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+
+    const check = canCompleteIdea(idea);
+    if (!check.allowed) {
+      toast.error(check.reason);
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const updatedIdea: IdeaDetails = {
+        ...idea,
+        status: 'posted',
+        datePosted: new Date().toISOString(),
+      };
+      setIdea(updatedIdea);
+      await dispatch(updateIdea(updatedIdea));
+      toast.success('🎉 Idea totally completed! Excellent work!');
+    } catch (err: any) {
+      toast.error('Failed to complete idea: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading || storeLoading) {
     return (
       <div className="space-y-6 pt-2 w-full max-w-full min-w-0">
@@ -527,7 +623,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
           Back to Ideas
         </Link>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {/* Formats settings button */}
           <Button
             type="button"
@@ -544,11 +640,59 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
           <Button
             onClick={handleSave}
             disabled={saving}
-            className="h-9 px-4 shadow-sm font-medium gap-1.5"
+            variant="outline"
+            className="h-9 px-3.5 text-xs font-medium gap-1.5 border-border/80"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            <span>Save Changes</span>
+            <span>Save</span>
           </Button>
+
+          {/* Top Right Completed Button */}
+          {idea && (() => {
+            const completed = isIdeaCompleted(idea);
+            const check = canCompleteIdea(idea);
+            if (completed) {
+              return (
+                <Button
+                  type="button"
+                  onClick={handleCompleteIdea}
+                  disabled={saving}
+                  className="h-9 px-3.5 text-xs font-semibold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm cursor-pointer"
+                  title="Idea is completed! Click if you want to reopen it"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Completed ✓</span>
+                </Button>
+              );
+            }
+            if (check.allowed) {
+              return (
+                <Button
+                  type="button"
+                  onClick={handleCompleteIdea}
+                  disabled={saving}
+                  className="h-9 px-4 text-xs font-bold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md animate-pulse hover:animate-none cursor-pointer"
+                  title="All required formats are published! Click to finalize as Completed"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Complete Idea</span>
+                </Button>
+              );
+            }
+            return (
+              <Button
+                type="button"
+                onClick={handleCompleteIdea}
+                disabled={saving}
+                variant="outline"
+                className="h-9 px-3.5 text-xs font-medium gap-1.5 border-border/80 text-muted-foreground hover:text-foreground cursor-pointer"
+                title={check.reason}
+              >
+                <Check className="w-4 h-4 opacity-40" />
+                <span>Complete Idea</span>
+              </Button>
+            );
+          })()}
         </div>
       </div>
 
@@ -671,7 +815,49 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-1.5 shrink-0">
+                      <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+                        {/* Publish Status Toggle for Article */}
+                        {tab.value === 'mediumArticle' && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={handleTogglePublishArticle}
+                            disabled={saving}
+                            className={cn(
+                              "h-7.5 px-2.5 sm:px-3 text-xs font-medium gap-1.5 transition-colors cursor-pointer",
+                              (idea.publishedMedium || idea.publishedSubstack)
+                                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 font-semibold"
+                                : "border-border/80 text-muted-foreground hover:text-foreground hover:bg-muted"
+                            )}
+                            title="Toggle whether the article is published"
+                          >
+                            <Check className={cn("h-3.5 w-3.5", (idea.publishedMedium || idea.publishedSubstack) ? "text-emerald-500" : "opacity-40")} />
+                            <span>{(idea.publishedMedium || idea.publishedSubstack) ? 'Article Published ✓' : 'Mark as Published'}</span>
+                          </Button>
+                        )}
+
+                        {/* Publish Status Toggle for Video */}
+                        {isVideoScript && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={handleTogglePublishVideo}
+                            disabled={saving}
+                            className={cn(
+                              "h-7.5 px-2.5 sm:px-3 text-xs font-medium gap-1.5 transition-colors cursor-pointer",
+                              (idea.publishedYoutube || idea.publishedInstagram)
+                                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 font-semibold"
+                                : "border-border/80 text-muted-foreground hover:text-foreground hover:bg-muted"
+                            )}
+                            title="Toggle whether the video is published"
+                          >
+                            <Check className={cn("h-3.5 w-3.5", (idea.publishedYoutube || idea.publishedInstagram) ? "text-emerald-500" : "opacity-40")} />
+                            <span>{(idea.publishedYoutube || idea.publishedInstagram) ? 'Video Published ✓' : 'Mark as Published'}</span>
+                          </Button>
+                        )}
+
                         {isVideoScript && (
                           <Button
                             type="button"
