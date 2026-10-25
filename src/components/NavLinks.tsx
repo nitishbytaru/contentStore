@@ -54,7 +54,7 @@ export function NavLinks() {
             {links.map(({ href, label }) => {
               const isActive =
                 href === '/'
-                  ? pathname === '/' || pathname === '/analytics'
+                  ? pathname === '/'
                   : pathname.startsWith(href);
 
               return (
@@ -114,7 +114,7 @@ export function NavLinks() {
                 {links.map(({ href, label }) => {
                   const isActive =
                     href === '/'
-                      ? pathname === '/' || pathname === '/analytics'
+                      ? pathname === '/'
                       : pathname.startsWith(href);
 
                   return (
