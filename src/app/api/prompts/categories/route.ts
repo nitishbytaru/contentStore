@@ -5,6 +5,8 @@ export const dynamic = 'force-dynamic';
 
 const CATEGORY_HEADERS = ['id', 'name', 'createdAt'];
 
+let isCategoriesSheetInitialized = false;
+
 async function getCategoriesSheet(doc: any) {
   let sheet = doc.sheetsByTitle['PromptCategories'];
   if (!sheet) {
@@ -13,23 +15,19 @@ async function getCategoriesSheet(doc: any) {
     } catch {
       sheet = doc.sheetsByTitle['PromptCategories'];
     }
-  } else {
+    isCategoriesSheetInitialized = true;
+  } else if (!isCategoriesSheetInitialized) {
     try {
       await sheet.loadHeaderRow();
-      let currentHeaders = [...sheet.headerValues];
-      let headersModified = false;
-      for (const header of CATEGORY_HEADERS) {
-        if (!currentHeaders.includes(header)) {
-          currentHeaders.push(header);
-          headersModified = true;
-        }
+      const currentHeaders = [...sheet.headerValues];
+      const missingHeaders = CATEGORY_HEADERS.filter((h) => !currentHeaders.includes(h));
+      if (missingHeaders.length > 0) {
+        await sheet.setHeaderRow([...currentHeaders, ...missingHeaders]);
       }
-      if (headersModified) {
-        await sheet.setHeaderRow(currentHeaders);
-      }
-    } catch (e) {
+    } catch {
       await sheet.setHeaderRow(CATEGORY_HEADERS);
     }
+    isCategoriesSheetInitialized = true;
   }
   return sheet;
 }
@@ -43,20 +41,20 @@ export async function GET() {
     const categoryNames = new Set<string>(['General']);
 
     // 1. Add categories explicitly saved in PromptCategories sheet
-    catRows.forEach((row: any) => {
+    for (const row of catRows) {
       const name = (row.get('name') || '').trim();
       if (name) categoryNames.add(name);
-    });
+    }
 
-    // 2. Also harvest categories currently used in Prompts sheet so existing ones are retained
+    // 2. Also harvest categories currently used in Prompts sheet
     const promptsSheet = doc.sheetsByTitle['Prompts'];
     if (promptsSheet) {
       try {
         const promptRows = await promptsSheet.getRows();
-        promptRows.forEach((row: any) => {
+        for (const row of promptRows) {
           const cat = (row.get('category') || '').trim();
           if (cat) categoryNames.add(cat);
-        });
+        }
       } catch (err) {
         console.warn('Could not read Prompts sheet for categories:', err);
       }
@@ -72,7 +70,6 @@ export async function GET() {
     return NextResponse.json({ data: sorted }, { status: 200 });
   } catch (error: any) {
     console.error('Error fetching categories:', error);
-    // Fallback to default categories if sheets connection has issues
     return NextResponse.json({ data: ['General'] }, { status: 200 });
   }
 }
@@ -100,7 +97,10 @@ export async function POST(request: Request) {
     );
 
     if (existing) {
-      return NextResponse.json({ data: existing.get('name') }, { status: 200 });
+      return NextResponse.json({
+        data: (existing.get('name') || '').trim(),
+        message: 'Category already exists'
+      }, { status: 200 });
     }
 
     const newRow = {
@@ -111,9 +111,12 @@ export async function POST(request: Request) {
 
     await categoriesSheet.addRow(newRow);
 
-    return NextResponse.json({ data: name }, { status: 201 });
+    return NextResponse.json({
+      data: name,
+      message: 'Category created successfully'
+    }, { status: 201 });
   } catch (error: any) {
     console.error('Error creating category:', error);
-    return NextResponse.json({ error: error.message || 'Failed to create category' }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
