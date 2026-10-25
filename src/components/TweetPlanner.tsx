@@ -15,9 +15,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from "sonner";
 import { useDispatch, useSelector } from 'react-redux';
 import { 
-  fetchIdeas, deleteIdea, updateIdea, addIdea, 
   setSearchQuery, setTypeFilter, setStatusFilter 
 } from '@/store/slices/ideasSlice';
+import { 
+  useGetIdeasQuery, 
+  useUpdateIdeaMutation, 
+  useDeleteIdeaMutation 
+} from '@/store/api/ideasApi';
 import { Idea, IdeaTypeFilter, IdeaStatusFilter } from '@/types';
 import { RootState, AppDispatch } from '@/store';
 import { cn } from 'cn';
@@ -31,47 +35,49 @@ export function IdeasPlanner() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { 
-    items: ideas, 
-    loading, 
-    error, 
-    actionLoading, 
-    hasFetched, 
     searchQuery, 
     typeFilter = 'all', 
     statusFilter = 'pending' 
   } = useSelector((state: RootState) => state.ideas);
 
+  const { data: ideas = [], isLoading: loading, error: queryError } = useGetIdeasQuery();
+  const [deleteIdea] = useDeleteIdeaMutation();
+  const [updateIdea] = useUpdateIdeaMutation();
+
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editIdeaText, setEditIdeaText] = useState('');
   const [actionItemId, setActionItemId] = useState<string | null>(null);
+  const actionLoading = Boolean(actionItemId);
 
-  useEffect(() => {
-    if (!hasFetched) {
-      dispatch(fetchIdeas());
-    }
-  }, [dispatch, hasFetched]);
+  const error = queryError
+    ? ('status' in queryError ? JSON.stringify(queryError.data) : (queryError as any).message || 'Failed to load ideas')
+    : null;
 
   const handleDeleteIdea = async (id: string) => {
     if (!confirm('Are you sure you want to delete this idea?')) return;
     setActionItemId(id);
-    const result = await dispatch(deleteIdea(id));
-    if (deleteIdea.rejected.match(result)) {
-      toast.error(result.payload as string);
+    try {
+      await deleteIdea(id).unwrap();
+      toast.success('Idea deleted');
+    } catch (err: any) {
+      toast.error(err?.data?.error || err?.message || 'Failed to delete idea');
+    } finally {
+      setActionItemId(null);
     }
-    setActionItemId(null);
   };
 
   const handleEditIdea = async (id: string) => {
     if (!editIdeaText.trim()) return;
     setActionItemId(id);
-    const result = await dispatch(updateIdea({ id, idea: editIdeaText.trim() }));
-    if (updateIdea.rejected.match(result)) {
-      toast.error(result.payload as string);
-    } else {
+    try {
+      await updateIdea({ id, idea: editIdeaText.trim() }).unwrap();
       toast.success('Changes saved successfully!');
       setEditingId(null);
+    } catch (err: any) {
+      toast.error(err?.data?.error || err?.message || 'Failed to update idea');
+    } finally {
+      setActionItemId(null);
     }
-    setActionItemId(null);
   };
 
   const handleCopyIdea = (text: string) => {

@@ -27,6 +27,7 @@ import { toast } from 'sonner';
 import { cn } from 'cn';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
+import { useGetIdeasQuery } from '@/store/api/ideasApi';
 import { recordTopicTime } from '@/lib/timeTracking';
 import { TimerMode } from '@/types';
 
@@ -37,7 +38,7 @@ const COUNTDOWN_PRESETS = [
 ];
 
 export function MobileTimer() {
-  const { items: ideas } = useSelector((state: RootState) => state.ideas);
+  const { data: ideas = [] } = useGetIdeasQuery();
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [mode, setMode] = useState<TimerMode>('stopwatch');
   const [seconds, setSeconds] = useState<number>(0);

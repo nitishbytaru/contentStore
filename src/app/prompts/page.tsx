@@ -1,16 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { setSelectedCategory } from '@/store/slices/promptsSlice';
 import { 
-  fetchPrompts, 
-  fetchPromptCategories, 
-  createPromptCategory, 
-  addPrompt, 
-  updatePrompt, 
-  deletePrompt, 
-  setSelectedCategory 
-} from '@/store/slices/promptsSlice';
+  useGetPromptsQuery, 
+  useGetPromptCategoriesQuery, 
+  useAddPromptMutation, 
+  useUpdatePromptMutation, 
+  useDeletePromptMutation, 
+  useCreatePromptCategoryMutation 
+} from '@/store/api/promptsApi';
 import { PromptItem } from '@/types';
 import { AppDispatch, RootState } from '@/store';
 import { Button } from '@/components/ui/button';
@@ -42,16 +42,15 @@ import { toast } from 'sonner';
 
 export default function PromptsPage() {
   const dispatch = useDispatch<AppDispatch>();
-  const { 
-    items: prompts, 
-    categories, 
-    selectedCategory, 
-    loading, 
-    categoriesLoading, 
-    error, 
-    hasFetched, 
-    actionLoading 
-  } = useSelector((state: RootState) => state.prompts);
+  const selectedCategory = useSelector((state: RootState) => state.prompts.selectedCategory);
+
+  const { data: prompts = [], isLoading: loading, error: queryError } = useGetPromptsQuery();
+  const { data: rawCategories = [], isLoading: categoriesLoading } = useGetPromptCategoriesQuery();
+  
+  const [addPromptMutation, { isLoading: isAddingPrompt }] = useAddPromptMutation();
+  const [updatePromptMutation, { isLoading: isUpdatingPrompt }] = useUpdatePromptMutation();
+  const [deletePromptMutation, { isLoading: isDeletingPrompt }] = useDeletePromptMutation();
+  const [createCategoryMutation] = useCreatePromptCategoryMutation();
 
   const [isCreating, setIsCreating] = useState(false);
   const [newTitle, setNewTitle] = useState('');
@@ -70,12 +69,18 @@ export default function PromptsPage() {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [creatingCategoryLoading, setCreatingCategoryLoading] = useState(false);
 
-  useEffect(() => {
-    if (!hasFetched) {
-      dispatch(fetchPrompts());
-    }
-    dispatch(fetchPromptCategories());
-  }, [dispatch, hasFetched]);
+  const actionLoading = isAddingPrompt || isUpdatingPrompt || isDeletingPrompt || creatingCategoryLoading;
+
+  const categories = useMemo(() => {
+    const set = new Set<string>(['General']);
+    rawCategories.forEach(c => {
+      if (c && c.trim()) set.add(c.trim());
+    });
+    prompts.forEach(p => {
+      if (p.category && p.category.trim()) set.add(p.category.trim());
+    });
+    return Array.from(set);
+  }, [rawCategories, prompts]);
 
   const handleCopy = (text: string) => {
     if (!text) return;
@@ -84,7 +89,6 @@ export default function PromptsPage() {
   };
 
   const handleOpenCreate = () => {
-    dispatch(fetchPromptCategories());
     const initialCat = selectedCategory !== 'all' 
       ? selectedCategory 
       : (categories.find(c => c.toLowerCase() === 'general') || categories[0] || 'General');
@@ -96,24 +100,23 @@ export default function PromptsPage() {
     e.preventDefault();
     if (!newTitle.trim() || !newContent.trim()) return;
 
-    const result = await dispatch(addPrompt({ 
-      title: newTitle.trim(), 
-      content: newContent.trim(), 
-      category: newCategory.trim() || 'General' 
-    }));
-    if (addPrompt.rejected.match(result)) {
-      toast.error('Failed to create prompt');
-    } else {
+    try {
+      await addPromptMutation({ 
+        title: newTitle.trim(), 
+        content: newContent.trim(), 
+        category: newCategory.trim() || 'General' 
+      }).unwrap();
       toast.success('Prompt created!');
       setIsCreating(false);
       setNewTitle('');
       setNewContent('');
       setNewCategory(selectedCategory !== 'all' ? selectedCategory : 'General');
+    } catch (err: any) {
+      toast.error(err?.data?.error || err?.message || 'Failed to create prompt');
     }
   };
 
   const handleStartEdit = (p: PromptItem) => {
-    dispatch(fetchPromptCategories());
     setEditingId(p.id);
     setEditTitle(p.title);
     setEditContent(p.content);
@@ -122,27 +125,27 @@ export default function PromptsPage() {
 
   const handleSaveEdit = async () => {
     if (!editingId || !editTitle.trim() || !editContent.trim()) return;
-    const result = await dispatch(updatePrompt({
-      id: editingId,
-      title: editTitle.trim(),
-      content: editContent.trim(),
-      category: editCategory.trim() || 'General'
-    }));
-    if (updatePrompt.rejected.match(result)) {
-      toast.error('Failed to update prompt');
-    } else {
+    try {
+      await updatePromptMutation({
+        id: editingId,
+        title: editTitle.trim(),
+        content: editContent.trim(),
+        category: editCategory.trim() || 'General'
+      }).unwrap();
       toast.success('Changes saved successfully!');
       setEditingId(null);
+    } catch (err: any) {
+      toast.error(err?.data?.error || err?.message || 'Failed to update prompt');
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this prompt?')) return;
-    const result = await dispatch(deletePrompt(id));
-    if (deletePrompt.rejected.match(result)) {
-      toast.error('Failed to delete prompt');
-    } else {
+    try {
+      await deletePromptMutation(id).unwrap();
       toast.success('Prompt deleted');
+    } catch (err: any) {
+      toast.error(err?.data?.error || err?.message || 'Failed to delete prompt');
     }
   };
 
@@ -153,24 +156,26 @@ export default function PromptsPage() {
 
     setCreatingCategoryLoading(true);
     try {
-      const result = await dispatch(createPromptCategory(trimmed));
-      if (createPromptCategory.fulfilled.match(result)) {
-        toast.success(`Category "${result.payload}" created!`);
-        if (isCreating) {
-          setNewCategory(result.payload);
-        }
-        if (editingId) {
-          setEditCategory(result.payload);
-        }
-        setNewCategoryName('');
-        setIsCategoryModalOpen(false);
-      } else {
-        toast.error((result.payload as string) || 'Failed to create category');
+      const createdCategory = await createCategoryMutation(trimmed).unwrap();
+      toast.success(`Category "${createdCategory}" created!`);
+      if (isCreating) {
+        setNewCategory(createdCategory);
       }
+      if (editingId) {
+        setEditCategory(createdCategory);
+      }
+      setNewCategoryName('');
+      setIsCategoryModalOpen(false);
+    } catch (err: any) {
+      toast.error(err?.data?.error || err?.message || 'Failed to create category');
     } finally {
       setCreatingCategoryLoading(false);
     }
   };
+
+  const error = queryError
+    ? ('status' in queryError ? JSON.stringify(queryError.data) : (queryError as any).message || 'Failed to load prompts')
+    : null;
 
   if (error) {
     return (

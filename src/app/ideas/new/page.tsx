@@ -9,31 +9,27 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ArrowLeft, Loader2, Sparkles } from 'lucide-react';
 import { toast } from "sonner";
 import Link from 'next/link';
-import { useDispatch, useSelector } from 'react-redux';
-import { addIdea } from '@/store/slices/ideasSlice';
-import { AppDispatch, RootState } from '@/store';
+import { useAddIdeaMutation } from '@/store/api/ideasApi';
 
 export default function NewIdeaPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const router = useRouter();
-  const dispatch = useDispatch<AppDispatch>();
-  const isSubmitting = useSelector((state: RootState) => state.ideas.actionLoading);
+  const [addIdea, { isLoading: isSubmitting }] = useAddIdeaMutation();
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
 
-    const result = await dispatch(addIdea({ 
-      idea: title.trim(), 
-      description: description.trim() 
-    }));
-    if (addIdea.rejected.match(result)) {
-      toast.error('Failed to create idea: ' + (result.payload as string));
-    } else {
+    try {
+      await addIdea({ 
+        idea: title.trim(), 
+        description: description.trim() 
+      }).unwrap();
       toast.success('Idea created in Pending state!');
-      // Redirect to the ideas page only
       router.push('/ideas');
+    } catch (err: any) {
+      toast.error('Failed to create idea: ' + (err?.data?.error || err?.message || 'Unknown error'));
     }
   };
 

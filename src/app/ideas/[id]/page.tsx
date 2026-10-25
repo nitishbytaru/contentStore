@@ -16,9 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchIdeas, updateIdea } from '@/store/slices/ideasSlice';
-import { AppDispatch, RootState } from '@/store';
+import { useGetIdeaByIdQuery, useUpdateIdeaMutation } from '@/store/api/ideasApi';
 import { cn } from 'cn';
 import { getIdeaPublishStatus, canCompleteIdea, isIdeaCompleted } from '@/utils/ideaStatus';
 import { Idea, OnboardingStep } from '@/types';
@@ -58,8 +56,12 @@ function formatDateTimeDisplay(isoString?: string): string {
 
 export default function IdeaEditor({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const dispatch = useDispatch<AppDispatch>();
-  const { items: ideas, loading: storeLoading, hasFetched } = useSelector((state: RootState) => state.ideas);
+  const { data: fetchedIdea, isLoading: ideaLoading } = useGetIdeaByIdQuery(id);
+  const [updateIdeaMutation] = useUpdateIdeaMutation();
+
+  const handleUpdateIdea = async (updatedData: Partial<IdeaDetails> & { id: string }) => {
+    return await updateIdeaMutation(updatedData).unwrap();
+  };
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -96,11 +98,10 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
     }
   }, [activeContentTab, idea?.youtubeScript]);
 
-  // Initialize and load idea
+  // Initialize and load idea from RTK Query
   useEffect(() => {
-    const existingIdea = ideas.find(i => i.id === id);
-    if (existingIdea) {
-      const details = existingIdea as IdeaDetails;
+    if (fetchedIdea) {
+      const details = fetchedIdea as IdeaDetails;
       setIdea(details);
       
       const hasResearch = Boolean(details.baseArticle && details.baseArticle.trim().length > 0);
@@ -120,40 +121,10 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
         setStep('WORKSPACE');
       }
       setLoading(false);
-    } else if (!hasFetched && !storeLoading) {
-      const loadData = async () => {
-        setLoading(true);
-        const result = await dispatch(fetchIdeas());
-        if (fetchIdeas.fulfilled.match(result)) {
-          const found = result.payload.find((i: { id: string }) => i.id === id);
-          if (found) {
-            const details = found as IdeaDetails;
-            setIdea(details);
-            const hasResearch = Boolean(details.baseArticle && details.baseArticle.trim().length > 0);
-            const hasAnsweredFormats = Boolean(
-              details.eligibleMedium || details.ineligibleMedium ||
-              details.eligibleYoutube || details.ineligibleYoutube ||
-              (details.mediumArticle && details.mediumArticle.trim()) ||
-              (details.youtubeScript && details.youtubeScript.trim())
-            );
-
-            if (!hasResearch) {
-              setStep('RESEARCH');
-              setInitialResearchText(details.description || '');
-            } else if (!hasAnsweredFormats) {
-              setStep('QUESTION_ARTICLE');
-            } else {
-              setStep('WORKSPACE');
-            }
-          }
-        }
-        setLoading(false);
-      };
-      loadData();
-    } else if (hasFetched && !existingIdea) {
+    } else if (!ideaLoading) {
       setLoading(false);
     }
-  }, [id, dispatch, ideas, storeLoading, hasFetched]);
+  }, [fetchedIdea, ideaLoading]);
 
   // Determine enabled formats
   const isArticleSelected = Boolean(
@@ -208,10 +179,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
 
     try {
       setSaving(true);
-      const result = await dispatch(updateIdea(idea));
-      if (updateIdea.rejected.match(result)) {
-        throw new Error(result.payload as string);
-      }
+      await handleUpdateIdea(idea);
       toast.success('Changes saved successfully!');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';
@@ -245,7 +213,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
         baseArticle: initialResearchText.trim(),
       };
       setIdea(updatedIdea);
-      await dispatch(updateIdea(updatedIdea));
+      await handleUpdateIdea(updatedIdea);
       toast.success('Initial research saved!');
       // Proceed to Question 1
       setStep('QUESTION_ARTICLE');
@@ -283,7 +251,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
       };
 
       setIdea(updatedIdea);
-      await dispatch(updateIdea(updatedIdea));
+      await handleUpdateIdea(updatedIdea);
 
       const enabledList: string[] = ['Research'];
       if (articleAnswer) enabledList.push('Article');
@@ -327,7 +295,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
         })
       };
       setIdea(updatedIdea);
-      await dispatch(updateIdea(updatedIdea));
+      await handleUpdateIdea(updatedIdea);
       toast.success(`${format === 'article' ? 'Article' : 'Video'} tab ${enable ? 'enabled' : 'disabled'}`);
     } catch (err: any) {
       toast.error('Failed to update formats: ' + err.message);
@@ -348,7 +316,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
         articleDraftedAt: newDone ? (idea.articleDraftedAt || new Date().toISOString()) : '',
       };
       setIdea(updatedIdea);
-      await dispatch(updateIdea(updatedIdea));
+      await handleUpdateIdea(updatedIdea);
       toast.success(newDone ? 'Article marked as Drafted! ✓' : 'Article draft status cleared.');
     } catch (err: any) {
       toast.error('Failed to update article draft status: ' + err.message);
@@ -373,7 +341,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
         publishedSubstack: newPublished,
       };
       setIdea(updatedIdea);
-      await dispatch(updateIdea(updatedIdea));
+      await handleUpdateIdea(updatedIdea);
       toast.success(newPublished ? 'Article marked as Published! ✓' : 'Article marked as unpublished.');
     } catch (err: any) {
       toast.error('Failed to update article status: ' + err.message);
@@ -411,7 +379,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
         publishedInstagram: tempUploadedDone,
       };
       setIdea(updatedIdea);
-      await dispatch(updateIdea(updatedIdea));
+      await handleUpdateIdea(updatedIdea);
       setIsVideoModalOpen(false);
       toast.success('Video stages and timestamps updated successfully! ✓');
     } catch (err: any) {
@@ -433,7 +401,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
         videoShootingAt: newDone ? (idea.videoShootingAt || new Date().toISOString()) : '',
       };
       setIdea(updatedIdea);
-      await dispatch(updateIdea(updatedIdea));
+      await handleUpdateIdea(updatedIdea);
       toast.success(newDone ? 'Shooting marked as completed! ✓' : 'Shooting status cleared.');
     } catch (err: any) {
       toast.error('Failed to update shooting status: ' + err.message);
@@ -453,7 +421,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
         videoEditingAt: newDone ? (idea.videoEditingAt || new Date().toISOString()) : '',
       };
       setIdea(updatedIdea);
-      await dispatch(updateIdea(updatedIdea));
+      await handleUpdateIdea(updatedIdea);
       toast.success(newDone ? 'Editing marked as completed! ✓' : 'Editing status cleared.');
     } catch (err: any) {
       toast.error('Failed to update editing status: ' + err.message);
@@ -476,7 +444,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
         publishedInstagram: newDone,
       };
       setIdea(updatedIdea);
-      await dispatch(updateIdea(updatedIdea));
+      await handleUpdateIdea(updatedIdea);
       toast.success(newDone ? 'Video marked as Uploaded / Published! ✓' : 'Upload status cleared.');
     } catch (err: any) {
       toast.error('Failed to update upload status: ' + err.message);
@@ -496,7 +464,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
         [field]: isoDate,
       };
       setIdea(updatedIdea);
-      await dispatch(updateIdea(updatedIdea));
+      await handleUpdateIdea(updatedIdea);
       setEditingDateKey(null);
       toast.success('Timestamp updated successfully!');
     } catch (err: any) {
@@ -520,7 +488,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
           datePosted: '',
         };
         setIdea(updatedIdea);
-        await dispatch(updateIdea(updatedIdea));
+        await handleUpdateIdea(updatedIdea);
         toast.info('Idea moved back to in-progress.');
       } catch (err: any) {
         toast.error('Failed to update status: ' + err.message);
@@ -544,7 +512,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
         datePosted: new Date().toISOString(),
       };
       setIdea(updatedIdea);
-      await dispatch(updateIdea(updatedIdea));
+      await handleUpdateIdea(updatedIdea);
       toast.success('🎉 Idea totally completed! Excellent work!');
     } catch (err: any) {
       toast.error('Failed to complete idea: ' + err.message);
@@ -553,7 +521,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
     }
   };
 
-  if (loading || storeLoading) {
+  if (loading || ideaLoading) {
     return (
       <div className="space-y-6 pt-2 w-full max-w-full min-w-0">
         <Skeleton className="h-5 w-32" />

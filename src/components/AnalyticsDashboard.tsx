@@ -13,21 +13,12 @@ import {
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend, Cell
 } from 'recharts';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchIdeas } from '@/store/slices/ideasSlice';
-import { AppDispatch, RootState } from '@/store';
+import { useGetIdeasQuery } from '@/store/api/ideasApi';
 import { calculateConversionAnalytics } from '@/utils/stageAnalytics';
 import { StageDurationStat } from '@/types';
 
 export function AnalyticsDashboard() {
-  const dispatch = useDispatch<AppDispatch>();
-  const { items: ideas, loading, error, hasFetched } = useSelector((state: RootState) => state.ideas);
-
-  useEffect(() => {
-    if (!hasFetched) {
-      dispatch(fetchIdeas());
-    }
-  }, [dispatch, hasFetched]);
+  const { data: ideas = [], isLoading: loading, error } = useGetIdeasQuery();
 
   // Stage & Conversion analytics calculation
   const conversionData = useMemo(() => {
@@ -36,16 +27,17 @@ export function AnalyticsDashboard() {
   }, [ideas]);
 
   if (error) {
+    const errorMsg = 'status' in error ? JSON.stringify(error.data) : (error as any).message || 'Failed to load analytics';
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Error Loading Analytics</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
+        <AlertDescription>{errorMsg}</AlertDescription>
       </Alert>
     );
   }
 
-  if (loading || !hasFetched) {
+  if (loading) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-60" />

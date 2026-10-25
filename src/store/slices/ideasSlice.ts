@@ -1,85 +1,19 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { Idea, IdeaTypeFilter, IdeaStatusFilter } from '@/types';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { IdeaTypeFilter, IdeaStatusFilter } from '@/types';
 
-interface IdeasState {
-  items: Idea[];
-  loading: boolean;
-  error: string | null;
-  actionLoading: boolean; // For create/update/delete specific actions
-  hasFetched: boolean;
+export interface IdeasUIState {
   searchQuery: string;
   typeFilter: IdeaTypeFilter;
   statusFilter: IdeaStatusFilter;
   activeTab: string;
 }
 
-const initialState: IdeasState = {
-  items: [],
-  loading: false,
-  error: null,
-  actionLoading: false,
-  hasFetched: false,
+const initialState: IdeasUIState = {
   searchQuery: '',
   typeFilter: 'all',
   statusFilter: 'pending',
   activeTab: 'pending',
 };
-
-export const fetchIdeas = createAsyncThunk('ideas/fetchIdeas', async (_, { rejectWithValue }) => {
-  try {
-    const res = await fetch('/api/ideas');
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || 'Failed to fetch ideas');
-    return json.data as Idea[];
-  } catch (err: any) {
-    return rejectWithValue(err.message);
-  }
-});
-
-export const addIdea = createAsyncThunk(
-  'ideas/addIdea', 
-  async (payload: string | { idea: string; description?: string }, { rejectWithValue }) => {
-    try {
-      const body = typeof payload === 'string' ? { idea: payload } : payload;
-      const res = await fetch('/api/ideas', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed to add idea');
-      return json.data as Idea;
-    } catch (err: any) {
-      return rejectWithValue(err.message);
-    }
-  }
-);
-
-export const updateIdea = createAsyncThunk('ideas/updateIdea', async (idea: Partial<Idea> & { id: string }, { rejectWithValue }) => {
-  try {
-    const res = await fetch('/api/ideas', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(idea),
-    });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || 'Failed to update idea');
-    return json.data as Idea;
-  } catch (err: any) {
-    return rejectWithValue(err.message);
-  }
-});
-
-export const deleteIdea = createAsyncThunk('ideas/deleteIdea', async (id: string, { rejectWithValue }) => {
-  try {
-    const res = await fetch(`/api/ideas?id=${id}`, { method: 'DELETE' });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || 'Failed to delete idea');
-    return id;
-  } catch (err: any) {
-    return rejectWithValue(err.message);
-  }
-});
 
 const ideasSlice = createSlice({
   name: 'ideas',
@@ -96,68 +30,7 @@ const ideasSlice = createSlice({
     },
     setActiveTab: (state, action: PayloadAction<string>) => {
       state.activeTab = action.payload;
-    }
-  },
-  extraReducers: (builder) => {
-    // Fetch ideas
-    builder.addCase(fetchIdeas.pending, (state) => {
-      state.loading = true;
-      state.error = null;
-    });
-    builder.addCase(fetchIdeas.fulfilled, (state, action) => {
-      state.loading = false;
-      state.items = action.payload;
-      state.hasFetched = true;
-    });
-    builder.addCase(fetchIdeas.rejected, (state, action) => {
-      state.loading = false;
-      state.error = action.payload as string;
-    });
-
-    // Add idea
-    builder.addCase(addIdea.pending, (state) => {
-      state.actionLoading = true;
-    });
-    builder.addCase(addIdea.fulfilled, (state, action) => {
-      state.actionLoading = false;
-      state.items.unshift(action.payload);
-      state.activeTab = 'pending';
-      state.statusFilter = 'pending';
-      state.typeFilter = 'all';
-    });
-    builder.addCase(addIdea.rejected, (state, action) => {
-      state.actionLoading = false;
-      state.error = action.payload as string;
-    });
-
-    // Update idea
-    builder.addCase(updateIdea.pending, (state) => {
-      state.actionLoading = true;
-    });
-    builder.addCase(updateIdea.fulfilled, (state, action) => {
-      state.actionLoading = false;
-      const index = state.items.findIndex((item) => item.id === action.payload.id);
-      if (index !== -1) {
-        state.items[index] = action.payload;
-      }
-    });
-    builder.addCase(updateIdea.rejected, (state, action) => {
-      state.actionLoading = false;
-      state.error = action.payload as string;
-    });
-
-    // Delete idea
-    builder.addCase(deleteIdea.pending, (state) => {
-      state.actionLoading = true;
-    });
-    builder.addCase(deleteIdea.fulfilled, (state, action) => {
-      state.actionLoading = false;
-      state.items = state.items.filter((item) => item.id !== action.payload);
-    });
-    builder.addCase(deleteIdea.rejected, (state, action) => {
-      state.actionLoading = false;
-      state.error = action.payload as string;
-    });
+    },
   },
 });
 
