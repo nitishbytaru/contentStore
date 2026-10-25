@@ -1,4 +1,5 @@
 import { Idea, TopicTimeStats, TopicTimeAnalytics } from '@/types';
+import { IdeaStatus } from '@/enums';
 
 export const TOPIC_TIME_STORAGE_KEY = 'contentstore_topic_times_v1';
 
@@ -53,7 +54,7 @@ function getDeterministicBaselineSeconds(idea: Idea): number {
   // 2. Publication state bonus
   if (idea.publishedMedium || idea.publishedSubstack) estimatedMinutes += 45;
   if (idea.publishedYoutube || idea.publishedInstagram) estimatedMinutes += 60;
-  if (idea.status === 'posted') estimatedMinutes += 20;
+  if (idea.status === IdeaStatus.POSTED) estimatedMinutes += 20;
 
   // 3. Fallback deterministic baseline between 25 and 95 mins based on ID string
   let hash = 0;

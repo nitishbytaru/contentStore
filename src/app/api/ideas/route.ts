@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getGoogleSheet } from '@/lib/google-sheets';
 import { matchesIdeaFilters } from '@/lib/ideaStatus';
 import { IdeaTypeFilter, IdeaStatusFilter } from '@/types';
+import { IdeaStatus } from '@/enums';
 
 export const dynamic = 'force-dynamic';
 
@@ -215,9 +216,9 @@ export async function PUT(request: Request) {
     });
 
     // Handle posted status logic explicitly if passed, or just update the date if status changed
-    if (payload.status === 'posted') {
+    if (payload.status === IdeaStatus.POSTED) {
       targetRow.set('datePosted', new Date().toISOString());
-    } else if (payload.status === 'pending') {
+    } else if (payload.status === IdeaStatus.PENDING) {
       targetRow.set('datePosted', '');
     }
 

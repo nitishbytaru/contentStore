@@ -4,12 +4,18 @@ import {
   IdeaTypeFilter,
   IdeaStatusFilter,
 } from '@/types';
+import {
+  IdeaStatus,
+  IdeaTypeFilter as IdeaTypeFilterEnum,
+  IdeaStatusFilter as IdeaStatusFilterEnum,
+  PublishStatusType,
+} from '@/enums';
 
 /**
  * Checks if an idea has been finalized and marked as completed.
  */
 export const isIdeaCompleted = (idea: IdeaChecklistFields): boolean => {
-  return idea.status === 'posted' || idea.status === 'completed';
+  return idea.status === IdeaStatus.POSTED || idea.status === IdeaStatus.COMPLETED;
 };
 
 export const isArticleIdea = (idea: IdeaChecklistFields): boolean => {
@@ -39,8 +45,8 @@ export const isVideoPublished = (idea: IdeaChecklistFields): boolean => {
  */
 export const matchesIdeaFilters = (
   idea: IdeaChecklistFields,
-  typeFilter: IdeaTypeFilter = 'all',
-  statusFilter: IdeaStatusFilter = 'pending'
+  typeFilter: IdeaTypeFilter = IdeaTypeFilterEnum.ALL,
+  statusFilter: IdeaStatusFilter = IdeaStatusFilterEnum.PENDING
 ): boolean => {
   const completed = isIdeaCompleted(idea);
   const articleSelected = isArticleIdea(idea);
@@ -49,17 +55,17 @@ export const matchesIdeaFilters = (
   const videoDone = isVideoPublished(idea) || completed;
   const researchDone = hasIdeaResearch(idea) || completed;
 
-  if (statusFilter === 'completed') {
-    if (typeFilter === 'all') return completed;
-    if (typeFilter === 'research') return researchDone;
-    if (typeFilter === 'article') return articleSelected && articleDone;
-    if (typeFilter === 'video') return videoSelected && videoDone;
+  if (statusFilter === IdeaStatusFilterEnum.COMPLETED) {
+    if (typeFilter === IdeaTypeFilterEnum.ALL) return completed;
+    if (typeFilter === IdeaTypeFilterEnum.RESEARCH) return researchDone;
+    if (typeFilter === IdeaTypeFilterEnum.ARTICLE) return articleSelected && articleDone;
+    if (typeFilter === IdeaTypeFilterEnum.VIDEO) return videoSelected && videoDone;
   } else {
-    // statusFilter === 'pending'
-    if (typeFilter === 'all') return !completed;
-    if (typeFilter === 'research') return !completed && (!hasIdeaResearch(idea) || (!articleSelected && !videoSelected));
-    if (typeFilter === 'article') return articleSelected && !articleDone && !completed;
-    if (typeFilter === 'video') return videoSelected && !videoDone && !completed;
+    // statusFilter === IdeaStatusFilterEnum.PENDING
+    if (typeFilter === IdeaTypeFilterEnum.ALL) return !completed;
+    if (typeFilter === IdeaTypeFilterEnum.RESEARCH) return !completed && (!hasIdeaResearch(idea) || (!articleSelected && !videoSelected));
+    if (typeFilter === IdeaTypeFilterEnum.ARTICLE) return articleSelected && !articleDone && !completed;
+    if (typeFilter === IdeaTypeFilterEnum.VIDEO) return videoSelected && !videoDone && !completed;
   }
 
   return true;
@@ -136,7 +142,7 @@ export const canCompleteIdea = (idea: IdeaChecklistFields): { allowed: boolean; 
 export const getIdeaPublishStatus = (i: IdeaChecklistFields): PublishStatus => {
   if (isIdeaCompleted(i)) {
     return {
-      status: 'completed',
+      status: PublishStatusType.COMPLETED,
       label: 'Completed',
       badgeClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
       dotClass: 'bg-emerald-500',
@@ -154,7 +160,7 @@ export const getIdeaPublishStatus = (i: IdeaChecklistFields): PublishStatus => {
   // Stage 1: Pending (No formats selected yet / awaiting research)
   if (!isArticleRequired && !isVideoRequired) {
     return {
-      status: 'pending',
+      status: PublishStatusType.PENDING,
       label: 'Pending',
       badgeClass: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20',
       dotClass: 'bg-violet-500',
@@ -170,7 +176,7 @@ export const getIdeaPublishStatus = (i: IdeaChecklistFields): PublishStatus => {
   // Ready to complete (all required published, awaiting user click on Completed button)
   if (articleDone && videoDone) {
     return {
-      status: 'ready-to-complete',
+      status: PublishStatusType.READY_TO_COMPLETE,
       label: 'Ready to Complete',
       badgeClass: 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/25',
       dotClass: 'bg-teal-500',
@@ -183,7 +189,7 @@ export const getIdeaPublishStatus = (i: IdeaChecklistFields): PublishStatus => {
   // Both formats in progress
   if (isArticleRequired && isVideoRequired && !isArticlePublished && !isVideoPublished) {
     return {
-      status: 'articles-and-videos',
+      status: PublishStatusType.ARTICLES_AND_VIDEOS,
       label: 'Articles & Videos',
       badgeClass: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20',
       dotClass: 'bg-indigo-500',
@@ -197,7 +203,7 @@ export const getIdeaPublishStatus = (i: IdeaChecklistFields): PublishStatus => {
   if (isArticleRequired && !isArticlePublished) {
     const label = i.articleDraftedDone ? 'Article Drafted' : 'Writing Article';
     return {
-      status: 'articles',
+      status: PublishStatusType.ARTICLES,
       label,
       badgeClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
       dotClass: 'bg-amber-500',
@@ -216,7 +222,7 @@ export const getIdeaPublishStatus = (i: IdeaChecklistFields): PublishStatus => {
   }
 
   return {
-    status: 'videos',
+    status: PublishStatusType.VIDEOS,
     label: videoLabel,
     badgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
     dotClass: 'bg-rose-500',

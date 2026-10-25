@@ -22,6 +22,7 @@ import { AppDispatch, RootState } from '@/store';
 import { cn } from 'cn';
 import { getIdeaPublishStatus, canCompleteIdea, isIdeaCompleted } from '@/lib/ideaStatus';
 import { Idea, OnboardingStep } from '@/types';
+import { IdeaStatus } from '@/enums';
 
 type IdeaDetails = Idea;
 
@@ -515,7 +516,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
         setSaving(true);
         const updatedIdea: IdeaDetails = {
           ...idea,
-          status: 'pending',
+          status: IdeaStatus.PENDING,
           datePosted: '',
         };
         setIdea(updatedIdea);
@@ -539,7 +540,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ id: string }>
       setSaving(true);
       const updatedIdea: IdeaDetails = {
         ...idea,
-        status: 'posted',
+        status: IdeaStatus.POSTED,
         datePosted: new Date().toISOString(),
       };
       setIdea(updatedIdea);
