@@ -58,8 +58,9 @@ function getDeterministicBaselineSeconds(idea: Idea): number {
 
   // 3. Fallback deterministic baseline between 25 and 95 mins based on ID string
   let hash = 0;
-  for (let i = 0; i < idea.id.length; i++) {
-    hash = (hash << 5) - hash + idea.id.charCodeAt(i);
+  const idStr = idea.ideaId || '';
+  for (let i = 0; i < idStr.length; i++) {
+    hash = (hash << 5) - hash + idStr.charCodeAt(i);
     hash |= 0;
   }
   const pseudoSeed = Math.abs(hash) % 70 + 25; // 25 to 95 minutes
@@ -99,7 +100,7 @@ export function calculateTopicTimeAnalytics(ideas: Idea[]): TopicTimeAnalytics {
 
   const topicsStats: TopicTimeStats[] = ideas.map((idea) => {
     // If user has explicitly logged time via the timer, prioritize it; otherwise use realistic baseline
-    const loggedSeconds = storedTimes[idea.id] || 0;
+    const loggedSeconds = storedTimes[idea.ideaId] || 0;
     const baselineSeconds = getDeterministicBaselineSeconds(idea);
     const totalSeconds = loggedSeconds > 0 ? loggedSeconds : baselineSeconds;
 
@@ -121,7 +122,7 @@ export function calculateTopicTimeAnalytics(ideas: Idea[]): TopicTimeAnalytics {
     const videoMins = Math.max(0, totalMins - researchMins - articleMins);
 
     return {
-      id: idea.id,
+      ideaId: idea.ideaId,
       topic: truncateTopicName(idea.idea),
       fullName: idea.idea || 'Untitled Topic',
       totalSeconds,

@@ -413,7 +413,7 @@ export function MobileTimer() {
                   <SelectContent>
                     <SelectItem value="none">-- General Focus (No specific topic) --</SelectItem>
                     {ideas.map((idea) => (
-                      <SelectItem key={idea.id} value={idea.id}>
+                      <SelectItem key={idea.ideaId} value={idea.ideaId}>
                         {idea.idea || 'Untitled Topic'}
                       </SelectItem>
                     ))}

@@ -44,39 +44,39 @@ export function IdeasPlanner() {
   const [deleteIdea] = useDeleteIdeaMutation();
   const [updateIdea] = useUpdateIdeaMutation();
 
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
   const [editIdeaText, setEditIdeaText] = useState('');
-  const [actionItemId, setActionItemId] = useState<string | null>(null);
-  const actionLoading = Boolean(actionItemId);
+  const [actionIdeaId, setActionIdeaId] = useState<string | null>(null);
+  const actionLoading = Boolean(actionIdeaId);
 
   const error = queryError
     ? ('status' in queryError ? JSON.stringify(queryError.data) : (queryError as any).message || 'Failed to load ideas')
     : null;
 
-  const handleDeleteIdea = async (id: string) => {
+  const handleDeleteIdea = async (ideaId: string) => {
     if (!confirm('Are you sure you want to delete this idea?')) return;
-    setActionItemId(id);
+    setActionIdeaId(ideaId);
     try {
-      await deleteIdea(id).unwrap();
+      await deleteIdea(ideaId).unwrap();
       toast.success('Idea deleted');
     } catch (err: any) {
       toast.error(err?.data?.error || err?.message || 'Failed to delete idea');
     } finally {
-      setActionItemId(null);
+      setActionIdeaId(null);
     }
   };
 
-  const handleEditIdea = async (id: string) => {
+  const handleEditIdea = async (ideaId: string) => {
     if (!editIdeaText.trim()) return;
-    setActionItemId(id);
+    setActionIdeaId(ideaId);
     try {
-      await updateIdea({ id, idea: editIdeaText.trim() }).unwrap();
+      await updateIdea({ ideaId, idea: editIdeaText.trim() }).unwrap();
       toast.success('Changes saved successfully!');
-      setEditingId(null);
+      setEditingIdeaId(null);
     } catch (err: any) {
       toast.error(err?.data?.error || err?.message || 'Failed to update idea');
     } finally {
-      setActionItemId(null);
+      setActionIdeaId(null);
     }
   };
 
@@ -137,32 +137,32 @@ export function IdeasPlanner() {
     );
 
     return (
-      <Card key={idea.id} className={cardClasses}>
+      <Card key={idea.ideaId} className={cardClasses}>
         <CardContent className="p-4 sm:p-5 flex flex-col justify-between gap-3 min-h-[104px]">
-          {editingId === idea.id ? (
+          {editingIdeaId === idea.ideaId ? (
             <div className="flex items-center gap-2 w-full py-1">
               <Input 
                 value={editIdeaText} 
                 onChange={(e) => setEditIdeaText(e.target.value)} 
                 className="flex-1 h-9 text-sm"
                 autoFocus
-                disabled={actionLoading && actionItemId === idea.id}
+                disabled={actionLoading && actionIdeaId === idea.ideaId}
               />
               <Button 
                 size="sm" 
-                onClick={() => handleEditIdea(idea.id)} 
-                disabled={actionLoading && actionItemId === idea.id}
+                onClick={() => handleEditIdea(idea.ideaId)} 
+                disabled={actionLoading && actionIdeaId === idea.ideaId}
                 className="h-9 px-3 gap-1 shrink-0"
               >
-                {actionLoading && actionItemId === idea.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                {actionLoading && actionIdeaId === idea.ideaId ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                 Save
               </Button>
               <Button 
                 size="icon" 
                 variant="ghost" 
                 className="h-9 w-9 shrink-0" 
-                onClick={() => setEditingId(null)} 
-                disabled={actionLoading && actionItemId === idea.id}
+                onClick={() => setEditingIdeaId(null)} 
+                disabled={actionLoading && actionIdeaId === idea.ideaId}
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -173,7 +173,7 @@ export function IdeasPlanner() {
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0 space-y-1.5">
                   <Link 
-                    href={`/ideas/${idea.id}`}
+                    href={`/ideas/${idea.ideaId}`}
                     className="text-sm sm:text-base font-medium leading-snug hover:underline cursor-pointer transition-colors hover:text-primary block line-clamp-2"
                     title={idea.idea}
                   >
@@ -187,7 +187,7 @@ export function IdeasPlanner() {
                   <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
                     {!hasBaseArticle && (
                       <Link
-                        href={`/ideas/${idea.id}`}
+                        href={`/ideas/${idea.ideaId}`}
                         className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25 hover:bg-amber-500/20 transition-colors"
                       >
                         <FileText className="w-3 h-3 shrink-0 opacity-80" />
@@ -255,14 +255,14 @@ export function IdeasPlanner() {
                   <span className="truncate">Created {new Date(idea.createdAt).toLocaleDateString()}</span>
                 </div>
                 
-                {actionLoading && actionItemId === idea.id ? (
+                {actionLoading && actionIdeaId === idea.ideaId ? (
                   <div className="flex items-center px-2 shrink-0">
                     <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                   </div>
                 ) : (
                   <div className="flex items-center gap-1 shrink-0">
                     <Link
-                      href={`/ideas/${idea.id}`}
+                      href={`/ideas/${idea.ideaId}`}
                       className="inline-flex items-center justify-center h-8 px-2.5 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                       title="Open Editor"
                     >
@@ -282,7 +282,7 @@ export function IdeasPlanner() {
                       size="icon" 
                       variant="ghost" 
                       className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted" 
-                      onClick={() => { setEditingId(idea.id); setEditIdeaText(idea.idea); }}
+                      onClick={() => { setEditingIdeaId(idea.ideaId); setEditIdeaText(idea.idea); }}
                       title="Edit Idea"
                     >
                       <Edit className="h-3.5 w-3.5" />
@@ -291,7 +291,7 @@ export function IdeasPlanner() {
                       size="icon" 
                       variant="ghost" 
                       className="h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" 
-                      onClick={() => handleDeleteIdea(idea.id)}
+                      onClick={() => handleDeleteIdea(idea.ideaId)}
                       title="Delete Idea"
                     >
                       <Trash2 className="h-3.5 w-3.5" />

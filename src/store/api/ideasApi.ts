@@ -3,7 +3,7 @@ import { Idea } from '@/types';
 
 /**
  * RTK Query API service for managing Idea resources.
- * Handles fetching, creating, updating, and deleting ideas with automatic cache management.
+ * Uses canonical `ideaId` naming for unambiguous entity identification.
  */
 export const ideasApi = createApi({
   reducerPath: 'ideasApi',
@@ -16,16 +16,16 @@ export const ideasApi = createApi({
       providesTags: (result) =>
         result
           ? [
-              ...result.map(({ id }) => ({ type: 'Idea' as const, id })),
+              ...result.map(({ ideaId }) => ({ type: 'Idea' as const, id: ideaId })),
               { type: 'Idea', id: 'LIST' },
             ]
           : [{ type: 'Idea', id: 'LIST' }],
     }),
 
     getIdeaById: builder.query<Idea, string>({
-      query: (id) => `/ideas?id=${encodeURIComponent(id)}`,
+      query: (ideaId) => `/ideas?ideaId=${encodeURIComponent(ideaId)}`,
       transformResponse: (response: { data: Idea }) => response.data,
-      providesTags: (result, error, id) => [{ type: 'Idea', id }],
+      providesTags: (result, error, ideaId) => [{ type: 'Idea', id: ideaId }],
     }),
 
     addIdea: builder.mutation<Idea, string | { idea: string; description?: string }>({
@@ -41,26 +41,26 @@ export const ideasApi = createApi({
       invalidatesTags: [{ type: 'Idea', id: 'LIST' }],
     }),
 
-    updateIdea: builder.mutation<Idea, Partial<Idea> & { id: string }>({
+    updateIdea: builder.mutation<Idea, Partial<Idea> & { ideaId: string }>({
       query: (idea) => ({
         url: '/ideas',
         method: 'PUT',
         body: idea,
       }),
       transformResponse: (response: { data: Idea }) => response.data,
-      invalidatesTags: (result, error, { id }) => [
-        { type: 'Idea', id },
+      invalidatesTags: (result, error, { ideaId }) => [
+        { type: 'Idea', id: ideaId },
         { type: 'Idea', id: 'LIST' },
       ],
     }),
 
     deleteIdea: builder.mutation<{ message: string }, string>({
-      query: (id) => ({
-        url: `/ideas?id=${encodeURIComponent(id)}`,
+      query: (ideaId) => ({
+        url: `/ideas?ideaId=${encodeURIComponent(ideaId)}`,
         method: 'DELETE',
       }),
-      invalidatesTags: (result, error, id) => [
-        { type: 'Idea', id },
+      invalidatesTags: (result, error, ideaId) => [
+        { type: 'Idea', id: ideaId },
         { type: 'Idea', id: 'LIST' },
       ],
     }),

@@ -7,7 +7,7 @@ import { IdeaStatus } from '@/enums';
 export const dynamic = 'force-dynamic';
 
 const HEADERS = [
-  'id', 'idea', 'description', 'status', 'datePosted', 'createdAt',
+  'ideaId', 'idea', 'description', 'status', 'datePosted', 'createdAt',
   'baseArticle', 'mediumArticle', 'youtubeScript',
   'eligibleMedium', 'eligibleSubstack', 'eligibleYoutube', 'eligibleInstagram',
   'ineligibleMedium', 'ineligibleSubstack', 'ineligibleYoutube', 'ineligibleInstagram',
@@ -75,7 +75,8 @@ async function getIdeasSheet() {
 }
 
 /**
- * Transforms a raw Google Spreadsheet row into a typed Idea object with parsed booleans.
+ * Transforms a raw Google Spreadsheet row into a typed Idea object with parsed booleans
+ * and ideaId identifier.
  */
 function parseRowToIdea(row: any): Idea {
   const data: Record<string, any> = {};
@@ -83,19 +84,20 @@ function parseRowToIdea(row: any): Idea {
     const val = row.get(header) ?? '';
     data[header] = BOOLEAN_SET.has(header) ? String(val).toLowerCase() === 'true' : val;
   }
+  data.ideaId = String(row.get('ideaId') || row.get('id') || '');
   return data as Idea;
 }
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
+    const ideaId = searchParams.get('ideaId');
 
     const sheet = await getIdeasSheet();
     const rows = await sheet.getRows();
 
-    if (id) {
-      const targetRow = rows.find(r => r.get('id') === id);
+    if (ideaId) {
+      const targetRow = rows.find(r => (r.get('ideaId') || r.get('id')) === ideaId);
       if (!targetRow) {
         return NextResponse.json({ error: 'Idea not found' }, { status: 404 });
       }
@@ -131,9 +133,10 @@ export async function POST(request: Request) {
 
     const sheet = await getIdeasSheet();
     const descText = description ? String(description).trim() : '';
+    const generatedIdeaId = crypto.randomUUID();
 
     const newIdea: Record<string, any> = {
-      id: crypto.randomUUID(),
+      ideaId: generatedIdeaId,
       idea: idea.trim(),
       description: descText,
       status: 'pending',
@@ -166,15 +169,15 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const payload = await request.json();
-    const { id } = payload;
+    const { ideaId } = payload;
 
-    if (!id) {
-      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    if (!ideaId) {
+      return NextResponse.json({ error: 'ideaId is required' }, { status: 400 });
     }
 
     const sheet = await getIdeasSheet();
     const rows = await sheet.getRows();
-    const targetRow = rows.find(r => r.get('id') === id);
+    const targetRow = rows.find(r => (r.get('ideaId') || r.get('id')) === ideaId);
 
     if (!targetRow) {
       return NextResponse.json({ error: 'Idea not found' }, { status: 404 });
@@ -189,6 +192,9 @@ export async function PUT(request: Request) {
         }
       }
     }
+
+    // Set ideaId in target row
+    targetRow.set('ideaId', ideaId);
 
     // Handle posted status logic explicitly if passed
     if (payload.status === IdeaStatus.POSTED) {
@@ -209,15 +215,15 @@ export async function PUT(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
+    const ideaId = searchParams.get('ideaId');
 
-    if (!id) {
-      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    if (!ideaId) {
+      return NextResponse.json({ error: 'ideaId is required' }, { status: 400 });
     }
 
     const sheet = await getIdeasSheet();
     const rows = await sheet.getRows();
-    const targetRow = rows.find(r => r.get('id') === id);
+    const targetRow = rows.find(r => (r.get('ideaId') || r.get('id')) === ideaId);
 
     if (!targetRow) {
       return NextResponse.json({ error: 'Idea not found' }, { status: 404 });

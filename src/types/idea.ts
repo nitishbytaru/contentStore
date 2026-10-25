@@ -21,7 +21,7 @@ export type PublishStatusType = `${PublishStatusTypeEnum}`;
 export type OnboardingStep = `${OnboardingStepEnum}`;
 
 export interface Idea {
-  id: string;
+  ideaId: string;
   idea: string;
   description?: string;
   status: IdeaStatus;

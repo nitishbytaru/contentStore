@@ -54,12 +54,12 @@ function formatDateTimeDisplay(isoString?: string): string {
   });
 }
 
-export default function IdeaEditor({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
-  const { data: fetchedIdea, isLoading: ideaLoading } = useGetIdeaByIdQuery(id);
+export default function IdeaEditor({ params }: { params: Promise<{ ideaId: string }> }) {
+  const { ideaId } = use(params);
+  const { data: fetchedIdea, isLoading: ideaLoading } = useGetIdeaByIdQuery(ideaId);
   const [updateIdeaMutation] = useUpdateIdeaMutation();
 
-  const handleUpdateIdea = async (updatedData: Partial<IdeaDetails> & { id: string }) => {
+  const handleUpdateIdea = async (updatedData: Partial<IdeaDetails> & { ideaId: string }) => {
     return await updateIdeaMutation(updatedData).unwrap();
   };
   

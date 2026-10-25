@@ -78,7 +78,7 @@ export interface ConversionAnalytics {
 }
 
 export interface TopicTimeStats {
-  id: string;
+  ideaId: string;
   topic: string;
   fullName: string;
   totalSeconds: number;
