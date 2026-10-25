@@ -1,7 +1,5 @@
 import { Idea, TopicTimeStats, TopicTimeAnalytics } from '@/types';
 
-export type { TopicTimeStats, TopicTimeAnalytics };
-
 export const TOPIC_TIME_STORAGE_KEY = 'contentstore_topic_times_v1';
 
 /**

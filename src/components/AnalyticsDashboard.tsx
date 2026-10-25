@@ -16,8 +16,8 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchIdeas } from '@/store/slices/ideasSlice';
 import { AppDispatch, RootState } from '@/store';
-import { cn } from 'cn';
-import { calculateConversionAnalytics, StageDurationStat } from '@/lib/stageAnalytics';
+import { calculateConversionAnalytics } from '@/lib/stageAnalytics';
+import { StageDurationStat } from '@/types';
 
 export function AnalyticsDashboard() {
   const dispatch = useDispatch<AppDispatch>();

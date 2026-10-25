@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getGoogleSheet } from '@/lib/google-sheets';
-import { matchesIdeaFilters, IdeaTypeFilter, IdeaStatusFilter } from '@/lib/ideaStatus';
+import { matchesIdeaFilters } from '@/lib/ideaStatus';
+import { IdeaTypeFilter, IdeaStatusFilter } from '@/types';
 
 export const dynamic = 'force-dynamic';
 

@@ -9,9 +9,9 @@ import {
   addPrompt, 
   updatePrompt, 
   deletePrompt, 
-  setSelectedCategory, 
-  PromptItem 
+  setSelectedCategory 
 } from '@/store/slices/promptsSlice';
+import { PromptItem } from '@/types';
 import { AppDispatch, RootState } from '@/store';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';

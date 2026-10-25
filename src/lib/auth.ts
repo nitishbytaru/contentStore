@@ -1,8 +1,6 @@
 import crypto from 'crypto';
 import { TokenPayload } from '@/types';
 
-export type { TokenPayload };
-
 export const SESSION_COOKIE_NAME = 'cs_auth_session';
 export const DEFAULT_MAX_AGE = 60 * 60 * 24 * 30; // 30 days in seconds
 export const REMEMBER_ME_MAX_AGE = 60 * 60 * 24 * 90; // 90 days in seconds

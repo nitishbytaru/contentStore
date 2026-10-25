@@ -14,9 +14,6 @@ import {
   isIdeaCompleted 
 } from '@/lib/ideaStatus';
 
-export type { StageDurationStat, FunnelStep, ConversionAnalytics };
-export { StageCategory };
-
 function parseTime(val?: string | null): number | null {
   if (!val) return null;
   const t = new Date(val).getTime();

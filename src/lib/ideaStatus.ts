@@ -5,13 +5,6 @@ import {
   IdeaStatusFilter,
 } from '@/types';
 
-export type {
-  PublishStatus,
-  IdeaChecklistFields,
-  IdeaTypeFilter,
-  IdeaStatusFilter,
-};
-
 /**
  * Checks if an idea has been finalized and marked as completed.
  */

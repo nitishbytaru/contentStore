@@ -1,8 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { Idea, IdeaTypeFilter, IdeaStatusFilter } from '@/types';
 
-export type { Idea, IdeaTypeFilter, IdeaStatusFilter };
-
 interface IdeasState {
   items: Idea[];
   loading: boolean;

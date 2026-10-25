@@ -15,9 +15,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from "sonner";
 import { useDispatch, useSelector } from 'react-redux';
 import { 
-  fetchIdeas, deleteIdea, updateIdea, addIdea, Idea, 
-  setSearchQuery, setTypeFilter, setStatusFilter, IdeaTypeFilter, IdeaStatusFilter 
+  fetchIdeas, deleteIdea, updateIdea, addIdea, 
+  setSearchQuery, setTypeFilter, setStatusFilter 
 } from '@/store/slices/ideasSlice';
+import { Idea, IdeaTypeFilter, IdeaStatusFilter } from '@/types';
 import { RootState, AppDispatch } from '@/store';
 import { cn } from 'cn';
 import { 
