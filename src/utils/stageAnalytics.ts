@@ -12,14 +12,34 @@ import {
   isArticlePublished, 
   isVideoPublished, 
   isIdeaCompleted 
-} from '@/lib/ideaStatus';
+} from '@/utils/ideaStatus';
 
+/**
+ * Safely parses an optional ISO 8601 date string or timestamp into epoch milliseconds.
+ *
+ * Handles undefined, null, or invalid date values gracefully without throwing errors.
+ *
+ * @param val - Optional ISO date string (e.g., "2026-10-25T10:00:00.000Z"), timestamp, or null/undefined.
+ * @returns Epoch milliseconds as a number if valid, or `null` if the date is invalid or missing.
+ */
 function parseTime(val?: string | null): number | null {
   if (!val) return null;
   const t = new Date(val).getTime();
   return isNaN(t) ? null : t;
 }
 
+/**
+ * Converts a duration in decimal hours into a concise, human-readable string.
+ *
+ * Formatting Rules:
+ * - 0 or negative hours: "0 hrs"
+ * - Less than 1 hour: Formats in minutes (e.g., "45 mins")
+ * - Less than 24 hours: Formats in hours with 1 decimal place (e.g., "4.5 hrs")
+ * - 24 hours or greater: Formats in days with 1 decimal place (e.g., "2.5 days")
+ *
+ * @param hours - The duration in decimal hours (e.g., 0.5, 4.25, 48.0).
+ * @returns Human-readable duration string (e.g., "30 mins", "4.3 hrs", "2.0 days").
+ */
 export function formatDurationHuman(hours: number): string {
   if (hours <= 0) return '0 hrs';
   if (hours < 1) {
@@ -33,6 +53,21 @@ export function formatDurationHuman(hours: number): string {
   return `${days.toFixed(1)} days`;
 }
 
+/**
+ * Calculates duration statistics (average, count, fastest, slowest) between two lifecycle stage timestamps
+ * across a collection of ideas.
+ *
+ * Filters out ideas where either the start or end timestamp is null or where the end precedes start.
+ *
+ * @param ideas - Array of idea objects to evaluate.
+ * @param getStart - Callback function extracting the starting timestamp in epoch milliseconds from an idea.
+ * @param getEnd - Callback function extracting the ending timestamp in epoch milliseconds from an idea.
+ * @returns An object containing:
+ * - `avgHours`: Average turnaround time in decimal hours.
+ * - `count`: Number of valid samples evaluated.
+ * - `fastest`: Formatted string of the fastest completion time (optional).
+ * - `slowest`: Formatted string of the slowest completion time (optional).
+ */
 function calculateDiffs(
   ideas: Idea[],
   getStart: (idea: Idea) => number | null,
@@ -66,6 +101,29 @@ function calculateDiffs(
   };
 }
 
+/**
+ * Computes end-to-end conversion intelligence, turnaround statistics, and stage bottleneck analysis.
+ *
+ * This function calculates:
+ * 1. Researched vs. Unresearched ideas: Counts and conversion percentages from ideation.
+ * 2. Format Conversions: Number and percentage of researched ideas assigned to Articles, Videos, Both, or Neither.
+ * 3. Article Pipeline: Drafted counts, published counts, pending counts, and drop-off rates.
+ * 4. Video Pipeline: Scripted, shot, edited, uploaded counts, upload rate, and drop-off rates.
+ * 5. Stage Durations & Bottlenecks: Average turnaround time (hours and days) for each production phase:
+ *    - Ideation → Draft Article
+ *    - Draft Article → Published
+ *    - Ideation → Video Shooting
+ *    - Shooting → Editing Done
+ *    - Editing Done → Uploaded
+ *    - Total Article Lead Time
+ *    - Total Video Lead Time
+ *    - End-to-End Idea Completion Lead Time
+ *    - Automatically identifies the slowest stage (primary bottleneck) and fastest transition stage.
+ * 6. Funnel Progression Steps: 4-stage sequential funnel with conversion rates and drop-off counts.
+ *
+ * @param ideas - Array of all ideas stored in the workspace.
+ * @returns A comprehensive `ConversionAnalytics` object powering the analytics dashboards and charts.
+ */
 export function calculateConversionAnalytics(ideas: Idea[]): ConversionAnalytics {
   const totalIdeas = ideas.length;
 

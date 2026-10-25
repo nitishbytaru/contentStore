@@ -20,7 +20,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchIdeas, updateIdea } from '@/store/slices/ideasSlice';
 import { AppDispatch, RootState } from '@/store';
 import { cn } from 'cn';
-import { getIdeaPublishStatus, canCompleteIdea, isIdeaCompleted } from '@/lib/ideaStatus';
+import { getIdeaPublishStatus, canCompleteIdea, isIdeaCompleted } from '@/utils/ideaStatus';
 import { Idea, OnboardingStep } from '@/types';
 import { IdeaStatus } from '@/enums';
 

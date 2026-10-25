@@ -24,7 +24,7 @@ import { cn } from 'cn';
 import { 
   getIdeaPublishStatus, 
   matchesIdeaFilters 
-} from '@/lib/ideaStatus';
+} from '@/utils/ideaStatus';
 import { MobileTimer } from '@/components/MobileTimer';
 
 export function IdeasPlanner() {

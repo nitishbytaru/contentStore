@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getGoogleSheet } from '@/lib/google-sheets';
-import { matchesIdeaFilters } from '@/lib/ideaStatus';
+import { matchesIdeaFilters } from '@/utils/ideaStatus';
 import { IdeaTypeFilter, IdeaStatusFilter } from '@/types';
 import { IdeaStatus } from '@/enums';
 
