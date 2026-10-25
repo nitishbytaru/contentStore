@@ -1,44 +1,16 @@
-export interface PublishStatus {
-  status: 'completed' | 'ready-to-complete' | 'pending' | 'articles' | 'videos' | 'articles-and-videos';
-  label: string;
-  badgeClass: string;
-  dotClass: string;
-  borderClass: string;
-  bgClass: string;
-  accentGradient: string;
-}
+import {
+  PublishStatus,
+  IdeaChecklistFields,
+  IdeaTypeFilter,
+  IdeaStatusFilter,
+} from '@/types';
 
-export type IdeaChecklistFields = {
-  status?: string;
-  eligibleMedium?: boolean;
-  publishedMedium?: boolean;
-  ineligibleMedium?: boolean;
-  eligibleSubstack?: boolean;
-  publishedSubstack?: boolean;
-  ineligibleSubstack?: boolean;
-  eligibleYoutube?: boolean;
-  publishedYoutube?: boolean;
-  ineligibleYoutube?: boolean;
-  eligibleInstagram?: boolean;
-  publishedInstagram?: boolean;
-  ineligibleInstagram?: boolean;
-  baseArticle?: string;
-  mediumArticle?: string;
-  youtubeScript?: string;
-  articleDraftedDone?: boolean;
-  articleDraftedAt?: string;
-  articlePublishedDone?: boolean;
-  articlePublishedAt?: string;
-  videoShootingDone?: boolean;
-  videoShootingAt?: string;
-  videoEditingDone?: boolean;
-  videoEditingAt?: string;
-  videoUploadedDone?: boolean;
-  videoUploadedAt?: string;
+export type {
+  PublishStatus,
+  IdeaChecklistFields,
+  IdeaTypeFilter,
+  IdeaStatusFilter,
 };
-
-export type IdeaTypeFilter = 'all' | 'research' | 'article' | 'video';
-export type IdeaStatusFilter = 'pending' | 'completed';
 
 /**
  * Checks if an idea has been finalized and marked as completed.

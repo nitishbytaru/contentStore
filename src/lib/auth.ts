@@ -1,4 +1,7 @@
 import crypto from 'crypto';
+import { TokenPayload } from '@/types';
+
+export type { TokenPayload };
 
 export const SESSION_COOKIE_NAME = 'cs_auth_session';
 export const DEFAULT_MAX_AGE = 60 * 60 * 24 * 30; // 30 days in seconds
@@ -39,12 +42,6 @@ export function verifyPassword(inputPassword: string): boolean {
   const expectedHash = crypto.createHash('sha256').update(expectedPassword).digest();
 
   return crypto.timingSafeEqual(inputHash, expectedHash);
-}
-
-interface TokenPayload {
-  v: number;
-  iat: number;
-  exp: number;
 }
 
 export function createAuthToken(maxAgeSeconds: number = DEFAULT_MAX_AGE): string {

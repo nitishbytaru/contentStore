@@ -21,40 +21,9 @@ import { fetchIdeas, updateIdea } from '@/store/slices/ideasSlice';
 import { AppDispatch, RootState } from '@/store';
 import { cn } from 'cn';
 import { getIdeaPublishStatus, canCompleteIdea, isIdeaCompleted } from '@/lib/ideaStatus';
+import { Idea, OnboardingStep } from '@/types';
 
-interface IdeaDetails {
-  id: string;
-  idea: string;
-  description?: string;
-  status?: 'pending' | 'posted';
-  datePosted?: string;
-  createdAt?: string;
-  baseArticle: string;
-  mediumArticle: string;
-  youtubeScript: string;
-  eligibleMedium: boolean;
-  eligibleSubstack: boolean;
-  eligibleYoutube: boolean;
-  eligibleInstagram: boolean;
-  ineligibleMedium: boolean;
-  ineligibleSubstack: boolean;
-  ineligibleYoutube: boolean;
-  ineligibleInstagram: boolean;
-  publishedMedium: boolean;
-  publishedSubstack: boolean;
-  publishedYoutube: boolean;
-  publishedInstagram: boolean;
-  articleDraftedDone?: boolean;
-  articleDraftedAt?: string;
-  articlePublishedDone?: boolean;
-  articlePublishedAt?: string;
-  videoShootingDone?: boolean;
-  videoShootingAt?: string;
-  videoEditingDone?: boolean;
-  videoEditingAt?: string;
-  videoUploadedDone?: boolean;
-  videoUploadedAt?: string;
-}
+type IdeaDetails = Idea;
 
 // Helpers for date/time conversion
 function toDateTimeLocalValue(isoString?: string): string {
@@ -85,8 +54,6 @@ function formatDateTimeDisplay(isoString?: string): string {
     minute: '2-digit' 
   });
 }
-
-type OnboardingStep = 'RESEARCH' | 'QUESTION_ARTICLE' | 'QUESTION_VIDEO' | 'WORKSPACE';
 
 export default function IdeaEditor({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);

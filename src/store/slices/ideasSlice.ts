@@ -1,41 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { Idea, IdeaTypeFilter, IdeaStatusFilter } from '@/types';
 
-export interface Idea {
-  id: string;
-  idea: string;
-  description?: string;
-  status: 'pending' | 'posted';
-  datePosted: string;
-  createdAt: string;
-  eligibleMedium: boolean;
-  eligibleSubstack: boolean;
-  eligibleYoutube: boolean;
-  eligibleInstagram: boolean;
-  ineligibleMedium: boolean;
-  ineligibleSubstack: boolean;
-  ineligibleYoutube: boolean;
-  ineligibleInstagram: boolean;
-  publishedMedium: boolean;
-  publishedSubstack: boolean;
-  publishedYoutube: boolean;
-  publishedInstagram: boolean;
-  baseArticle: string;
-  mediumArticle: string;
-  youtubeScript: string;
-  articleDraftedDone?: boolean;
-  articleDraftedAt?: string;
-  articlePublishedDone?: boolean;
-  articlePublishedAt?: string;
-  videoShootingDone?: boolean;
-  videoShootingAt?: string;
-  videoEditingDone?: boolean;
-  videoEditingAt?: string;
-  videoUploadedDone?: boolean;
-  videoUploadedAt?: string;
-}
-
-export type IdeaTypeFilter = 'all' | 'research' | 'article' | 'video';
-export type IdeaStatusFilter = 'pending' | 'completed';
+export type { Idea, IdeaTypeFilter, IdeaStatusFilter };
 
 interface IdeasState {
   items: Idea[];

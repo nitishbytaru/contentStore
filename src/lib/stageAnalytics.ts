@@ -1,4 +1,10 @@
-import { Idea } from '@/store/slices/ideasSlice';
+import {
+  Idea,
+  StageDurationStat,
+  FunnelStep,
+  ConversionAnalytics,
+} from '@/types';
+import { StageCategory } from '@/enums';
 import { 
   hasIdeaResearch, 
   isArticleIdea, 
@@ -8,80 +14,8 @@ import {
   isIdeaCompleted 
 } from '@/lib/ideaStatus';
 
-export interface StageDurationStat {
-  id: string;
-  stageName: string;
-  category: 'article' | 'video' | 'overall';
-  avgHours: number;
-  avgDays: number;
-  formattedAvg: string;
-  sampleCount: number;
-  fastestFormatted?: string;
-  slowestFormatted?: string;
-  color: string;
-}
-
-export interface FunnelStep {
-  name: string;
-  count: number;
-  percentageOfTotal: number;
-  conversionRateFromPrev: number;
-  dropOffCount: number;
-  dropOffRate: number;
-  color: string;
-  description: string;
-}
-
-export interface ConversionAnalytics {
-  totalIdeas: number;
-  researched: {
-    count: number;
-    rate: number;
-    unresearchedCount: number;
-    unresearchedRate: number;
-  };
-  formats: {
-    articles: number;
-    videos: number;
-    both: number;
-    neither: number;
-    articleRate: number;
-    videoRate: number;
-    neitherRate: number;
-  };
-  articlePipeline: {
-    total: number;
-    drafted: number;
-    published: number;
-    pending: number;
-    publishRate: number;
-    dropRate: number;
-  };
-  videoPipeline: {
-    total: number;
-    scripted: number;
-    shot: number;
-    edited: number;
-    uploaded: number;
-    pending: number;
-    uploadRate: number;
-    dropRate: number;
-  };
-  stageDurations: {
-    ideationToDraft: StageDurationStat;
-    draftToPublish: StageDurationStat;
-    totalArticleTime: StageDurationStat;
-    ideationToShooting: StageDurationStat;
-    shootingToEditing: StageDurationStat;
-    editingToUpload: StageDurationStat;
-    totalVideoTime: StageDurationStat;
-    totalIdeaLeadTime: StageDurationStat;
-    chartStages: StageDurationStat[];
-    slowestStage: StageDurationStat | null;
-    fastestStage: StageDurationStat | null;
-  };
-  funnelSteps: FunnelStep[];
-}
+export type { StageDurationStat, FunnelStep, ConversionAnalytics };
+export { StageCategory };
 
 function parseTime(val?: string | null): number | null {
   if (!val) return null;
@@ -230,7 +164,7 @@ export function calculateConversionAnalytics(ideas: Idea[]): ConversionAnalytics
     {
       id: 'article-draft',
       stageName: 'Ideation → Draft Article',
-      category: 'article',
+      category: StageCategory.ARTICLE,
       avgHours: ideationToDraftStats.avgHours,
       avgDays: ideationToDraftStats.avgHours / 24,
       formattedAvg: formatDurationHuman(ideationToDraftStats.avgHours),
@@ -242,7 +176,7 @@ export function calculateConversionAnalytics(ideas: Idea[]): ConversionAnalytics
     {
       id: 'article-publish',
       stageName: 'Draft Article → Published',
-      category: 'article',
+      category: StageCategory.ARTICLE,
       avgHours: draftToPublishStats.avgHours,
       avgDays: draftToPublishStats.avgHours / 24,
       formattedAvg: formatDurationHuman(draftToPublishStats.avgHours),
@@ -254,7 +188,7 @@ export function calculateConversionAnalytics(ideas: Idea[]): ConversionAnalytics
     {
       id: 'video-shoot',
       stageName: 'Ideation → Video Shooting',
-      category: 'video',
+      category: StageCategory.VIDEO,
       avgHours: ideationToShootingStats.avgHours,
       avgDays: ideationToShootingStats.avgHours / 24,
       formattedAvg: formatDurationHuman(ideationToShootingStats.avgHours),
@@ -266,7 +200,7 @@ export function calculateConversionAnalytics(ideas: Idea[]): ConversionAnalytics
     {
       id: 'video-edit',
       stageName: 'Shooting → Editing Done',
-      category: 'video',
+      category: StageCategory.VIDEO,
       avgHours: shootingToEditingStats.avgHours,
       avgDays: shootingToEditingStats.avgHours / 24,
       formattedAvg: formatDurationHuman(shootingToEditingStats.avgHours),
@@ -278,7 +212,7 @@ export function calculateConversionAnalytics(ideas: Idea[]): ConversionAnalytics
     {
       id: 'video-upload',
       stageName: 'Editing Done → Uploaded',
-      category: 'video',
+      category: StageCategory.VIDEO,
       avgHours: editingToUploadStats.avgHours,
       avgDays: editingToUploadStats.avgHours / 24,
       formattedAvg: formatDurationHuman(editingToUploadStats.avgHours),
@@ -384,7 +318,7 @@ export function calculateConversionAnalytics(ideas: Idea[]): ConversionAnalytics
       totalArticleTime: {
         id: 'total-article',
         stageName: 'Total Article Lead Time',
-        category: 'article',
+        category: StageCategory.ARTICLE,
         avgHours: totalArticleTimeStats.avgHours,
         avgDays: totalArticleTimeStats.avgHours / 24,
         formattedAvg: formatDurationHuman(totalArticleTimeStats.avgHours),
@@ -399,7 +333,7 @@ export function calculateConversionAnalytics(ideas: Idea[]): ConversionAnalytics
       totalVideoTime: {
         id: 'total-video',
         stageName: 'Total Video Lead Time',
-        category: 'video',
+        category: StageCategory.VIDEO,
         avgHours: totalVideoTimeStats.avgHours,
         avgDays: totalVideoTimeStats.avgHours / 24,
         formattedAvg: formatDurationHuman(totalVideoTimeStats.avgHours),
@@ -411,7 +345,7 @@ export function calculateConversionAnalytics(ideas: Idea[]): ConversionAnalytics
       totalIdeaLeadTime: {
         id: 'total-lead',
         stageName: 'End-to-End Idea Completion',
-        category: 'overall',
+        category: StageCategory.OVERALL,
         avgHours: totalIdeaLeadTimeStats.avgHours,
         avgDays: totalIdeaLeadTimeStats.avgHours / 24,
         formattedAvg: formatDurationHuman(totalIdeaLeadTimeStats.avgHours),

@@ -1,41 +1,8 @@
-import { Idea } from '@/store/slices/ideasSlice';
+import { Idea, TopicTimeStats, TopicTimeAnalytics } from '@/types';
+
+export type { TopicTimeStats, TopicTimeAnalytics };
 
 export const TOPIC_TIME_STORAGE_KEY = 'contentstore_topic_times_v1';
-
-export interface TopicTimeStats {
-  id: string;
-  topic: string;
-  fullName: string;
-  totalSeconds: number;
-  minutes: number;
-  hours: number;
-  formattedTime: string;
-  researchMinutes: number;
-  articleMinutes: number;
-  videoMinutes: number;
-  isPublished: boolean;
-}
-
-export interface TopicTimeAnalytics {
-  topics: TopicTimeStats[];
-  totalSeconds: number;
-  totalMinutes: number;
-  totalHours: number;
-  totalHoursFormatted: string;
-  averageMinutes: number;
-  topTopic: TopicTimeStats | null;
-  pieData: { name: string; fullName: string; value: number; formatted: string }[];
-  stageBreakdown: {
-    stage: string;
-    hours: number;
-    minutes: number;
-    color: string;
-  }[];
-  bracketDistribution: {
-    bracket: string;
-    count: number;
-  }[];
-}
 
 /**
  * Retrieve saved topic times from localStorage safely

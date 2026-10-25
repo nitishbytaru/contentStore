@@ -28,8 +28,7 @@ import { cn } from 'cn';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { recordTopicTime } from '@/lib/timeTracking';
-
-type TimerMode = 'stopwatch' | 'countdown';
+import { TimerMode } from '@/types';
 
 const COUNTDOWN_PRESETS = [
   { label: '5m', seconds: 5 * 60 },
