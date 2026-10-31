@@ -1,3 +1,7 @@
+# ContentStore
+
+> 🤖 **AI Integration Blueprint**: See [AI_INTEGRATION_README.md](./AI_INTEGRATION_README.md) for full architecture, LangGraph workflows, RAG, and queue setup.
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
