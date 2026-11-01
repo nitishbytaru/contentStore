@@ -3,6 +3,7 @@ import { generateArticleFromResearch } from '@/lib/research-chat';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 export async function POST(_request: Request, context: { params: Promise<{ ideaId: string }> }) {
   try {

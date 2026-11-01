@@ -49,6 +49,15 @@ async function ensureCollection(): Promise<void> {
           vectors: { size: IDEA_VECTOR_SIZE, distance: 'Cosine' },
         });
       }
+
+      try {
+        await qdrant.createPayloadIndex(COLLECTION, {
+          field_name: 'ideaId',
+          field_schema: 'keyword',
+        });
+      } catch {
+        // Index might already exist
+      }
     })().catch((error) => {
       collectionReady = null;
       throw error;

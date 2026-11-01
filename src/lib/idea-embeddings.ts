@@ -1,4 +1,5 @@
 import path from 'path';
+import os from 'os';
 
 const MODEL = 'Xenova/all-MiniLM-L6-v2';
 export const IDEA_VECTOR_SIZE = 384;
@@ -16,7 +17,14 @@ async function getExtractor(): Promise<FeatureExtractor> {
       const { pipeline, env } = await import('@xenova/transformers');
       env.allowLocalModels = false;
       env.useBrowserCache = false;
-      env.cacheDir = path.join(process.cwd(), '.cache/transformers');
+      
+      // On Vercel / serverless production, the root directory is read-only.
+      // We must write cached models to /tmp.
+      const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NODE_ENV === 'production');
+      env.cacheDir = isServerless
+        ? path.join(os.tmpdir(), 'transformers-cache')
+        : path.join(process.cwd(), '.cache/transformers');
+
       return (await pipeline('feature-extraction', MODEL)) as FeatureExtractor;
     })().catch((error) => {
       extractorPromise = null;

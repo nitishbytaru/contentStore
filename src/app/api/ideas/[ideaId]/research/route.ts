@@ -4,6 +4,7 @@ import { listResearchMessages } from '@/lib/research-messages';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 export async function GET(_request: Request, context: { params: Promise<{ ideaId: string }> }) {
   try {
@@ -45,7 +46,12 @@ export async function POST(request: Request, context: { params: Promise<{ ideaId
 
     return NextResponse.json({ data: messages });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Research failed';
+    console.error('Research API POST error:', error);
+    const message = error instanceof Error
+      ? error.message
+      : (typeof error === 'object' && error !== null && 'message' in error)
+        ? String((error as { message: unknown }).message)
+        : 'Research failed';
     const status = message.includes('GROQ_API_KEY') || message.includes('GROQ_MODEL') ? 400 : 500;
     return NextResponse.json({ error: message }, { status });
   }

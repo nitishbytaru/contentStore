@@ -24,6 +24,19 @@ async function ensureCollection() {
           vectors: { size: IDEA_VECTOR_SIZE, distance: 'Cosine' },
         });
       }
+
+      // Ensure payload indexes exist for filtered queries
+      const indexFields = ['ideaId', 'sourceKey', 'sourceName'];
+      for (const field of indexFields) {
+        try {
+          await qdrant.createPayloadIndex(COLLECTION, {
+            field_name: field,
+            field_schema: 'keyword',
+          });
+        } catch {
+          // Index might already exist
+        }
+      }
     })().catch((error) => {
       ready = null;
       throw error;

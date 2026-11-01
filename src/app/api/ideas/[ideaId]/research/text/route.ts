@@ -4,6 +4,7 @@ import { AlreadyAddedError, sourceKeyForText } from '@/lib/research-index';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 export async function POST(request: Request, context: { params: Promise<{ ideaId: string }> }) {
   try {
