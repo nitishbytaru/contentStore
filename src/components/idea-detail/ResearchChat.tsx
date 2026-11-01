@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { FileUp, Send, Sparkles } from 'lucide-react';
+import { FileText, FileUp, Send, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import {
+  useGenerateArticleMutation,
   useGetResearchMessagesQuery,
   useSendResearchMutation,
   useUploadResearchPdfMutation,
@@ -23,15 +24,25 @@ function readable(text: string) {
     .trim();
 }
 
-export function ResearchChat({ ideaId, title }: { ideaId: string; title: string }) {
+export function ResearchChat({
+  ideaId,
+  title,
+  onArticleGenerated,
+}: {
+  ideaId: string;
+  title: string;
+  onArticleGenerated?: (article: string) => void;
+}) {
   const { data: messages = [], isLoading } = useGetResearchMessagesQuery(ideaId);
   const [sendResearch, { isLoading: isSending }] = useSendResearchMutation();
+  const [generateArticle, { isLoading: isGenerating }] = useGenerateArticleMutation();
   const [uploadPdf, { isLoading: isUploading }] = useUploadResearchPdfMutation();
   const [draft, setDraft] = useState('');
   const [pending, setPending] = useState<{ role: 'user' | 'source'; content: string } | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
-  const busy = isSending || isUploading;
+  const busy = isSending || isUploading || isGenerating;
+  const hasConversation = messages.some((message) => message.role === 'user' || message.role === 'assistant');
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -57,6 +68,17 @@ export function ResearchChat({ ideaId, title }: { ideaId: string; title: string 
       toast.error(errorText(err));
     } finally {
       setPending(null);
+    }
+  };
+
+  const onGenerate = async () => {
+    if (busy) return;
+    try {
+      const result = await generateArticle(ideaId).unwrap();
+      onArticleGenerated?.(result.mediumArticle);
+      toast.success('Article saved');
+    } catch (err) {
+      toast.error(errorText(err));
     }
   };
 
@@ -90,7 +112,7 @@ export function ResearchChat({ ideaId, title }: { ideaId: string; title: string 
         <div className="min-w-0">
           <p className="text-xs font-medium leading-none">Research assistant</p>
           <p className="text-[10px] text-muted-foreground mt-1 truncate">
-            {busy ? 'Looking through your sources' : 'Answers stay with this idea'}
+            {isGenerating ? 'Writing the article' : busy ? 'Looking through your sources' : 'Answers stay with this idea'}
           </p>
         </div>
       </div>
@@ -143,7 +165,7 @@ export function ResearchChat({ ideaId, title }: { ideaId: string; title: string 
               ))}
             </span>
             <span className="text-[11px] text-muted-foreground">
-              {isUploading || pending?.role === 'source' ? 'Reading the source' : 'Thinking'}
+              {isGenerating ? 'Writing the article' : isUploading || pending?.role === 'source' ? 'Reading the source' : 'Thinking'}
             </span>
           </div>
         )}
@@ -187,10 +209,22 @@ export function ResearchChat({ ideaId, title }: { ideaId: string; title: string 
               Upload PDF
             </Button>
           </div>
-          <Button type="submit" size="sm" disabled={!draft.trim() || busy}>
-            <Send className="h-3.5 w-3.5" />
-            Ask
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={!hasConversation || busy}
+              onClick={() => void onGenerate()}
+            >
+              <FileText className="h-3.5 w-3.5" />
+              Generate article
+            </Button>
+            <Button type="submit" size="sm" disabled={!draft.trim() || busy}>
+              <Send className="h-3.5 w-3.5" />
+              Ask
+            </Button>
+          </div>
         </div>
       </form>
     </div>

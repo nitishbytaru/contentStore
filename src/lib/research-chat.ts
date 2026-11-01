@@ -98,6 +98,66 @@ export async function saveResearchSource(ideaId: string, sourceName: string, tex
   return listResearchMessages(ideaId);
 }
 
+async function saveArticle(ideaId: string, article: string) {
+  const doc = await getGoogleSheet();
+  const sheet = doc.sheetsByIndex[0];
+  const rows = await sheet.getRows();
+  const row = rows.find((item) => (item.get('ideaId') || item.get('id')) === ideaId);
+  if (!row) throw new Error('Idea not found');
+  row.set('mediumArticle', article);
+  await row.save();
+  return article;
+}
+
+function conversationTranscript(messages: ResearchMessage[]) {
+  return messages
+    .filter((message) => message.role === 'user' || message.role === 'assistant')
+    .map((message) => `${message.role === 'assistant' ? 'Assistant' : 'You'}: ${message.content.slice(0, 2000)}`)
+    .join('\n\n')
+    .slice(-14000);
+}
+
+export async function generateArticleFromResearch(ideaId: string) {
+  const messages = await listResearchMessages(ideaId);
+  const transcript = conversationTranscript(messages);
+  if (!transcript.trim()) {
+    throw new Error('Ask a few questions first so there is a conversation to write from');
+  }
+
+  const key = process.env.GROQ_API_KEY;
+  const model = process.env.GROQ_MODEL?.trim();
+  if (!key) throw new Error('GROQ_API_KEY is not set');
+  if (!model) throw new Error('GROQ_MODEL is not set');
+
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${key}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model,
+      temperature: 0.4,
+      messages: [
+        {
+          role: 'system',
+          content:
+            'Write a generic article from the conversation. Use only what the person and the assistant said. Write plain paragraphs a reader can follow. Use normal sentences. Do not use markdown, asterisks, headings, bullets, or citation markers.',
+        },
+        { role: 'user', content: transcript },
+      ],
+    }),
+  });
+
+  const body = await response.json();
+  if (!response.ok) {
+    throw new Error(body?.error?.message || 'Groq request failed');
+  }
+  const article = readableAnswer(String(body?.choices?.[0]?.message?.content || ''));
+  if (!article) throw new Error('Groq returned an empty article');
+  return saveArticle(ideaId, article);
+}
+
 export async function askResearch(ideaId: string, question: string, title = '') {
   const trimmed = question.trim();
   if (trimmed.length >= SOURCE_MIN) {

@@ -421,7 +421,14 @@ export function IdeaContentTabs({
 
                   <div className="relative group w-full min-w-0">
                     {tab.value === 'baseArticle' ? (
-                      <ResearchChat ideaId={idea.ideaId} title={idea.idea} />
+                      <ResearchChat
+                        ideaId={idea.ideaId}
+                        title={idea.idea}
+                        onArticleGenerated={(article) => {
+                          onTextChange('mediumArticle', article);
+                          onTabChange('mediumArticle');
+                        }}
+                      />
                     ) : isVideoScript ? (
                       <Textarea
                         ref={videoScriptRef}

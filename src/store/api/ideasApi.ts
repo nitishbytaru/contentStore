@@ -102,6 +102,15 @@ export const ideasApi = createApi({
       ],
     }),
 
+    generateArticle: builder.mutation<{ mediumArticle: string }, string>({
+      query: (ideaId) => ({
+        url: `/ideas/${encodeURIComponent(ideaId)}/article`,
+        method: 'POST',
+      }),
+      transformResponse: (response: { data: { mediumArticle: string } }) => response.data,
+      invalidatesTags: (result, error, ideaId) => [{ type: 'Idea', id: ideaId }],
+    }),
+
     uploadResearchPdf: builder.mutation<ResearchMessage[], { ideaId: string; file: File; title?: string }>({
       query: ({ ideaId, file, title }) => {
         const body = new FormData();
@@ -141,6 +150,7 @@ export const {
   useFindSimilarIdeasMutation,
   useGetResearchMessagesQuery,
   useSendResearchMutation,
+  useGenerateArticleMutation,
   useUploadResearchPdfMutation,
   useDeleteIdeaMutation,
 } = ideasApi;
