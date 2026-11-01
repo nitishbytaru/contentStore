@@ -157,6 +157,12 @@ export async function POST(request: Request) {
       newIdea[field] = false;
     }
 
+    // Default Article and Video formats to enabled
+    newIdea.eligibleMedium = true;
+    newIdea.eligibleSubstack = true;
+    newIdea.eligibleYoutube = true;
+    newIdea.eligibleInstagram = true;
+
     await sheet.addRow(newIdea);
 
     return NextResponse.json({ data: newIdea as Idea }, { status: 201 });

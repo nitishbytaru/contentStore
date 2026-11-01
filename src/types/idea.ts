@@ -3,7 +3,6 @@ import {
   IdeaTypeFilter as IdeaTypeFilterEnum,
   IdeaStatusFilter as IdeaStatusFilterEnum,
   PublishStatusType as PublishStatusTypeEnum,
-  OnboardingStep as OnboardingStepEnum,
 } from '@/enums';
 
 export {
@@ -11,14 +10,12 @@ export {
   IdeaTypeFilterEnum,
   IdeaStatusFilterEnum,
   PublishStatusTypeEnum,
-  OnboardingStepEnum,
 };
 
 export type IdeaStatus = `${IdeaStatusEnum}`;
 export type IdeaTypeFilter = `${IdeaTypeFilterEnum}`;
 export type IdeaStatusFilter = `${IdeaStatusFilterEnum}`;
 export type PublishStatusType = `${PublishStatusTypeEnum}`;
-export type OnboardingStep = `${OnboardingStepEnum}`;
 
 export interface Idea {
   ideaId: string;

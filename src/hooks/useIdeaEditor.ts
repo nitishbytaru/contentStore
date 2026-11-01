@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { useGetIdeaByIdQuery, useUpdateIdeaMutation } from '@/store/api/ideasApi';
 import { getIdeaPublishStatus, canCompleteIdea, isIdeaCompleted } from '@/utils/ideaStatus';
 import { toDateTimeLocalValue } from '@/utils/dateTime';
-import { Idea, OnboardingStep } from '@/types';
+import { Idea } from '@/types';
 import { IdeaStatus } from '@/enums';
 import { BookOpen, FileText, Video } from 'lucide-react';
 
@@ -20,9 +20,6 @@ export function useIdeaEditor(ideaId: string) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [idea, setIdea] = useState<Idea | null>(null);
-  const [step, setStep] = useState<OnboardingStep>('WORKSPACE');
-  const [initialResearchText, setInitialResearchText] = useState('');
-  const [pendingArticleAnswer, setPendingArticleAnswer] = useState<boolean | null>(null);
 
   const [activeContentTab, setActiveContentTab] = useState<string>('baseArticle');
   const [isPrompterOpen, setIsPrompterOpen] = useState(false);
@@ -44,27 +41,7 @@ export function useIdeaEditor(ideaId: string) {
   // Initialize and load idea from RTK Query
   useEffect(() => {
     if (fetchedIdea) {
-      const details = fetchedIdea as Idea;
-      setIdea(details);
-
-      const hasResearch = Boolean(details.baseArticle && details.baseArticle.trim().length > 0);
-      const hasAnsweredFormats = Boolean(
-        details.eligibleMedium ||
-        details.ineligibleMedium ||
-        details.eligibleYoutube ||
-        details.ineligibleYoutube ||
-        (details.mediumArticle && details.mediumArticle.trim()) ||
-        (details.youtubeScript && details.youtubeScript.trim())
-      );
-
-      if (!hasResearch) {
-        setStep('RESEARCH');
-        setInitialResearchText(details.description || '');
-      } else if (!hasAnsweredFormats) {
-        setStep('QUESTION_ARTICLE');
-      } else {
-        setStep('WORKSPACE');
-      }
+      setIdea(fetchedIdea as Idea);
       setLoading(false);
     } else if (!ideaLoading) {
       setLoading(false);
@@ -152,76 +129,7 @@ export function useIdeaEditor(ideaId: string) {
     toast.success('Copied to clipboard!');
   };
 
-  // Submit Initial Research
-  const handleSubmitResearch = async () => {
-    if (!idea || !initialResearchText.trim()) return;
 
-    try {
-      setSaving(true);
-      const updatedIdea: Idea = {
-        ...idea,
-        baseArticle: initialResearchText.trim(),
-      };
-      setIdea(updatedIdea);
-      await handleUpdateIdea(updatedIdea);
-      toast.success('Initial research saved!');
-      setStep('QUESTION_ARTICLE');
-    } catch (err: any) {
-      toast.error('Failed to save research: ' + err.message);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // Answer Question 1: Article?
-  const handleAnswerArticle = (answer: boolean) => {
-    setPendingArticleAnswer(answer);
-    setStep('QUESTION_VIDEO');
-  };
-
-  // Answer Question 2: Video?
-  const handleAnswerVideo = async (videoAnswer: boolean) => {
-    if (!idea) return;
-    const articleAnswer = pendingArticleAnswer ?? false;
-
-    try {
-      setSaving(true);
-      const updatedIdea: Idea = {
-        ...idea,
-        eligibleMedium: articleAnswer,
-        eligibleSubstack: articleAnswer,
-        ineligibleMedium: !articleAnswer,
-        ineligibleSubstack: !articleAnswer,
-        eligibleYoutube: videoAnswer,
-        eligibleInstagram: videoAnswer,
-        ineligibleYoutube: !videoAnswer,
-        ineligibleInstagram: !videoAnswer,
-      };
-
-      setIdea(updatedIdea);
-      await handleUpdateIdea(updatedIdea);
-
-      const enabledList: string[] = ['Research'];
-      if (articleAnswer) enabledList.push('Article');
-      if (videoAnswer) enabledList.push('Video Script');
-
-      toast.success(`Workspace activated with: ${enabledList.join(', ')}`);
-
-      if (articleAnswer) {
-        setActiveContentTab('mediumArticle');
-      } else if (videoAnswer) {
-        setActiveContentTab('youtubeScript');
-      } else {
-        setActiveContentTab('baseArticle');
-      }
-
-      setStep('WORKSPACE');
-    } catch (err: any) {
-      toast.error('Failed to save formats: ' + err.message);
-    } finally {
-      setSaving(false);
-    }
-  };
 
   // Reconfigure formats from workspace
   const handleToggleFormat = async (format: 'article' | 'video', enable: boolean) => {
@@ -489,10 +397,6 @@ export function useIdeaEditor(ideaId: string) {
     idea,
     loading: loading || ideaLoading,
     saving,
-    step,
-    setStep,
-    initialResearchText,
-    setInitialResearchText,
     activeContentTab,
     setActiveContentTab,
     contentTabs,
@@ -524,9 +428,6 @@ export function useIdeaEditor(ideaId: string) {
     handleSave,
     handleTextChange,
     handleCopyContent,
-    handleSubmitResearch,
-    handleAnswerArticle,
-    handleAnswerVideo,
     handleToggleFormat,
     handleToggleDraftedArticle,
     handleTogglePublishArticle,

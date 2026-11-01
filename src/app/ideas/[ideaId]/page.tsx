@@ -6,8 +6,6 @@ import ScriptPrompter from '@/components/ScriptPrompter';
 import { useIdeaEditor } from '@/hooks';
 import {
   IdeaEditorSkeleton,
-  IdeaResearchStep,
-  IdeaQuestionStep,
   IdeaEditorHeader,
   IdeaBanner,
   IdeaContentTabs,
@@ -22,10 +20,6 @@ export default function IdeaEditor({ params }: { params: Promise<{ ideaId: strin
     idea,
     loading,
     saving,
-    step,
-    setStep,
-    initialResearchText,
-    setInitialResearchText,
     activeContentTab,
     setActiveContentTab,
     contentTabs,
@@ -56,9 +50,6 @@ export default function IdeaEditor({ params }: { params: Promise<{ ideaId: strin
     handleSave,
     handleTextChange,
     handleCopyContent,
-    handleSubmitResearch,
-    handleAnswerArticle,
-    handleAnswerVideo,
     handleToggleFormat,
     handleToggleDraftedArticle,
     handleTogglePublishArticle,
@@ -86,34 +77,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ ideaId: strin
     );
   }
 
-  // STEP 1: INITIAL RESEARCH PROMPT
-  if (step === 'RESEARCH') {
-    return (
-      <IdeaResearchStep
-        idea={idea}
-        initialResearchText={initialResearchText}
-        saving={saving}
-        onTextChange={setInitialResearchText}
-        onSubmitResearch={handleSubmitResearch}
-        onSkipResearch={() => setStep('QUESTION_ARTICLE')}
-      />
-    );
-  }
-
-  // STEP 2: SEQUENTIAL QUESTIONS (ARTICLE & VIDEO)
-  if (step === 'QUESTION_ARTICLE' || step === 'QUESTION_VIDEO') {
-    return (
-      <IdeaQuestionStep
-        idea={idea}
-        step={step}
-        saving={saving}
-        onAnswerArticle={handleAnswerArticle}
-        onAnswerVideo={handleAnswerVideo}
-      />
-    );
-  }
-
-  // STEP 3: WORKSPACE WITH DYNAMIC TABS
+  // WORKSPACE WITH DYNAMIC TABS
   return (
     <div className="space-y-6 w-full max-w-full min-w-0 overflow-x-hidden">
       {/* Top Bar Navigation & Controls */}

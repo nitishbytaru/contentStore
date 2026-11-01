@@ -22,12 +22,12 @@ export default function NewIdeaPage() {
     if (!title.trim()) return;
 
     try {
-      await addIdea({ 
+      const createdIdea = await addIdea({ 
         idea: title.trim(), 
         description: description.trim() 
       }).unwrap();
-      toast.success('Idea created in Pending state!');
-      router.push('/ideas');
+      toast.success('Idea created successfully!');
+      router.push(`/ideas/${createdIdea.ideaId}`);
     } catch (err: any) {
       toast.error('Failed to create idea: ' + (err?.data?.error || err?.message || 'Unknown error'));
     }

@@ -25,9 +25,4 @@ export enum PublishStatusType {
   ARTICLES_AND_VIDEOS = 'articles-and-videos',
 }
 
-export enum OnboardingStep {
-  RESEARCH = 'RESEARCH',
-  QUESTION_ARTICLE = 'QUESTION_ARTICLE',
-  QUESTION_VIDEO = 'QUESTION_VIDEO',
-  WORKSPACE = 'WORKSPACE',
-}
+

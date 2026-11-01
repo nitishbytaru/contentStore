@@ -1,6 +1,4 @@
 export * from './IdeaEditorSkeleton';
-export * from './IdeaResearchStep';
-export * from './IdeaQuestionStep';
 export * from './IdeaEditorHeader';
 export * from './IdeaBanner';
 export * from './IdeaContentTabs';

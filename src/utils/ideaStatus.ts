@@ -207,7 +207,7 @@ export const canCompleteIdea = (idea: IdeaChecklistFields): { allowed: boolean; 
   if (!isArticleRequired && !isVideoRequired) {
     return {
       allowed: false,
-      reason: 'Please paste initial research and select whether you are creating an Article or Video first.',
+      reason: 'Please enable at least one format (Article or Video) via Configure Formats first.',
     };
   }
 
