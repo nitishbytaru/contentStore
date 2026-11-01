@@ -32,6 +32,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ ideaId: strin
     isFormatModalOpen,
     setIsFormatModalOpen,
     handleSave,
+    handleDeleteIdea,
     handleTextChange,
     handleCopyContent,
     handleToggleFormat,
@@ -74,6 +75,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ ideaId: strin
             onSave={handleSave}
             onCompleteIdea={handleCompleteIdea}
             onCopyTitle={handleCopyContent}
+            onDeleteIdea={handleDeleteIdea}
             locked={pageLocked}
           />
         </div>

@@ -263,16 +263,20 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Idea not found' }, { status: 404 });
     }
 
+    // 1. Delete idea row from Google Sheets (removes idea, description, baseArticle, mediumArticle, youtubeScript, and status)
     await targetRow.delete();
 
-    try {
-      await deleteIdeaVector(ideaId);
-    } catch (indexError) {
-      console.warn('Idea deleted, but the search index was not updated:', indexError);
-    }
-    await deleteResearchForIdea(ideaId);
+    // 2. Concurrently purge all associated vector embeddings, research chunks, and chat messages
+    await Promise.allSettled([
+      deleteIdeaVector(ideaId).catch((err) =>
+        console.warn(`Failed to delete idea vector for ${ideaId}:`, err)
+      ),
+      deleteResearchForIdea(ideaId).catch((err) =>
+        console.warn(`Failed to delete research data for ${ideaId}:`, err)
+      ),
+    ]);
 
-    return NextResponse.json({ success: true, message: 'Idea deleted successfully' }, { status: 200 });
+    return NextResponse.json({ success: true, message: 'Idea and all associated data deleted successfully' }, { status: 200 });
   } catch (error: any) {
     console.error('Error deleting idea:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });

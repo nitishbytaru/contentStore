@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowLeft, Settings2, Save, Loader2, Check, Copy, FileText, Video } from 'lucide-react';
+import { ArrowLeft, Settings2, Save, Loader2, Check, Copy, FileText, Video, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Idea } from '@/types';
 import { isIdeaCompleted, canCompleteIdea, getIdeaPublishStatus } from '@/utils/ideaStatus';
@@ -14,6 +14,7 @@ interface IdeaEditorHeaderProps {
   onSave: () => void;
   onCompleteIdea: () => void;
   onCopyTitle: (title: string) => void;
+  onDeleteIdea?: () => void;
   locked?: boolean;
 }
 
@@ -26,6 +27,7 @@ export function IdeaEditorHeader({
   onSave,
   onCompleteIdea,
   onCopyTitle,
+  onDeleteIdea,
   locked = false,
 }: IdeaEditorHeaderProps) {
   const completed = isIdeaCompleted(idea);
@@ -99,6 +101,19 @@ export function IdeaEditorHeader({
         >
           <Settings2 className="h-3.5 w-3.5" />
         </Button>
+        {onDeleteIdea && (
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            className="h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+            title="Delete idea and associated data"
+            disabled={saving || locked}
+            onClick={onDeleteIdea}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        )}
         <Button
           type="button"
           size="sm"

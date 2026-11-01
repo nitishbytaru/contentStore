@@ -1,6 +1,7 @@
 import { createHash } from 'crypto';
 import { QdrantClient } from '@qdrant/js-client-rest';
 import { embedIdeaText, IDEA_VECTOR_SIZE } from '@/lib/idea-embeddings';
+import { clearResearchMessages } from '@/lib/research-messages';
 
 const COLLECTION = 'research';
 let ready: Promise<void> | null = null;
@@ -135,5 +136,11 @@ export async function deleteResearchForIdea(ideaId: string) {
     await clearResearchChunks(ideaId);
   } catch (error) {
     console.warn('Research vectors were not removed:', error);
+  }
+
+  try {
+    await clearResearchMessages(ideaId);
+  } catch (error) {
+    console.warn('Research messages were not removed:', error);
   }
 }

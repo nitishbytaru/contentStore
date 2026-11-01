@@ -171,6 +171,7 @@ export const ideasApi = createApi({
       invalidatesTags: (result, error, ideaId) => [
         { type: 'Idea', id: ideaId },
         { type: 'Idea', id: 'LIST' },
+        { type: 'Research', id: ideaId },
       ],
     }),
   }),

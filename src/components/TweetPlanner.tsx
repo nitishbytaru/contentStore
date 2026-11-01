@@ -48,11 +48,11 @@ export function IdeasPlanner() {
     : null;
 
   const handleDeleteIdea = async (ideaId: string) => {
-    if (!confirm('Are you sure you want to delete this idea?')) return;
+    if (!confirm('Are you sure you want to delete this idea and all its associated data (articles, chats, and embeddings)?')) return;
     setActionIdeaId(ideaId);
     try {
       await deleteIdea(ideaId).unwrap();
-      toast.success('Idea deleted');
+      toast.success('Idea and all associated data deleted');
     } catch (err: any) {
       toast.error(err?.data?.error || err?.message || 'Failed to delete idea');
     } finally {

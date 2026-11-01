@@ -1,16 +1,19 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { useGetIdeaByIdQuery, useUpdateIdeaMutation } from '@/store/api/ideasApi';
+import { useGetIdeaByIdQuery, useUpdateIdeaMutation, useDeleteIdeaMutation } from '@/store/api/ideasApi';
 import { getIdeaPublishStatus, isIdeaCompleted } from '@/utils/ideaStatus';
 import { Idea } from '@/types';
 import { IdeaStatus } from '@/enums';
 import { BookOpen, FileText, Video } from 'lucide-react';
 
 export function useIdeaEditor(ideaId: string) {
+  const router = useRouter();
   const { data: fetchedIdea, isLoading: ideaLoading } = useGetIdeaByIdQuery(ideaId);
   const [updateIdeaMutation] = useUpdateIdeaMutation();
+  const [deleteIdeaMutation] = useDeleteIdeaMutation();
 
   const handleUpdateIdea = async (updatedData: Partial<Idea> & { ideaId: string }) => {
     return await updateIdeaMutation(updatedData).unwrap();
@@ -189,6 +192,19 @@ export function useIdeaEditor(ideaId: string) {
     }
   };
 
+  const handleDeleteIdea = async () => {
+    if (!confirm('Are you sure you want to delete this idea and all associated data (articles, chats, and embeddings)?')) return;
+    try {
+      setSaving(true);
+      await deleteIdeaMutation(ideaId).unwrap();
+      toast.success('Idea and all associated data deleted');
+      router.push('/ideas');
+    } catch (err: any) {
+      toast.error(err?.data?.error || err?.message || 'Failed to delete idea');
+      setSaving(false);
+    }
+  };
+
   const publishStatus = idea ? getIdeaPublishStatus(idea) : null;
 
   return {
@@ -206,6 +222,7 @@ export function useIdeaEditor(ideaId: string) {
     isFormatModalOpen,
     setIsFormatModalOpen,
     handleSave,
+    handleDeleteIdea,
     handleTextChange,
     handleCopyContent,
     handleToggleFormat,
