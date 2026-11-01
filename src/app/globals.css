@@ -169,6 +169,15 @@ textarea {
   scrollbar-width: none;
 }
 
+@keyframes idea-scan-sweep {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(320%); }
+}
+
+@keyframes idea-scan-orbit {
+  to { transform: rotate(360deg); }
+}
+
 /* Spinner animation for loading buttons */
 @keyframes spin {
   to {

@@ -54,13 +54,22 @@ export const ideasApi = createApi({
       ],
     }),
 
-    findSimilarIdeas: builder.mutation<{ ideaId: string; title: string }[], string>({
+    findSimilarIdeas: builder.mutation<
+      { ideas: { ideaId: string; title: string }[]; firstIdea: boolean },
+      string
+    >({
       query: (text) => ({
         url: '/ideas/similar',
         method: 'POST',
         body: { text },
       }),
-      transformResponse: (response: { data: { ideaId: string; title: string }[] }) => response.data || [],
+      transformResponse: (response: {
+        data?: { ideaId: string; title: string }[];
+        firstIdea?: boolean;
+      }) => ({
+        ideas: response.data || [],
+        firstIdea: Boolean(response.firstIdea),
+      }),
     }),
 
     deleteIdea: builder.mutation<{ message: string }, string>({

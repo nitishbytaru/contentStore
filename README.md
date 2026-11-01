@@ -61,7 +61,7 @@ The form asks for the article title only.
 
 - **Continue with this idea** opens that idea. Nothing new is saved.
 - **Continue with new idea** writes the title to the sheet, embeds it, and opens the new editor.
-- If the sheet has no ideas yet, the page says so and you can still create one.
+- If the sheet has no ideas yet, the scan stops immediately and says this is the first idea. Nothing is embedded or searched. You can still create it.
 
 The first scan embeds any sheet rows that are not in Qdrant yet. Embeddings are computed in the Next.js server with `Xenova/all-MiniLM-L6-v2` (384 dimensions, cosine). There is no embedding API key. The model is cached under `.cache/transformers` on first use. A Qdrant or embedding failure shows a toast and does not create an idea.
 

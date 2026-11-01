@@ -9,6 +9,7 @@ import { ArrowLeft, Loader2, Sparkles } from 'lucide-react';
 import { toast } from "sonner";
 import Link from 'next/link';
 import { useAddIdeaMutation, useFindSimilarIdeasMutation } from '@/store/api/ideasApi';
+import { IdeaScanAnalysis } from '@/components/ideas';
 
 interface SimilarIdea {
   ideaId: string;
@@ -18,21 +19,38 @@ interface SimilarIdea {
 export default function NewIdeaPage() {
   const [article, setArticle] = useState('');
   const [matches, setMatches] = useState<SimilarIdea[] | null>(null);
+  const [isFirstIdea, setIsFirstIdea] = useState(false);
+  const [showScan, setShowScan] = useState(false);
   const router = useRouter();
   const [addIdea, { isLoading: isSubmitting }] = useAddIdeaMutation();
   const [findSimilarIdeas, { isLoading: isScanning }] = useFindSimilarIdeasMutation();
+  const scanning = showScan || isScanning;
 
   const handleScan = async () => {
-    if (!article.trim() || isScanning) return;
+    if (!article.trim() || scanning) return;
+
+    setMatches(null);
+    setIsFirstIdea(false);
+    setShowScan(true);
+    const started = Date.now();
 
     try {
       const results = await findSimilarIdeas(article.trim()).unwrap();
-      setMatches(results);
+      if (!results.firstIdea) {
+        const remaining = 2800 - (Date.now() - started);
+        if (remaining > 0) {
+          await new Promise((resolve) => setTimeout(resolve, remaining));
+        }
+      }
+      setIsFirstIdea(results.firstIdea);
+      setMatches(results.ideas);
     } catch (err: unknown) {
       const message = err && typeof err === 'object' && 'data' in err
         ? String((err as { data?: { error?: string } }).data?.error || '')
         : '';
       toast.error(message || 'Could not scan existing ideas. Nothing was created.');
+    } finally {
+      setShowScan(false);
     }
   };
 
@@ -85,20 +103,35 @@ export default function NewIdeaPage() {
                 onChange={(e) => {
                   setArticle(e.target.value);
                   setMatches(null);
+                  setIsFirstIdea(false);
                 }} 
                 placeholder="e.g. 5 system design patterns every senior dev should know..." 
-                disabled={isSubmitting || isScanning}
+                disabled={isSubmitting || scanning}
                 className="text-sm h-10"
                 autoFocus
                 required
               />
             </div>
 
-            {matches && (
+            {scanning && <IdeaScanAnalysis />}
+
+            {matches && !scanning && (
               <div className="space-y-2 rounded-lg border border-border/70 bg-muted/30 p-3">
-                {matches.length === 0 ? (
+                {isFirstIdea ? (
+                  <div className="flex items-start gap-3">
+                    <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/15 text-primary">
+                      <Sparkles className="h-4 w-4" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-foreground">This is your first idea</p>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        The library is empty, so there is nothing to compare. Create it, and later scans will check against this one.
+                      </p>
+                    </div>
+                  </div>
+                ) : matches.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    No existing ideas to compare yet. You can still create this one.
+                    No similar ideas turned up. You can still create this one.
                   </p>
                 ) : (
                   <>
@@ -132,7 +165,7 @@ export default function NewIdeaPage() {
                 type="button" 
                 variant="ghost" 
                 onClick={() => router.push('/ideas')} 
-                disabled={isSubmitting || isScanning}
+                disabled={isSubmitting || scanning}
               >
                 Cancel
               </Button>
@@ -140,22 +173,24 @@ export default function NewIdeaPage() {
                 type="button"
                 variant="outline"
                 onClick={handleScan}
-                disabled={!article.trim() || isSubmitting || isScanning}
+                disabled={!article.trim() || isSubmitting || scanning}
               >
-                {isScanning && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                {isScanning ? 'Scanning...' : 'Scan through ideas'}
+                {scanning && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                {scanning ? 'Analyzing ideas...' : 'Scan through ideas'}
               </Button>
               <Button 
                 type="submit" 
-                disabled={!article.trim() || isSubmitting || isScanning} 
+                disabled={!article.trim() || isSubmitting || scanning} 
                 className="min-w-[140px] font-medium"
               >
                 {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 {isSubmitting
                   ? 'Creating Idea...'
-                  : matches
-                    ? 'Continue with new idea'
-                    : 'Create Idea'}
+                  : isFirstIdea
+                    ? 'Create this idea'
+                    : matches
+                      ? 'Continue with new idea'
+                      : 'Create Idea'}
               </Button>
             </div>
           </form>

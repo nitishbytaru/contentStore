@@ -15,10 +15,14 @@ export async function POST(request: Request) {
     }
 
     const catalog = await listIdeaCatalog();
+    if (catalog.length === 0) {
+      return NextResponse.json({ data: [], firstIdea: true }, { status: 200 });
+    }
+
     await backfillIdeaIndex(catalog);
     const matches = await searchSimilarIdeas(query, 3);
 
-    return NextResponse.json({ data: matches }, { status: 200 });
+    return NextResponse.json({ data: matches, firstIdea: false }, { status: 200 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to scan ideas';
     console.error('Error scanning similar ideas:', error);
