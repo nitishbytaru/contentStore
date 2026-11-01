@@ -162,14 +162,16 @@ export default function PromptsPage() {
               <Input 
                 placeholder="Search prompts..." 
                 value={searchQuery}
+                disabled={actionLoading}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-8 pr-7 h-9 text-xs sm:text-sm bg-muted/40 border-border/60 focus-visible:bg-background"
               />
               {searchQuery && (
                 <button
                   type="button"
+                  disabled={actionLoading}
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5 disabled:opacity-50"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -178,12 +180,34 @@ export default function PromptsPage() {
           )}
 
           {!isCreating && (
-            <Button onClick={handleOpenCreate} className="h-9 shrink-0 text-xs sm:text-sm font-medium shadow-xs gap-1.5">
+            <Button onClick={handleOpenCreate} disabled={actionLoading} className="h-9 shrink-0 text-xs sm:text-sm font-medium shadow-xs gap-1.5">
               <Plus className="w-4 h-4" /> Add Prompt
             </Button>
           )}
         </div>
       </div>
+
+      {/* Global AI Enhancing Loader Overlay */}
+      {enhancingId && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/80 backdrop-blur-xs select-none animate-in fade-in-0 duration-200">
+          <div className="w-[min(90vw,360px)] rounded-xl border border-border/80 bg-card p-6 shadow-xl text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary mx-auto mb-3">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+            <p className="text-sm font-semibold tracking-tight text-foreground">
+              Enhancing Prompt with AI...
+            </p>
+            <p className="text-xs text-muted-foreground mt-1 max-w-[260px] mx-auto">
+              Optimizing prompt instructions and updating your prompt library.
+            </p>
+            <div className="mt-4 space-y-2 max-w-[220px] mx-auto">
+              <Skeleton className="h-2.5 w-full" />
+              <Skeleton className="h-2.5 w-4/5 mx-auto" />
+              <Skeleton className="h-2.5 w-3/5 mx-auto" />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Create Form */}
       {isCreating && (
@@ -269,11 +293,11 @@ export default function PromptsPage() {
               : 'No prompts yet. Start building your library!'}
           </p>
           {searchQuery ? (
-            <Button onClick={() => setSearchQuery('')} variant="outline" size="sm">
+            <Button onClick={() => setSearchQuery('')} disabled={actionLoading} variant="outline" size="sm">
               Clear search
             </Button>
           ) : (
-            <Button onClick={handleOpenCreate} variant="outline" size="sm">
+            <Button onClick={handleOpenCreate} disabled={actionLoading} variant="outline" size="sm">
               Create your first prompt
             </Button>
           )}
@@ -288,6 +312,7 @@ export default function PromptsPage() {
                     <label className="text-[11px] font-medium text-muted-foreground">Title</label>
                     <Input 
                       value={editTitle} 
+                      disabled={actionLoading}
                       onChange={e => setEditTitle(e.target.value)} 
                       placeholder="Title" 
                       className="h-8 text-xs font-medium"
@@ -298,6 +323,7 @@ export default function PromptsPage() {
                     <label className="text-[11px] font-medium text-muted-foreground">Content</label>
                     <Textarea 
                       value={editContent} 
+                      disabled={actionLoading}
                       onChange={e => setEditContent(e.target.value)} 
                       className="flex-1 min-h-[120px] max-h-[300px] text-xs font-mono overflow-y-auto overscroll-contain"
                     />
@@ -309,7 +335,7 @@ export default function PromptsPage() {
                       size="sm" 
                       variant="outline" 
                       onClick={() => handleEnhance(p.id)} 
-                      disabled={enhancingId === p.id}
+                      disabled={actionLoading}
                       className="h-8 text-xs font-medium gap-1.5 text-primary hover:bg-primary/10 border-primary/30"
                     >
                       {enhancingId === p.id ? (
@@ -325,10 +351,10 @@ export default function PromptsPage() {
                       )}
                     </Button>
                     <div className="flex items-center gap-2">
-                      <Button size="sm" variant="ghost" onClick={() => setEditingId(null)} className="h-8 text-xs">
+                      <Button size="sm" variant="ghost" disabled={actionLoading} onClick={() => setEditingId(null)} className="h-8 text-xs">
                         Cancel
                       </Button>
-                      <Button size="sm" onClick={handleSaveEdit} disabled={!editTitle.trim() || !editContent.trim()} className="h-8 text-xs">
+                      <Button size="sm" onClick={handleSaveEdit} disabled={!editTitle.trim() || !editContent.trim() || actionLoading} className="h-8 text-xs">
                         Save
                       </Button>
                     </div>
@@ -343,7 +369,8 @@ export default function PromptsPage() {
                     <Button 
                       size="icon-xs" 
                       variant="ghost" 
-                      className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground" 
+                      disabled={actionLoading}
+                      className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground disabled:opacity-50" 
                       onClick={() => handleCopy(p.id, p.content)} 
                       title="Copy Prompt"
                     >
@@ -364,8 +391,8 @@ export default function PromptsPage() {
                       size="sm" 
                       variant="outline" 
                       onClick={() => handleEnhance(p.id)} 
-                      disabled={enhancingId === p.id}
-                      className="h-7 px-2 text-xs font-medium gap-1 text-primary hover:text-primary hover:bg-primary/10 border-primary/25 hover:border-primary/50 shadow-xs"
+                      disabled={actionLoading}
+                      className="h-7 px-2 text-xs font-medium gap-1 text-primary hover:text-primary hover:bg-primary/10 border-primary/25 hover:border-primary/50 shadow-xs disabled:opacity-50"
                       title="Enhance this prompt using AI"
                     >
                       {enhancingId === p.id ? (
@@ -384,16 +411,18 @@ export default function PromptsPage() {
                       <Button 
                         size="sm" 
                         variant="ghost" 
+                        disabled={actionLoading}
                         onClick={() => handleStartEdit(p)} 
-                        className="h-7 text-xs text-muted-foreground hover:text-foreground"
+                        className="h-7 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
                       >
                         <Edit className="h-3 w-3 mr-1" /> Edit
                       </Button>
                       <Button 
                         size="sm" 
                         variant="ghost" 
+                        disabled={actionLoading}
                         onClick={() => handleDelete(p.id)} 
-                        className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                        className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 disabled:opacity-50"
                       >
                         <Trash2 className="h-3 w-3 mr-1" /> Delete
                       </Button>

@@ -122,8 +122,28 @@ export function ArticlePromptButton({
         </Button>
       </div>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-xl gap-4 p-5 sm:max-w-xl overflow-hidden">
+      <Dialog open={open} onOpenChange={(v) => { if (!isEnhancing) setOpen(v); }}>
+        <DialogContent className="max-w-xl gap-4 p-5 sm:max-w-xl overflow-hidden relative" showCloseButton={!isEnhancing}>
+          {/* Enhancing AI Loading Overlay */}
+          {isEnhancing && (
+            <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/85 backdrop-blur-xs p-6 text-center animate-in fade-in-0 duration-200 select-none">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary mb-3">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+              <p className="text-sm font-semibold tracking-tight text-foreground">
+                Enhancing Prompt with AI...
+              </p>
+              <p className="text-xs text-muted-foreground mt-1 max-w-[280px]">
+                Restructuring instructions for maximum clarity and output quality.
+              </p>
+              <div className="w-52 mt-4 space-y-2">
+                <Skeleton className="h-2.5 w-full" />
+                <Skeleton className="h-2.5 w-4/5 mx-auto" />
+                <Skeleton className="h-2.5 w-3/5 mx-auto" />
+              </div>
+            </div>
+          )}
+
           {/* Header */}
           <DialogHeader className="gap-1.5 pb-1">
             <div className="flex items-center gap-2.5">
@@ -152,14 +172,16 @@ export function ArticlePromptButton({
             <Input
               placeholder="Search prompts by title or keywords..."
               value={search}
+              disabled={isEnhancing}
               onChange={(e) => setSearch(e.target.value)}
               className="h-8 pl-8 pr-8 text-xs bg-muted/40 border-border/60 focus-visible:bg-background"
             />
             {search && (
               <button
                 type="button"
+                disabled={isEnhancing}
                 onClick={() => setSearch('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground disabled:opacity-50"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -195,7 +217,7 @@ export function ArticlePromptButton({
                   Create your first prompt template to quickly rewrite and improve articles.
                 </p>
                 <Link href="/prompts">
-                  <Button variant="outline" size="sm" className="mt-4 gap-1.5 text-xs">
+                  <Button variant="outline" size="sm" disabled={isEnhancing} className="mt-4 gap-1.5 text-xs">
                     <span>Manage Prompts</span>
                     <ExternalLink className="h-3 w-3" />
                   </Button>
@@ -214,6 +236,7 @@ export function ArticlePromptButton({
                 <Button
                   variant="ghost"
                   size="xs"
+                  disabled={isEnhancing}
                   onClick={() => setSearch('')}
                   className="mt-3 text-xs text-primary"
                 >
@@ -238,12 +261,17 @@ export function ArticlePromptButton({
                       >
                         <button
                           type="button"
+                          disabled={isEnhancing}
                           onClick={() => setChosenId(prompt.id)}
                           onDoubleClick={() => {
-                            setChosenId(prompt.id);
-                            void apply();
+                            if (!isEnhancing) {
+                              setChosenId(prompt.id);
+                              void apply();
+                            }
                           }}
-                          className={`group relative w-full rounded-lg border p-2.5 text-left transition-all duration-150 cursor-pointer ${
+                          className={`group relative w-full rounded-lg border p-2.5 text-left transition-all duration-150 ${
+                            isEnhancing ? 'opacity-40 pointer-events-none' : 'cursor-pointer'
+                          } ${
                             isSelected
                               ? 'border-primary bg-primary/5 ring-1 ring-primary/30 shadow-xs'
                               : 'border-border/60 bg-card hover:border-primary/40 hover:bg-muted/40'
@@ -343,6 +371,7 @@ export function ArticlePromptButton({
                 type="button"
                 variant="ghost"
                 size="sm"
+                disabled={isEnhancing}
                 onClick={() => setOpen(false)}
                 className="h-8 text-xs"
               >
@@ -351,7 +380,7 @@ export function ArticlePromptButton({
               <Button
                 type="button"
                 size="sm"
-                disabled={!chosen}
+                disabled={!chosen || isEnhancing}
                 onClick={() => void apply()}
                 className="h-8 gap-1.5 text-xs shadow-xs"
               >
