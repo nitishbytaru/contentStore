@@ -75,6 +75,19 @@ export const promptsApi = createApi({
       transformResponse: (response: { data: string }) => response.data,
       invalidatesTags: [{ type: 'Category', id: 'LIST' }],
     }),
+
+    enhancePrompt: builder.mutation<PromptItem, { id: string }>({
+      query: ({ id }) => ({
+        url: '/prompts/enhance',
+        method: 'POST',
+        body: { id },
+      }),
+      transformResponse: (response: { data: PromptItem }) => response.data,
+      invalidatesTags: (result, error, { id }) => [
+        { type: 'Prompt', id },
+        { type: 'Prompt', id: 'LIST' },
+      ],
+    }),
   }),
 });
 
@@ -85,4 +98,6 @@ export const {
   useUpdatePromptMutation,
   useDeletePromptMutation,
   useCreatePromptCategoryMutation,
+  useEnhancePromptMutation,
 } = promptsApi;
+

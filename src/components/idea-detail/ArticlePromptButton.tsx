@@ -10,7 +10,8 @@ import {
   ArrowRight, 
   X, 
   FileText, 
-  ExternalLink 
+  ExternalLink,
+  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -28,7 +29,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-import { useGetPromptsQuery } from '@/store/api/promptsApi';
+import { useGetPromptsQuery, useEnhancePromptMutation } from '@/store/api/promptsApi';
 import { useApplyArticlePromptMutation } from '@/store/api/ideasApi';
 
 export function ArticlePromptButton({
@@ -44,10 +45,24 @@ export function ArticlePromptButton({
 }) {
   const { data: prompts = [], isLoading } = useGetPromptsQuery();
   const [applyPrompt] = useApplyArticlePromptMutation();
+  const [enhancePrompt] = useEnhancePromptMutation();
 
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [chosenId, setChosenId] = useState<string | null>(null);
+  const [isEnhancing, setIsEnhancing] = useState(false);
+
+  const handleEnhance = async (id: string) => {
+    setIsEnhancing(true);
+    try {
+      await enhancePrompt({ id }).unwrap();
+      toast.success('Prompt enhanced and saved with AI!');
+    } catch (err: any) {
+      toast.error(err?.data?.error || err?.message || 'Failed to enhance prompt with AI');
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
 
   // Filtered prompts based on search
   const filteredPrompts = useMemo(() => {
@@ -279,16 +294,41 @@ export function ArticlePromptButton({
                 className="overflow-hidden"
               >
                 <div className="rounded-lg border border-primary/20 bg-primary/[0.03] p-2.5">
-                  <div className="flex items-center justify-between text-[11px] font-medium mb-1">
+                  <div className="flex items-center justify-between text-[11px] font-medium mb-1.5 gap-2">
                     <span className="flex items-center gap-1.5 text-primary">
                       <Sparkles className="h-3 w-3" />
                       Ready to apply
                     </span>
-                    <span className="truncate max-w-[240px] text-muted-foreground text-[10px]">
-                      {chosen.title}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="truncate max-w-[150px] text-muted-foreground text-[10px]">
+                        {chosen.title}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="xs"
+                        disabled={isEnhancing}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void handleEnhance(chosen.id);
+                        }}
+                        className="h-5 px-2 text-[10px] gap-1 text-primary hover:bg-primary/10 border-primary/30"
+                      >
+                        {isEnhancing ? (
+                          <>
+                            <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                            <span>Enhancing...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="h-2.5 w-2.5 text-primary" />
+                            <span>Enhance with AI</span>
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
-                  <div className="max-h-16 overflow-y-auto rounded bg-background/60 p-1.5 text-[11px] font-mono leading-relaxed text-muted-foreground border border-border/40">
+                  <div className="max-h-20 overflow-y-auto rounded bg-background/60 p-2 text-[11px] font-mono leading-relaxed text-muted-foreground border border-border/40">
                     {chosen.content}
                   </div>
                 </div>

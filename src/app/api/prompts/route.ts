@@ -1,47 +1,8 @@
 import { NextResponse } from 'next/server';
-import { getGoogleSheet } from '@/lib/google-sheets';
 import { PromptItem } from '@/types';
+import { getPromptsSheet, parseRowToPrompt } from '@/lib/prompts-sheet';
 
 export const dynamic = 'force-dynamic';
-
-const HEADERS = ['id', 'title', 'content', 'category', 'createdAt', 'updatedAt'];
-
-let isPromptsSheetInitialized = false;
-
-async function getPromptsSheet() {
-  const doc = await getGoogleSheet();
-  let sheet = doc.sheetsByTitle['Prompts'];
-
-  if (!sheet) {
-    sheet = await doc.addSheet({ title: 'Prompts', headerValues: HEADERS });
-    isPromptsSheetInitialized = true;
-  } else if (!isPromptsSheetInitialized) {
-    try {
-      await sheet.loadHeaderRow();
-      const currentHeaders = [...sheet.headerValues];
-      const missingHeaders = HEADERS.filter((h) => !currentHeaders.includes(h));
-      if (missingHeaders.length > 0) {
-        await sheet.setHeaderRow([...currentHeaders, ...missingHeaders]);
-      }
-    } catch {
-      await sheet.setHeaderRow(HEADERS);
-    }
-    isPromptsSheetInitialized = true;
-  }
-
-  return sheet;
-}
-
-function parseRowToPrompt(row: any): PromptItem {
-  return {
-    id: row.get('id') || '',
-    title: row.get('title') || '',
-    content: row.get('content') || '',
-    category: row.get('category') || 'General',
-    createdAt: row.get('createdAt') || '',
-    updatedAt: row.get('updatedAt') || '',
-  };
-}
 
 export async function GET() {
   try {

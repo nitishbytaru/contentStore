@@ -5,7 +5,8 @@ import {
   useGetPromptsQuery, 
   useAddPromptMutation, 
   useUpdatePromptMutation, 
-  useDeletePromptMutation 
+  useDeletePromptMutation,
+  useEnhancePromptMutation,
 } from '@/store/api/promptsApi';
 import { PromptItem } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ export default function PromptsPage() {
   const [addPromptMutation, { isLoading: isAddingPrompt }] = useAddPromptMutation();
   const [updatePromptMutation, { isLoading: isUpdatingPrompt }] = useUpdatePromptMutation();
   const [deletePromptMutation, { isLoading: isDeletingPrompt }] = useDeletePromptMutation();
+  const [enhancePromptMutation] = useEnhancePromptMutation();
 
   const [isCreating, setIsCreating] = useState(false);
   const [newTitle, setNewTitle] = useState('');
@@ -34,11 +36,27 @@ export default function PromptsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
+  const [enhancingId, setEnhancingId] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const actionLoading = isAddingPrompt || isUpdatingPrompt || isDeletingPrompt;
+  const actionLoading = isAddingPrompt || isUpdatingPrompt || isDeletingPrompt || !!enhancingId;
+
+  const handleEnhance = async (id: string) => {
+    setEnhancingId(id);
+    try {
+      const updated = await enhancePromptMutation({ id }).unwrap();
+      if (editingId === id) {
+        setEditContent(updated.content);
+      }
+      toast.success('Prompt enhanced and saved with AI!');
+    } catch (err: any) {
+      toast.error(err?.data?.error || err?.message || 'Failed to enhance prompt with AI');
+    } finally {
+      setEnhancingId(null);
+    }
+  };
 
   const handleCopy = (id: string, text: string) => {
     if (!text) return;
@@ -285,13 +303,35 @@ export default function PromptsPage() {
                     />
                   </div>
 
-                  <div className="flex justify-end gap-2 pt-1">
-                    <Button size="sm" variant="ghost" onClick={() => setEditingId(null)} className="h-8 text-xs">
-                      Cancel
+                  <div className="flex items-center justify-between gap-2 pt-1">
+                    <Button 
+                      type="button"
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => handleEnhance(p.id)} 
+                      disabled={enhancingId === p.id}
+                      className="h-8 text-xs font-medium gap-1.5 text-primary hover:bg-primary/10 border-primary/30"
+                    >
+                      {enhancingId === p.id ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          <span>Enhancing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-3.5 w-3.5 text-primary" />
+                          <span>Enhance with AI</span>
+                        </>
+                      )}
                     </Button>
-                    <Button size="sm" onClick={handleSaveEdit} disabled={!editTitle.trim() || !editContent.trim()} className="h-8 text-xs">
-                      Save
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="ghost" onClick={() => setEditingId(null)} className="h-8 text-xs">
+                        Cancel
+                      </Button>
+                      <Button size="sm" onClick={handleSaveEdit} disabled={!editTitle.trim() || !editContent.trim()} className="h-8 text-xs">
+                        Save
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               ) : (
@@ -319,23 +359,45 @@ export default function PromptsPage() {
                       {p.content}
                     </div>
                   </CardContent>
-                  <CardFooter className="pt-0 flex justify-end gap-1">
+                  <CardFooter className="pt-0 flex items-center justify-between gap-1 border-t border-border/40 mt-auto pt-2.5">
                     <Button 
                       size="sm" 
-                      variant="ghost" 
-                      onClick={() => handleStartEdit(p)} 
-                      className="h-7 text-xs text-muted-foreground hover:text-foreground"
+                      variant="outline" 
+                      onClick={() => handleEnhance(p.id)} 
+                      disabled={enhancingId === p.id}
+                      className="h-7 px-2 text-xs font-medium gap-1 text-primary hover:text-primary hover:bg-primary/10 border-primary/25 hover:border-primary/50 shadow-xs"
+                      title="Enhance this prompt using AI"
                     >
-                      <Edit className="h-3 w-3 mr-1" /> Edit
+                      {enhancingId === p.id ? (
+                        <>
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          <span>Enhancing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-3 w-3 text-primary" />
+                          <span>Enhance with AI</span>
+                        </>
+                      )}
                     </Button>
-                    <Button 
-                      size="sm" 
-                      variant="ghost" 
-                      onClick={() => handleDelete(p.id)} 
-                      className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="h-3 w-3 mr-1" /> Delete
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        onClick={() => handleStartEdit(p)} 
+                        className="h-7 text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        <Edit className="h-3 w-3 mr-1" /> Edit
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        onClick={() => handleDelete(p.id)} 
+                        className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-3 w-3 mr-1" /> Delete
+                      </Button>
+                    </div>
                   </CardFooter>
                 </>
               )}
