@@ -54,7 +54,7 @@ async function askGroq(question: string, chunks: { sourceName: string; text: str
         {
           role: 'system',
           content:
-            'You answer only from the context excerpts. Those excerpts are PDFs and text the person added. Do not use general knowledge, guesses, or earlier messages. If the excerpts do not contain the answer, reply with only this sentence: I can only answer from the context you added. That question is outside it. When they do contain the answer, write plain sentences. Do not use markdown, asterisks, headings, bullets, or citation markers.',
+            'You answer from the provided context excerpts (notes and documents uploaded by the user). Understand summaries, overviews, and questions related to the content. If the question is completely unrelated and cannot be answered from the excerpts, reply with only: I can only answer from the context you added. That question is outside it. When answering, write plain, clear, and helpful sentences without markdown formatting, bullets, asterisks, or citation markers.',
         },
         {
           role: 'user',
@@ -166,13 +166,21 @@ export async function generateArticleFromResearch(ideaId: string) {
 export async function askResearch(ideaId: string, question: string, title = '') {
   const trimmed = question.trim();
   await appendResearchMessage(ideaId, 'user', trimmed);
-  const found = await searchResearch(ideaId, trimmed);
-  const chunks = found.filter((chunk) => chunk.score >= MIN_MATCH);
-  const answer = found.length === 0
-    ? NO_CONTEXT
-    : chunks.length === 0
-      ? OUTSIDE_CONTEXT
-      : await askGroq(trimmed, chunks);
+  const found = await searchResearch(ideaId, trimmed, 6);
+
+  if (found.length === 0) {
+    const answer = NO_CONTEXT;
+    await appendResearchMessage(ideaId, 'assistant', answer);
+    await saveBrief(ideaId, title, answer);
+    return listResearchMessages(ideaId);
+  }
+
+  // Prioritize chunks with strong similarity, or fall back to top retrieved chunks
+  // for broad/summary questions (which naturally score low in embedding cosine distance)
+  const strongMatches = found.filter((chunk) => chunk.score >= 0.35);
+  const chunksToUse = strongMatches.length > 0 ? strongMatches : found.slice(0, 5);
+
+  const answer = await askGroq(trimmed, chunksToUse);
   await appendResearchMessage(ideaId, 'assistant', answer);
   await saveBrief(ideaId, title, answer);
   return listResearchMessages(ideaId);

@@ -22,7 +22,12 @@ export async function POST(request: Request, context: { params: Promise<{ ideaId
     });
     return NextResponse.json({ data: messages });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Could not save that text';
+    console.error('Research text POST error:', error);
+    const message = error instanceof Error
+      ? error.message
+      : (typeof error === 'object' && error !== null && 'message' in error)
+        ? String((error as { message: unknown }).message)
+        : 'Could not save that text';
     const status = error instanceof AlreadyAddedError ? 409 : 500;
     return NextResponse.json({ error: message }, { status });
   }

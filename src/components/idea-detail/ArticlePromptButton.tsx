@@ -123,7 +123,7 @@ export function ArticlePromptButton({
       </div>
 
       <Dialog open={open} onOpenChange={(v) => { if (!isEnhancing) setOpen(v); }}>
-        <DialogContent className="max-w-xl gap-4 p-5 sm:max-w-xl overflow-hidden relative" showCloseButton={!isEnhancing}>
+        <DialogContent className="max-w-xl gap-4 p-5 sm:max-w-xl overflow-hidden max-h-[88vh]" showCloseButton={!isEnhancing}>
           {/* Enhancing AI Loading Overlay */}
           {isEnhancing && (
             <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/85 backdrop-blur-xs p-6 text-center animate-in fade-in-0 duration-200 select-none">
