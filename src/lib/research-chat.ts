@@ -3,7 +3,9 @@ import { replaceIdeaVector } from '@/lib/idea-index';
 import { appendResearchMessage, clearResearchMessages, listResearchMessages, ResearchMessage } from '@/lib/research-messages';
 import { clearResearchChunks, indexResearchSource, searchResearch } from '@/lib/research-index';
 
-const SOURCE_MIN = 500;
+const NO_CONTEXT = 'I have no context. Please add context.';
+const OUTSIDE_CONTEXT = 'I can only answer from the context you added. That question is outside it.';
+const MIN_MATCH = 0.42;
 
 function readableAnswer(text: string): string {
   return text
@@ -32,20 +34,13 @@ async function saveBrief(ideaId: string, title: string, brief: string) {
   }
 }
 
-async function askGroq(question: string, chunks: { sourceName: string; text: string }[], history: ResearchMessage[]) {
+async function askGroq(question: string, chunks: { sourceName: string; text: string }[]) {
   const key = process.env.GROQ_API_KEY;
   const model = process.env.GROQ_MODEL?.trim();
   if (!key) throw new Error('GROQ_API_KEY is not set');
   if (!model) throw new Error('GROQ_MODEL is not set');
 
-  const context = chunks.length
-    ? chunks.map((chunk, index) => `[${index + 1}] ${chunk.sourceName}\n${chunk.text}`).join('\n\n')
-    : 'No source material has been saved for this idea yet.';
-
-  const recent = history.slice(-8).map((message) => ({
-    role: message.role === 'assistant' ? 'assistant' as const : 'user' as const,
-    content: message.content.slice(0, 1500),
-  }));
+  const context = chunks.map((chunk, index) => `[${index + 1}] ${chunk.sourceName}\n${chunk.text}`).join('\n\n');
 
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
@@ -55,19 +50,17 @@ async function askGroq(question: string, chunks: { sourceName: string; text: str
     },
     body: JSON.stringify({
       model,
-      temperature: 0.3,
+      temperature: 0.2,
       messages: [
         {
           role: 'system',
           content:
-            'You are the research assistant for one content idea. Answer only from the supplied sources. If they do not contain the answer, say what is missing in a normal sentence. Write plain text a person can read aloud. Use short sentences. Do not use markdown, asterisks, headings, bullets, brackets, or citation markers.',
+            'You answer only from the context excerpts. Those excerpts are PDFs and text the person added. Do not use general knowledge, guesses, or earlier messages. If the excerpts do not contain the answer, reply with only this sentence: I can only answer from the context you added. That question is outside it. When they do contain the answer, write plain sentences. Do not use markdown, asterisks, headings, bullets, or citation markers.',
         },
         {
           role: 'user',
-          content: `Sources:\n${context}`,
+          content: `Context:\n${context}\n\nQuestion: ${question}`,
         },
-        ...recent,
-        { role: 'user', content: question },
       ],
     }),
   });
@@ -83,16 +76,24 @@ async function askGroq(question: string, chunks: { sourceName: string; text: str
   return readable;
 }
 
-export async function saveResearchSource(ideaId: string, sourceName: string, text: string, title = '') {
-  const count = await indexResearchSource(ideaId, sourceName, text);
-  if (count === 0) throw new Error('That source did not contain readable text');
+export async function saveResearchSource(
+  ideaId: string,
+  sourceName: string,
+  text: string,
+  title = '',
+  identity?: { sourceKey: string; matchName?: boolean; maxChunks?: number }
+) {
+  const indexed = await indexResearchSource(ideaId, sourceName, text, identity);
+  if (indexed.count === 0) throw new Error('That source did not contain readable text');
   const preview = text.replace(/\s+/g, ' ').trim().slice(0, 700);
   await appendResearchMessage(
     ideaId,
     'source',
     `${sourceName}\n${preview}${text.length > 700 ? '…' : ''}`
   );
-  const note = `Saved ${sourceName} in ${count} sections. Ask a question when you want to dig in.`;
+  const note = indexed.truncated
+    ? `Saved the first part of ${sourceName} in ${indexed.count} sections. The rest was too long to store.`
+    : `Saved ${sourceName} in ${indexed.count} sections. Ask a question when you want to dig in.`;
   await appendResearchMessage(ideaId, 'assistant', note);
   await saveBrief(ideaId, title, note);
   return listResearchMessages(ideaId);
@@ -165,14 +166,14 @@ export async function generateArticleFromResearch(ideaId: string) {
 
 export async function askResearch(ideaId: string, question: string, title = '') {
   const trimmed = question.trim();
-  if (trimmed.length >= SOURCE_MIN) {
-    await indexResearchSource(ideaId, 'Pasted note', trimmed);
-    await appendResearchMessage(ideaId, 'source', `Pasted note\n${trimmed.slice(0, 700)}${trimmed.length > 700 ? '…' : ''}`);
-  }
   await appendResearchMessage(ideaId, 'user', trimmed);
-  const history = await listResearchMessages(ideaId);
-  const chunks = await searchResearch(ideaId, trimmed);
-  const answer = await askGroq(trimmed, chunks, history);
+  const found = await searchResearch(ideaId, trimmed);
+  const chunks = found.filter((chunk) => chunk.score >= MIN_MATCH);
+  const answer = found.length === 0
+    ? NO_CONTEXT
+    : chunks.length === 0
+      ? OUTSIDE_CONTEXT
+      : await askGroq(trimmed, chunks);
   await appendResearchMessage(ideaId, 'assistant', answer);
   await saveBrief(ideaId, title, answer);
   return listResearchMessages(ideaId);

@@ -119,6 +119,19 @@ export const ideasApi = createApi({
       invalidatesTags: (result, error, ideaId) => [{ type: 'Idea', id: ideaId }],
     }),
 
+    uploadResearchText: builder.mutation<ResearchMessage[], { ideaId: string; content: string; title?: string }>({
+      query: ({ ideaId, content, title }) => ({
+        url: `/ideas/${encodeURIComponent(ideaId)}/research/text`,
+        method: 'POST',
+        body: { content, title },
+      }),
+      transformResponse: (response: { data: ResearchMessage[] }) => response.data || [],
+      invalidatesTags: (result, error, { ideaId }) => [
+        { type: 'Research', id: ideaId },
+        { type: 'Idea', id: ideaId },
+      ],
+    }),
+
     uploadResearchPdf: builder.mutation<ResearchMessage[], { ideaId: string; file: File; title?: string }>({
       query: ({ ideaId, file, title }) => {
         const body = new FormData();
@@ -160,6 +173,7 @@ export const {
   useSendResearchMutation,
   useClearResearchMutation,
   useGenerateArticleMutation,
+  useUploadResearchTextMutation,
   useUploadResearchPdfMutation,
   useDeleteIdeaMutation,
 } = ideasApi;

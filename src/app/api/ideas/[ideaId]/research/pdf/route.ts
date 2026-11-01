@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { extractText, getDocumentProxy } from 'unpdf';
 import { saveResearchSource } from '@/lib/research-chat';
+import { AlreadyAddedError, sourceKeyForBytes } from '@/lib/research-index';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -24,10 +25,15 @@ export async function POST(request: Request, context: { params: Promise<{ ideaId
     const pdf = await getDocumentProxy(bytes);
     const extracted = await extractText(pdf, { mergePages: true });
     const text = Array.isArray(extracted.text) ? extracted.text.join('\n') : String(extracted.text || '');
-    const messages = await saveResearchSource(ideaId, file.name || 'document.pdf', text, title);
+    const messages = await saveResearchSource(ideaId, file.name || 'document.pdf', text, title, {
+      sourceKey: sourceKeyForBytes(bytes),
+      matchName: true,
+      maxChunks: 160,
+    });
     return NextResponse.json({ data: messages });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Could not read that PDF';
-    return NextResponse.json({ error: message }, { status: 500 });
+    const status = error instanceof AlreadyAddedError ? 409 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 }

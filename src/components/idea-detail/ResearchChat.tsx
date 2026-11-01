@@ -1,9 +1,17 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { FileText, FileUp, Send, Sparkles, Trash2 } from 'lucide-react';
+import { FileText, FileUp, Send, Sparkles, Trash2, Type } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import {
   useClearResearchMutation,
@@ -11,6 +19,7 @@ import {
   useGetResearchMessagesQuery,
   useSendResearchMutation,
   useUploadResearchPdfMutation,
+  useUploadResearchTextMutation,
 } from '@/store/api/ideasApi';
 import { cn } from 'cn';
 
@@ -39,11 +48,15 @@ export function ResearchChat({
   const [clearResearch, { isLoading: isClearing }] = useClearResearchMutation();
   const [generateArticle, { isLoading: isGenerating }] = useGenerateArticleMutation();
   const [uploadPdf, { isLoading: isUploading }] = useUploadResearchPdfMutation();
+  const [uploadText, { isLoading: isUploadingText }] = useUploadResearchTextMutation();
   const [draft, setDraft] = useState('');
+  const [contextOpen, setContextOpen] = useState(false);
+  const [textOpen, setTextOpen] = useState(false);
+  const [contextText, setContextText] = useState('');
   const [pending, setPending] = useState<{ role: 'user' | 'source'; content: string } | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
-  const busy = isSending || isUploading || isGenerating || isClearing;
+  const busy = isSending || isUploading || isUploadingText || isGenerating || isClearing;
   const hasConversation = messages.some((message) => message.role === 'user' || message.role === 'assistant');
 
   useEffect(() => {
@@ -113,6 +126,21 @@ export function ResearchChat({
     }
   };
 
+  const onText = async () => {
+    const content = contextText.trim();
+    if (!content || busy) return;
+    setPending({ role: 'source', content: content.slice(0, 180) });
+    try {
+      await uploadText({ ideaId, content, title }).unwrap();
+      setContextText('');
+      setTextOpen(false);
+    } catch (err) {
+      toast.error(errorText(err));
+    } finally {
+      setPending(null);
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-[420px] max-h-[72vh] rounded-xl border border-border/70 bg-background overflow-hidden">
       <div className="flex items-center gap-2 px-3 py-2 border-b border-border/60">
@@ -126,7 +154,7 @@ export function ResearchChat({
         <div className="min-w-0">
           <p className="text-xs font-medium leading-none">Research assistant</p>
           <p className="text-[10px] text-muted-foreground mt-1 truncate">
-            {isClearing ? 'Clearing research' : isGenerating ? 'Writing the article' : busy ? 'Looking through your sources' : 'Answers stay with this idea'}
+            {isClearing ? 'Clearing research' : isGenerating ? 'Writing the article' : isUploading || isUploadingText ? 'Saving the context' : busy ? 'Looking through your sources' : 'Answers stay with this idea'}
           </p>
         </div>
         <Button
@@ -146,7 +174,7 @@ export function ResearchChat({
         {isLoading && <p className="text-sm text-muted-foreground">Opening the thread…</p>}
         {!isLoading && messages.length === 0 && !pending && (
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Paste notes or upload a PDF, then ask about them. The conversation is saved on this idea.
+            Add a PDF or a long note, then ask about them. The conversation is saved on this idea.
           </p>
         )}
         {messages.map((message, index) => {
@@ -190,7 +218,7 @@ export function ResearchChat({
               ))}
             </span>
             <span className="text-[11px] text-muted-foreground">
-              {isGenerating ? 'Writing the article' : isUploading || pending?.role === 'source' ? 'Reading the source' : 'Thinking'}
+              {isGenerating ? 'Writing the article' : isUploading || isUploadingText || pending?.role === 'source' ? 'Reading the source' : 'Thinking'}
             </span>
           </div>
         )}
@@ -233,11 +261,64 @@ export function ResearchChat({
               variant="outline"
               size="sm"
               disabled={busy}
-              onClick={() => fileRef.current?.click()}
+              onClick={() => setContextOpen(true)}
             >
-              <FileUp className="h-3.5 w-3.5" />
-              Upload PDF
+              Add context
             </Button>
+            <Dialog open={contextOpen} onOpenChange={setContextOpen}>
+              <DialogContent className="sm:max-w-sm">
+                <DialogHeader>
+                  <DialogTitle>Add context</DialogTitle>
+                  <DialogDescription>Choose how to add research for this idea.</DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={busy}
+                    onClick={() => {
+                      setContextOpen(false);
+                      fileRef.current?.click();
+                    }}
+                  >
+                    <FileUp className="h-3.5 w-3.5" />
+                    Upload PDF
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={busy}
+                    onClick={() => {
+                      setContextOpen(false);
+                      setTextOpen(true);
+                    }}
+                  >
+                    <Type className="h-3.5 w-3.5" />
+                    Upload text
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+            <Dialog open={textOpen} onOpenChange={setTextOpen}>
+              <DialogContent className="sm:max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Upload text</DialogTitle>
+                  <DialogDescription>Paste a long note. It is stored as research context for this idea.</DialogDescription>
+                </DialogHeader>
+                <Textarea
+                  value={contextText}
+                  onChange={(event) => setContextText(event.target.value)}
+                  placeholder="Paste the text you want to keep…"
+                  disabled={busy}
+                  className="min-h-64 max-h-[50vh] text-sm"
+                />
+                <DialogFooter>
+                  <Button type="button" disabled={!contextText.trim() || busy} onClick={() => void onText()}>
+                    Add text
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
           <div className="flex items-center gap-2">
             <Button

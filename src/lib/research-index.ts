@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import { QdrantClient } from '@qdrant/js-client-rest';
 import { embedIdeaText, IDEA_VECTOR_SIZE } from '@/lib/idea-embeddings';
 
@@ -27,32 +28,80 @@ async function ensureCollection() {
   await ready;
 }
 
-export function chunkResearchText(text: string): string[] {
+export function chunkResearchText(text: string, maxChunks = 40): string[] {
   const clean = text.replace(/\s+/g, ' ').trim();
   if (!clean) return [];
   const size = 900;
   const overlap = 120;
   const chunks: string[] = [];
-  for (let index = 0; index < clean.length && chunks.length < 40; index += size - overlap) {
+  for (let index = 0; index < clean.length && chunks.length < maxChunks; index += size - overlap) {
     chunks.push(clean.slice(index, index + size));
   }
   return chunks;
 }
 
-export async function indexResearchSource(ideaId: string, sourceName: string, text: string) {
-  const chunks = chunkResearchText(text);
-  if (chunks.length === 0) return 0;
+export function sourceKeyForBytes(bytes: Uint8Array) {
+  return createHash('sha256').update(bytes).digest('hex');
+}
+
+export function sourceKeyForText(text: string) {
+  return createHash('sha256').update(text.replace(/\s+/g, ' ').trim()).digest('hex');
+}
+
+export class AlreadyAddedError extends Error {
+  constructor(kind: 'file' | 'text') {
+    super(kind === 'file' ? 'This file is already added' : 'This text is already added');
+    this.name = 'AlreadyAddedError';
+  }
+}
+
+async function sourceExists(ideaId: string, key: string, value: string) {
+  const found = await client().scroll(COLLECTION, {
+    filter: {
+      must: [
+        { key: 'ideaId', match: { value: ideaId } },
+        { key, match: { value } },
+      ],
+    },
+    limit: 1,
+    with_payload: false,
+  });
+  return found.points.length > 0;
+}
+
+export async function indexResearchSource(
+  ideaId: string,
+  sourceName: string,
+  text: string,
+  options?: { sourceKey?: string; matchName?: boolean; maxChunks?: number }
+) {
+  const maxChunks = options?.maxChunks ?? 40;
+  const chunks = chunkResearchText(text, maxChunks);
+  if (chunks.length === 0) return { count: 0, truncated: false };
   await ensureCollection();
+  if (options?.sourceKey && await sourceExists(ideaId, 'sourceKey', options.sourceKey)) {
+    throw new AlreadyAddedError(options.matchName ? 'file' : 'text');
+  }
+  if (options?.matchName && await sourceExists(ideaId, 'sourceName', sourceName)) {
+    throw new AlreadyAddedError('file');
+  }
   const points = [];
   for (const chunk of chunks) {
     points.push({
       id: crypto.randomUUID(),
       vector: await embedIdeaText(chunk),
-      payload: { ideaId, sourceName, text: chunk },
+      payload: {
+        ideaId,
+        sourceName,
+        text: chunk,
+        ...(options?.sourceKey ? { sourceKey: options.sourceKey } : {}),
+      },
     });
   }
   await client().upsert(COLLECTION, { wait: true, points });
-  return chunks.length;
+  const cleanLength = text.replace(/\s+/g, ' ').trim().length;
+  const covered = chunks.length * (900 - 120) + 120;
+  return { count: chunks.length, truncated: cleanLength > covered };
 }
 
 export async function searchResearch(ideaId: string, query: string, limit = 5) {
@@ -68,6 +117,7 @@ export async function searchResearch(ideaId: string, query: string, limit = 5) {
     .map((point) => ({
       sourceName: String(point.payload?.sourceName || 'note'),
       text: String(point.payload?.text || ''),
+      score: typeof point.score === 'number' ? point.score : 0,
     }))
     .filter((chunk) => chunk.text);
 }
