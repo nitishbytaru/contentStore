@@ -3,7 +3,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { FileText, FileUp, Send, Sparkles, Trash2, Type } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import {
   Dialog,
   DialogContent,
@@ -38,10 +48,12 @@ export function ResearchChat({
   ideaId,
   title,
   onArticleGenerated,
+  onClearingChange,
 }: {
   ideaId: string;
   title: string;
   onArticleGenerated?: (article: string) => void;
+  onClearingChange?: (clearing: boolean) => void;
 }) {
   const { data: messages = [], isLoading } = useGetResearchMessagesQuery(ideaId);
   const [sendResearch, { isLoading: isSending }] = useSendResearchMutation();
@@ -50,6 +62,7 @@ export function ResearchChat({
   const [uploadPdf, { isLoading: isUploading }] = useUploadResearchPdfMutation();
   const [uploadText, { isLoading: isUploadingText }] = useUploadResearchTextMutation();
   const [draft, setDraft] = useState('');
+  const [confirmClear, setConfirmClear] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
   const [textOpen, setTextOpen] = useState(false);
   const [contextText, setContextText] = useState('');
@@ -87,14 +100,16 @@ export function ResearchChat({
   };
 
   const onClear = async () => {
-    if (busy || messages.length === 0) return;
-    const confirmed = window.confirm('Clear this conversation and the saved research sources?');
-    if (!confirmed) return;
+    if (isClearing || messages.length === 0) return;
+    onClearingChange?.(true);
     try {
       await clearResearch(ideaId).unwrap();
+      setConfirmClear(false);
       toast.success('Research cleared');
     } catch (err) {
       toast.error(errorText(err));
+    } finally {
+      onClearingChange?.(false);
     }
   };
 
@@ -163,11 +178,41 @@ export function ResearchChat({
           size="sm"
           className="ml-auto text-muted-foreground hover:text-destructive"
           disabled={busy || messages.length === 0}
-          onClick={() => void onClear()}
+          onClick={() => setConfirmClear(true)}
         >
           <Trash2 className="h-3.5 w-3.5" />
           Clear all
         </Button>
+        <AlertDialog
+          open={confirmClear}
+          onOpenChange={(open) => {
+            if (!open && isClearing) return;
+            setConfirmClear(open);
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{isClearing ? 'Clearing research' : 'Clear this research?'}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {isClearing
+                  ? 'Removing the conversation and the saved context.'
+                  : 'This removes the conversation and the saved PDF and text context for this idea. The article draft stays.'}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            {isClearing && <Progress value={null} />}
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isClearing}>Cancel</AlertDialogCancel>
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={isClearing}
+                onClick={() => void onClear()}
+              >
+                {isClearing ? 'Clearing…' : 'Clear all'}
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-2.5">

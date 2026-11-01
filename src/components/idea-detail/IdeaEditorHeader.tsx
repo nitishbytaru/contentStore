@@ -14,6 +14,7 @@ interface IdeaEditorHeaderProps {
   onSave: () => void;
   onCompleteIdea: () => void;
   onCopyTitle: (title: string) => void;
+  locked?: boolean;
 }
 
 export function IdeaEditorHeader({
@@ -25,6 +26,7 @@ export function IdeaEditorHeader({
   onSave,
   onCompleteIdea,
   onCopyTitle,
+  locked = false,
 }: IdeaEditorHeaderProps) {
   const completed = isIdeaCompleted(idea);
   const check = canCompleteIdea(idea);
@@ -34,7 +36,12 @@ export function IdeaEditorHeader({
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 w-full min-w-0 min-h-14">
       <Link
         href="/ideas"
-        className="inline-flex items-center text-xs font-medium text-muted-foreground hover:text-foreground transition-colors shrink-0"
+        aria-disabled={locked}
+        tabIndex={locked ? -1 : undefined}
+        className={cn(
+          'inline-flex items-center text-xs font-medium text-muted-foreground hover:text-foreground transition-colors shrink-0',
+          locked && 'pointer-events-none opacity-50'
+        )}
         title="Back to Ideas"
       >
         <ArrowLeft className="w-3.5 h-3.5 mr-1" />
@@ -76,6 +83,7 @@ export function IdeaEditorHeader({
           variant="ghost"
           className="h-8 w-8"
           title="Copy title"
+          disabled={locked}
           onClick={() => onCopyTitle(idea.idea)}
         >
           <Copy className="h-3.5 w-3.5" />
@@ -86,6 +94,7 @@ export function IdeaEditorHeader({
           variant="ghost"
           className="h-8 w-8"
           title="Configure formats"
+          disabled={locked}
           onClick={onOpenFormatModal}
         >
           <Settings2 className="h-3.5 w-3.5" />
@@ -96,7 +105,7 @@ export function IdeaEditorHeader({
           variant="outline"
           className="h-8 px-2.5 text-xs gap-1"
           onClick={onSave}
-          disabled={saving}
+          disabled={saving || locked}
         >
           {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
           Save
@@ -110,7 +119,7 @@ export function IdeaEditorHeader({
             (completed || check.allowed) && 'bg-emerald-600 hover:bg-emerald-700 text-white'
           )}
           onClick={onCompleteIdea}
-          disabled={saving}
+          disabled={saving || locked}
           title={completed ? 'Reopen this idea' : check.reason}
         >
           <Check className="w-3.5 h-3.5" />

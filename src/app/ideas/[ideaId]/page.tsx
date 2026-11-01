@@ -1,6 +1,6 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState } from 'react';
 import Link from 'next/link';
 import ScriptPrompter from '@/components/ScriptPrompter';
 import { useIdeaEditor } from '@/hooks';
@@ -12,9 +12,11 @@ import {
   IdeaVideoStagesModal,
   IdeaTimestampModal,
 } from '@/components/idea-detail';
+import { cn } from 'cn';
 
 export default function IdeaEditor({ params }: { params: Promise<{ ideaId: string }> }) {
   const { ideaId } = use(params);
+  const [clearingResearch, setClearingResearch] = useState(false);
   const {
     idea,
     loading,
@@ -78,7 +80,13 @@ export default function IdeaEditor({ params }: { params: Promise<{ ideaId: strin
 
   // WORKSPACE WITH DYNAMIC TABS
   return (
-    <div className="w-full max-w-full min-w-0 overflow-x-hidden">
+    <div
+      inert={clearingResearch ? true : undefined}
+      className={cn(
+        'w-full max-w-full min-w-0 overflow-x-hidden',
+        clearingResearch && '[&_button]:pointer-events-none [&_button]:opacity-50 [&_a]:pointer-events-none [&_a]:opacity-50 [&_[role=tab]]:pointer-events-none [&_[role=tab]]:opacity-50 [&_textarea]:pointer-events-none'
+      )}
+    >
       <div className="sticky top-0 z-40 -mx-4 md:-mx-6 -mt-6 md:-mt-8 mb-4 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="px-4 md:px-6">
           <IdeaEditorHeader
@@ -90,6 +98,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ ideaId: strin
             onSave={handleSave}
             onCompleteIdea={handleCompleteIdea}
             onCopyTitle={handleCopyContent}
+            locked={clearingResearch}
           />
         </div>
       </div>
@@ -113,6 +122,8 @@ export default function IdeaEditor({ params }: { params: Promise<{ ideaId: strin
           setEditingDateKey(key);
           setEditingDateValue(currentVal);
         }}
+        onResearchClearing={setClearingResearch}
+        locked={clearingResearch}
       />
 
       {/* Format Configuration Dialog */}

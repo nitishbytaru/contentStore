@@ -35,6 +35,8 @@ interface IdeaContentTabsProps {
   onQuickToggleEditing: () => void;
   onQuickToggleUploaded: () => void;
   onEditDateKey: (key: keyof Idea, currentVal: string) => void;
+  onResearchClearing?: (clearing: boolean) => void;
+  locked?: boolean;
 }
 
 export function IdeaContentTabs({
@@ -52,6 +54,8 @@ export function IdeaContentTabs({
   onQuickToggleEditing,
   onQuickToggleUploaded,
   onEditDateKey,
+  onResearchClearing,
+  locked = false,
 }: IdeaContentTabsProps) {
   // Ref to auto-expand video script textarea so it is not scrollable and shows all text at a stretch
   const videoScriptRef = useRef<HTMLTextAreaElement | null>(null);
@@ -87,6 +91,7 @@ export function IdeaContentTabs({
                   <TabsTrigger
                     key={tab.value}
                     value={tab.value}
+                    disabled={locked}
                     className={cn(
                       'text-xs sm:text-sm py-2 px-2 text-center truncate min-w-0 font-medium rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer',
                       isActive
@@ -428,6 +433,7 @@ export function IdeaContentTabs({
                           onTextChange('mediumArticle', article);
                           onTabChange('mediumArticle');
                         }}
+                        onClearingChange={onResearchClearing}
                       />
                     ) : isVideoScript ? (
                       <Textarea
