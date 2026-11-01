@@ -45,13 +45,13 @@ export function ResearchChat({ ideaId, title }: { ideaId: string; title: string 
     return 'Research could not be saved';
   };
 
-  const submit = async (mode: 'ask' | 'source') => {
+  const submit = async () => {
     const content = draft.trim();
     if (!content || busy) return;
-    setPending({ role: mode === 'source' ? 'source' : 'user', content });
+    setPending({ role: 'user', content });
     setDraft('');
     try {
-      await sendResearch({ ideaId, content, mode, title }).unwrap();
+      await sendResearch({ ideaId, content, mode: 'ask', title }).unwrap();
     } catch (err) {
       setDraft(content);
       toast.error(errorText(err));
@@ -154,7 +154,7 @@ export function ResearchChat({ ideaId, title }: { ideaId: string; title: string 
         className="border-t border-border/70 p-2.5 space-y-2 focus-within:bg-primary/5 transition-colors"
         onSubmit={(event) => {
           event.preventDefault();
-          void submit('ask');
+          void submit();
         }}
       >
         <Textarea
@@ -162,7 +162,7 @@ export function ResearchChat({ ideaId, title }: { ideaId: string; title: string 
           onChange={(event) => setDraft(event.target.value)}
           placeholder="Paste research or ask a question about the sources…"
           disabled={busy}
-          className="min-h-[88px] text-sm resize-y border-transparent bg-muted/30 focus-visible:border-primary/40"
+          className="h-[88px] min-h-[88px] max-h-[88px] text-sm resize-none border-transparent bg-muted/30 focus-visible:border-primary/40"
         />
         <div className="flex items-center justify-between gap-2">
           <div>
@@ -187,21 +187,10 @@ export function ResearchChat({ ideaId, title }: { ideaId: string; title: string 
               Upload PDF
             </Button>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={!draft.trim() || busy}
-              onClick={() => void submit('source')}
-            >
-              Save source
-            </Button>
-            <Button type="submit" size="sm" disabled={!draft.trim() || busy}>
-              <Send className="h-3.5 w-3.5" />
-              Ask
-            </Button>
-          </div>
+          <Button type="submit" size="sm" disabled={!draft.trim() || busy}>
+            <Send className="h-3.5 w-3.5" />
+            Ask
+          </Button>
         </div>
       </form>
     </div>
