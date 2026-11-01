@@ -21,7 +21,10 @@ function qdrantUrl(): string {
 }
 
 function client(): QdrantClient {
-  return new QdrantClient({ url: qdrantUrl() });
+  return new QdrantClient({
+    url: qdrantUrl(),
+    apiKey: process.env.QDRANT_API_KEY || undefined,
+  });
 }
 
 /**

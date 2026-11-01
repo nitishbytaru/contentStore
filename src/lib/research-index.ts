@@ -7,7 +7,10 @@ const COLLECTION = 'research';
 let ready: Promise<void> | null = null;
 
 function client() {
-  return new QdrantClient({ url: process.env.QDRANT_URL || 'http://localhost:6333' });
+  return new QdrantClient({
+    url: process.env.QDRANT_URL || 'http://localhost:6333',
+    apiKey: process.env.QDRANT_API_KEY || undefined,
+  });
 }
 
 async function ensureCollection() {
