@@ -8,12 +8,33 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ArrowLeft, Loader2, Sparkles } from 'lucide-react';
 import { toast } from "sonner";
 import Link from 'next/link';
-import { useAddIdeaMutation } from '@/store/api/ideasApi';
+import { useAddIdeaMutation, useFindSimilarIdeasMutation } from '@/store/api/ideasApi';
+
+interface SimilarIdea {
+  ideaId: string;
+  title: string;
+}
 
 export default function NewIdeaPage() {
   const [article, setArticle] = useState('');
+  const [matches, setMatches] = useState<SimilarIdea[] | null>(null);
   const router = useRouter();
   const [addIdea, { isLoading: isSubmitting }] = useAddIdeaMutation();
+  const [findSimilarIdeas, { isLoading: isScanning }] = useFindSimilarIdeasMutation();
+
+  const handleScan = async () => {
+    if (!article.trim() || isScanning) return;
+
+    try {
+      const results = await findSimilarIdeas(article.trim()).unwrap();
+      setMatches(results);
+    } catch (err: unknown) {
+      const message = err && typeof err === 'object' && 'data' in err
+        ? String((err as { data?: { error?: string } }).data?.error || '')
+        : '';
+      toast.error(message || 'Could not scan existing ideas. Nothing was created.');
+    }
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +69,7 @@ export default function NewIdeaPage() {
             <div>
               <CardTitle className="text-xl">Create New Idea</CardTitle>
               <CardDescription className="text-xs sm:text-sm mt-0.5">
-                Add the article. Your idea will be created in the Pending queue.
+                Add the article, then scan existing ideas before you create a new one.
               </CardDescription>
             </div>
           </div>
@@ -61,31 +82,80 @@ export default function NewIdeaPage() {
               </label>
               <Input 
                 value={article} 
-                onChange={(e) => setArticle(e.target.value)} 
+                onChange={(e) => {
+                  setArticle(e.target.value);
+                  setMatches(null);
+                }} 
                 placeholder="e.g. 5 system design patterns every senior dev should know..." 
-                disabled={isSubmitting}
+                disabled={isSubmitting || isScanning}
                 className="text-sm h-10"
                 autoFocus
                 required
               />
             </div>
 
+            {matches && (
+              <div className="space-y-2 rounded-lg border border-border/70 bg-muted/30 p-3">
+                {matches.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No existing ideas to compare yet. You can still create this one.
+                  </p>
+                ) : (
+                  <>
+                    <p className="text-xs font-semibold text-foreground">Similar ideas</p>
+                    <ul className="space-y-2">
+                      {matches.map((match) => (
+                        <li
+                          key={match.ideaId}
+                          className="flex items-center justify-between gap-3 rounded-md border border-border/60 bg-background px-3 py-2"
+                        >
+                          <span className="text-sm leading-snug min-w-0">{match.title}</span>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="shrink-0"
+                            onClick={() => router.push(`/ideas/${match.ideaId}`)}
+                          >
+                            Continue with this idea
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </div>
+            )}
+
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/40">
               <Button 
                 type="button" 
                 variant="ghost" 
                 onClick={() => router.push('/ideas')} 
-                disabled={isSubmitting}
+                disabled={isSubmitting || isScanning}
               >
                 Cancel
               </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleScan}
+                disabled={!article.trim() || isSubmitting || isScanning}
+              >
+                {isScanning && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                {isScanning ? 'Scanning...' : 'Scan through ideas'}
+              </Button>
               <Button 
                 type="submit" 
-                disabled={!article.trim() || isSubmitting} 
+                disabled={!article.trim() || isSubmitting || isScanning} 
                 className="min-w-[140px] font-medium"
               >
                 {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                {isSubmitting ? 'Creating Idea...' : 'Create Idea'}
+                {isSubmitting
+                  ? 'Creating Idea...'
+                  : matches
+                    ? 'Continue with new idea'
+                    : 'Create Idea'}
               </Button>
             </div>
           </form>

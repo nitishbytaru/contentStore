@@ -54,6 +54,15 @@ export const ideasApi = createApi({
       ],
     }),
 
+    findSimilarIdeas: builder.mutation<{ ideaId: string; title: string }[], string>({
+      query: (text) => ({
+        url: '/ideas/similar',
+        method: 'POST',
+        body: { text },
+      }),
+      transformResponse: (response: { data: { ideaId: string; title: string }[] }) => response.data || [],
+    }),
+
     deleteIdea: builder.mutation<{ message: string }, string>({
       query: (ideaId) => ({
         url: `/ideas?ideaId=${encodeURIComponent(ideaId)}`,
@@ -72,5 +81,6 @@ export const {
   useGetIdeaByIdQuery,
   useAddIdeaMutation,
   useUpdateIdeaMutation,
+  useFindSimilarIdeasMutation,
   useDeleteIdeaMutation,
 } = ideasApi;

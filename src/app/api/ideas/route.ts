@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getGoogleSheet } from '@/lib/google-sheets';
+import { deleteIdeaVector, upsertIdeaVector } from '@/lib/idea-index';
 import { matchesIdeaFilters } from '@/utils/ideaStatus';
 import { Idea, IdeaTypeFilter, IdeaStatusFilter } from '@/types';
 import { IdeaStatus } from '@/enums';
@@ -165,6 +166,16 @@ export async function POST(request: Request) {
 
     await sheet.addRow(newIdea);
 
+    try {
+      await upsertIdeaVector({
+        ideaId: generatedIdeaId,
+        title: newIdea.idea,
+        notes: newIdea.baseArticle,
+      });
+    } catch (indexError) {
+      console.warn('Idea saved, but the search index was not updated:', indexError);
+    }
+
     return NextResponse.json({ data: newIdea as Idea }, { status: 201 });
   } catch (error: any) {
     console.error('Error creating idea:', error);
@@ -211,7 +222,20 @@ export async function PUT(request: Request) {
 
     await targetRow.save();
 
-    return NextResponse.json({ data: parseRowToIdea(targetRow) }, { status: 200 });
+    const saved = parseRowToIdea(targetRow);
+    if (payload.idea !== undefined || payload.baseArticle !== undefined || payload.description !== undefined) {
+      try {
+        await upsertIdeaVector({
+          ideaId,
+          title: saved.idea,
+          notes: saved.baseArticle,
+        });
+      } catch (indexError) {
+        console.warn('Idea updated, but the search index was not updated:', indexError);
+      }
+    }
+
+    return NextResponse.json({ data: saved }, { status: 200 });
   } catch (error: any) {
     console.error('Error updating idea:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -236,6 +260,12 @@ export async function DELETE(request: Request) {
     }
 
     await targetRow.delete();
+
+    try {
+      await deleteIdeaVector(ideaId);
+    } catch (indexError) {
+      console.warn('Idea deleted, but the search index was not updated:', indexError);
+    }
 
     return NextResponse.json({ success: true, message: 'Idea deleted successfully' }, { status: 200 });
   } catch (error: any) {
