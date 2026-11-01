@@ -73,3 +73,12 @@ export async function appendResearchMessage(
   });
   return message;
 }
+
+export async function clearResearchMessages(ideaId: string) {
+  const tab = await sheet();
+  const rows = await tab.getRows();
+  const matches = rows.filter((row) => String(row.get('ideaId') || '') === ideaId);
+  for (let index = matches.length - 1; index >= 0; index -= 1) {
+    await matches[index].delete();
+  }
+}

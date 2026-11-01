@@ -102,6 +102,14 @@ export const ideasApi = createApi({
       ],
     }),
 
+    clearResearch: builder.mutation<void, string>({
+      query: (ideaId) => ({
+        url: `/ideas/${encodeURIComponent(ideaId)}/research`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (result, error, ideaId) => [{ type: 'Research', id: ideaId }],
+    }),
+
     generateArticle: builder.mutation<{ mediumArticle: string }, string>({
       query: (ideaId) => ({
         url: `/ideas/${encodeURIComponent(ideaId)}/article`,
@@ -150,6 +158,7 @@ export const {
   useFindSimilarIdeasMutation,
   useGetResearchMessagesQuery,
   useSendResearchMutation,
+  useClearResearchMutation,
   useGenerateArticleMutation,
   useUploadResearchPdfMutation,
   useDeleteIdeaMutation,

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { askResearch, saveResearchSource } from '@/lib/research-chat';
+import { askResearch, clearResearch, saveResearchSource } from '@/lib/research-chat';
 import { listResearchMessages } from '@/lib/research-messages';
 
 export const dynamic = 'force-dynamic';
@@ -12,6 +12,17 @@ export async function GET(_request: Request, context: { params: Promise<{ ideaId
     return NextResponse.json({ data: messages });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to load research';
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+export async function DELETE(_request: Request, context: { params: Promise<{ ideaId: string }> }) {
+  try {
+    const { ideaId } = await context.params;
+    await clearResearch(ideaId);
+    return NextResponse.json({ data: [] });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to clear research';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

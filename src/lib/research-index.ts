@@ -72,13 +72,17 @@ export async function searchResearch(ideaId: string, query: string, limit = 5) {
     .filter((chunk) => chunk.text);
 }
 
+export async function clearResearchChunks(ideaId: string) {
+  await ensureCollection();
+  await client().delete(COLLECTION, {
+    wait: true,
+    filter: { must: [{ key: 'ideaId', match: { value: ideaId } }] },
+  });
+}
+
 export async function deleteResearchForIdea(ideaId: string) {
   try {
-    await ensureCollection();
-    await client().delete(COLLECTION, {
-      wait: true,
-      filter: { must: [{ key: 'ideaId', match: { value: ideaId } }] },
-    });
+    await clearResearchChunks(ideaId);
   } catch (error) {
     console.warn('Research vectors were not removed:', error);
   }

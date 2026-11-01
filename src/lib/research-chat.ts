@@ -1,7 +1,7 @@
 import { getGoogleSheet } from '@/lib/google-sheets';
 import { replaceIdeaVector } from '@/lib/idea-index';
-import { appendResearchMessage, listResearchMessages, ResearchMessage } from '@/lib/research-messages';
-import { indexResearchSource, searchResearch } from '@/lib/research-index';
+import { appendResearchMessage, clearResearchMessages, listResearchMessages, ResearchMessage } from '@/lib/research-messages';
+import { clearResearchChunks, indexResearchSource, searchResearch } from '@/lib/research-index';
 
 const SOURCE_MIN = 500;
 
@@ -115,6 +115,11 @@ function conversationTranscript(messages: ResearchMessage[]) {
     .map((message) => `${message.role === 'assistant' ? 'Assistant' : 'You'}: ${message.content.slice(0, 2000)}`)
     .join('\n\n')
     .slice(-14000);
+}
+
+export async function clearResearch(ideaId: string) {
+  await clearResearchMessages(ideaId);
+  await clearResearchChunks(ideaId);
 }
 
 export async function generateArticleFromResearch(ideaId: string) {

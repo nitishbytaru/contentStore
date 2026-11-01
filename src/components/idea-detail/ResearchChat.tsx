@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { FileText, FileUp, Send, Sparkles } from 'lucide-react';
+import { FileText, FileUp, Send, Sparkles, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import {
+  useClearResearchMutation,
   useGenerateArticleMutation,
   useGetResearchMessagesQuery,
   useSendResearchMutation,
@@ -35,13 +36,14 @@ export function ResearchChat({
 }) {
   const { data: messages = [], isLoading } = useGetResearchMessagesQuery(ideaId);
   const [sendResearch, { isLoading: isSending }] = useSendResearchMutation();
+  const [clearResearch, { isLoading: isClearing }] = useClearResearchMutation();
   const [generateArticle, { isLoading: isGenerating }] = useGenerateArticleMutation();
   const [uploadPdf, { isLoading: isUploading }] = useUploadResearchPdfMutation();
   const [draft, setDraft] = useState('');
   const [pending, setPending] = useState<{ role: 'user' | 'source'; content: string } | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
-  const busy = isSending || isUploading || isGenerating;
+  const busy = isSending || isUploading || isGenerating || isClearing;
   const hasConversation = messages.some((message) => message.role === 'user' || message.role === 'assistant');
 
   useEffect(() => {
@@ -68,6 +70,18 @@ export function ResearchChat({
       toast.error(errorText(err));
     } finally {
       setPending(null);
+    }
+  };
+
+  const onClear = async () => {
+    if (busy || messages.length === 0) return;
+    const confirmed = window.confirm('Clear this conversation and the saved research sources?');
+    if (!confirmed) return;
+    try {
+      await clearResearch(ideaId).unwrap();
+      toast.success('Research cleared');
+    } catch (err) {
+      toast.error(errorText(err));
     }
   };
 
@@ -112,9 +126,20 @@ export function ResearchChat({
         <div className="min-w-0">
           <p className="text-xs font-medium leading-none">Research assistant</p>
           <p className="text-[10px] text-muted-foreground mt-1 truncate">
-            {isGenerating ? 'Writing the article' : busy ? 'Looking through your sources' : 'Answers stay with this idea'}
+            {isClearing ? 'Clearing research' : isGenerating ? 'Writing the article' : busy ? 'Looking through your sources' : 'Answers stay with this idea'}
           </p>
         </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="ml-auto text-muted-foreground hover:text-destructive"
+          disabled={busy || messages.length === 0}
+          onClick={() => void onClear()}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          Clear all
+        </Button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
@@ -182,6 +207,11 @@ export function ResearchChat({
         <Textarea
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) return;
+            event.preventDefault();
+            void submit();
+          }}
           placeholder="Paste research or ask a question about the sources…"
           disabled={busy}
           className="h-[88px] min-h-[88px] max-h-[88px] text-sm resize-none border-transparent bg-muted/30 focus-visible:border-primary/40"
