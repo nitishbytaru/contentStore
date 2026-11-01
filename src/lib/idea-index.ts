@@ -55,8 +55,13 @@ async function ensureCollection(): Promise<void> {
 }
 
 export async function upsertIdeaVector(entry: IdeaCatalogEntry): Promise<void> {
-  if (!entry.ideaId || !entry.title.trim()) return;
+  if (!entry.ideaId) return;
   await ensureCollection();
+  if (!entry.title.trim()) {
+    await deleteIdeaVector(entry.ideaId);
+    return;
+  }
+
   const vector = await embedIdeaText(ideaIndexText(entry.title, entry.notes));
   await client().upsert(COLLECTION, {
     wait: true,
@@ -70,12 +75,27 @@ export async function upsertIdeaVector(entry: IdeaCatalogEntry): Promise<void> {
   });
 }
 
+/**
+ * Removes every stored vector for an idea, including one saved under an older point id.
+ */
 export async function deleteIdeaVector(ideaId: string): Promise<void> {
+  if (!ideaId) return;
   await ensureCollection();
-  await client().delete(COLLECTION, {
+  const qdrant = client();
+  await qdrant.delete(COLLECTION, {
     wait: true,
-    points: [ideaPointId(ideaId)],
+    filter: {
+      must: [{ key: 'ideaId', match: { value: ideaId } }],
+    },
   });
+}
+
+/**
+ * Drops the previous vector and writes the current title and notes.
+ */
+export async function replaceIdeaVector(entry: IdeaCatalogEntry): Promise<void> {
+  await deleteIdeaVector(entry.ideaId);
+  await upsertIdeaVector(entry);
 }
 
 async function indexedIdeaIds(): Promise<Set<string>> {

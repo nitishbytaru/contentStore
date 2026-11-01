@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getGoogleSheet } from '@/lib/google-sheets';
-import { deleteIdeaVector, upsertIdeaVector } from '@/lib/idea-index';
+import { ideaIndexText } from '@/lib/idea-embeddings';
+import { deleteIdeaVector, replaceIdeaVector, upsertIdeaVector } from '@/lib/idea-index';
 import { matchesIdeaFilters } from '@/utils/ideaStatus';
 import { Idea, IdeaTypeFilter, IdeaStatusFilter } from '@/types';
 import { IdeaStatus } from '@/enums';
@@ -26,6 +27,13 @@ const BOOLEAN_FIELDS = [
 ];
 
 const BOOLEAN_SET = new Set(BOOLEAN_FIELDS);
+
+function indexedNotes(baseArticle: unknown, description: unknown): string {
+  return [baseArticle, description]
+    .map((value) => String(value || '').trim())
+    .filter(Boolean)
+    .join('\n');
+}
 
 let isIdeasSheetInitialized = false;
 
@@ -200,6 +208,11 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'Idea not found' }, { status: 404 });
     }
 
+    const previousIndexText = ideaIndexText(
+      String(targetRow.get('idea') || ''),
+      indexedNotes(targetRow.get('baseArticle'), targetRow.get('description'))
+    );
+
     for (const header of HEADERS) {
       if (payload[header] !== undefined) {
         if (typeof payload[header] === 'boolean') {
@@ -223,12 +236,13 @@ export async function PUT(request: Request) {
     await targetRow.save();
 
     const saved = parseRowToIdea(targetRow);
-    if (payload.idea !== undefined || payload.baseArticle !== undefined || payload.description !== undefined) {
+    const nextIndexText = ideaIndexText(saved.idea, indexedNotes(saved.baseArticle, saved.description));
+    if (previousIndexText !== nextIndexText) {
       try {
-        await upsertIdeaVector({
+        await replaceIdeaVector({
           ideaId,
           title: saved.idea,
-          notes: saved.baseArticle,
+          notes: indexedNotes(saved.baseArticle, saved.description),
         });
       } catch (indexError) {
         console.warn('Idea updated, but the search index was not updated:', indexError);
