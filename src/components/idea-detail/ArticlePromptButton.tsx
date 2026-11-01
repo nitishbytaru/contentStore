@@ -56,8 +56,7 @@ export function ArticlePromptButton({
     return prompts.filter((p) => {
       return (
         p.title.toLowerCase().includes(query) ||
-        p.content.toLowerCase().includes(query) ||
-        (p.category || '').toLowerCase().includes(query)
+        p.content.toLowerCase().includes(query)
       );
     });
   }, [prompts, search]);

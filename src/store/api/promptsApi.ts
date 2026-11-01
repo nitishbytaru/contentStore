@@ -28,7 +28,7 @@ export const promptsApi = createApi({
       providesTags: [{ type: 'Category', id: 'LIST' }],
     }),
 
-    addPrompt: builder.mutation<PromptItem, { title: string; content: string; category: string }>({
+    addPrompt: builder.mutation<PromptItem, { title: string; content: string; category?: string }>({
       query: (prompt) => ({
         url: '/prompts',
         method: 'POST',
