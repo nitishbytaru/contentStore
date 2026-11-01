@@ -10,11 +10,14 @@ import {
   IdeaContentTabs,
   IdeaFormatModal,
 } from '@/components/idea-detail';
+import { ArticleWritingOverlay } from '@/components/idea-detail/ArticlePromptButton';
 import { cn } from 'cn';
 
 export default function IdeaEditor({ params }: { params: Promise<{ ideaId: string }> }) {
   const { ideaId } = use(params);
   const [clearingResearch, setClearingResearch] = useState(false);
+  const [applyingPrompt, setApplyingPrompt] = useState(false);
+  const pageLocked = clearingResearch || applyingPrompt;
   const {
     idea,
     loading,
@@ -52,11 +55,12 @@ export default function IdeaEditor({ params }: { params: Promise<{ ideaId: strin
 
   // WORKSPACE WITH DYNAMIC TABS
   return (
+    <>
     <div
-      inert={clearingResearch ? true : undefined}
+      inert={pageLocked ? true : undefined}
       className={cn(
         'w-full max-w-full min-w-0 overflow-x-hidden',
-        clearingResearch && '[&_button]:pointer-events-none [&_button]:opacity-50 [&_a]:pointer-events-none [&_a]:opacity-50 [&_[role=tab]]:pointer-events-none [&_[role=tab]]:opacity-50 [&_textarea]:pointer-events-none'
+        pageLocked && '[&_button]:pointer-events-none [&_button]:opacity-50 [&_a]:pointer-events-none [&_a]:opacity-50 [&_[role=tab]]:pointer-events-none [&_[role=tab]]:opacity-50 [&_textarea]:pointer-events-none'
       )}
     >
       <div className="sticky top-0 z-40 -mx-4 md:-mx-6 -mt-6 md:-mt-8 mb-4 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -70,7 +74,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ ideaId: strin
             onSave={handleSave}
             onCompleteIdea={handleCompleteIdea}
             onCopyTitle={handleCopyContent}
-            locked={clearingResearch}
+            locked={pageLocked}
           />
         </div>
       </div>
@@ -85,7 +89,8 @@ export default function IdeaEditor({ params }: { params: Promise<{ ideaId: strin
         onCopyContent={handleCopyContent}
         onOpenPrompter={() => setIsPrompterOpen(true)}
         onResearchClearing={setClearingResearch}
-        locked={clearingResearch}
+        onApplyingPrompt={setApplyingPrompt}
+        locked={pageLocked}
       />
 
       {/* Format Configuration Dialog */}
@@ -106,5 +111,7 @@ export default function IdeaEditor({ params }: { params: Promise<{ ideaId: strin
         script={idea.youtubeScript || ''}
       />
     </div>
+    {applyingPrompt && <ArticleWritingOverlay />}
+    </>
   );
 }

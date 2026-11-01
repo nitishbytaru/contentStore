@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Idea } from '@/types';
+import { ArticlePromptButton } from '@/components/idea-detail/ArticlePromptButton';
 import { ResearchChat } from '@/components/idea-detail/ResearchChat';
 import { cn } from 'cn';
 
@@ -26,6 +27,7 @@ interface IdeaContentTabsProps {
   onCopyContent: (text: string) => void;
   onOpenPrompter: () => void;
   onResearchClearing?: (clearing: boolean) => void;
+  onApplyingPrompt?: (applying: boolean) => void;
   locked?: boolean;
 }
 
@@ -38,6 +40,7 @@ export function IdeaContentTabs({
   onCopyContent,
   onOpenPrompter,
   onResearchClearing,
+  onApplyingPrompt,
   locked = false,
 }: IdeaContentTabsProps) {
   // Ref to auto-expand video script textarea so it is not scrollable and shows all text at a stretch
@@ -183,12 +186,23 @@ export function IdeaContentTabs({
                         className="min-h-[360px] h-auto overflow-hidden [field-sizing:content] resize-none w-full max-w-full text-sm p-3.5 sm:p-5 leading-relaxed break-words"
                       />
                     ) : (
-                      <Textarea
-                        placeholder={tab.placeholder}
-                        value={contentText}
-                        onChange={(e) => onTextChange(tab.value as keyof Idea, e.target.value)}
-                        className="h-[440px] sm:h-[520px] md:h-[580px] max-h-[72vh] w-full max-w-full resize-none sm:resize-y text-sm p-3.5 sm:p-5 leading-relaxed break-words overflow-x-hidden overflow-y-auto overscroll-contain"
-                      />
+                      <>
+                        <Textarea
+                          placeholder={tab.placeholder}
+                          value={contentText}
+                          disabled={locked}
+                          onChange={(e) => onTextChange(tab.value as keyof Idea, e.target.value)}
+                          className="h-[440px] sm:h-[520px] md:h-[580px] max-h-[72vh] w-full max-w-full resize-none sm:resize-y text-sm p-3.5 sm:p-5 leading-relaxed break-words overflow-x-hidden overflow-y-auto overscroll-contain"
+                        />
+                        {contentText.trim() && (
+                          <ArticlePromptButton
+                            ideaId={idea.ideaId}
+                            article={contentText}
+                            onArticle={(article) => onTextChange('mediumArticle', article)}
+                            onApplyingChange={onApplyingPrompt}
+                          />
+                        )}
+                      </>
                     )}
                   </div>
                 </TabsContent>

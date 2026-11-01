@@ -110,6 +110,19 @@ export const ideasApi = createApi({
       invalidatesTags: (result, error, ideaId) => [{ type: 'Research', id: ideaId }],
     }),
 
+    applyArticlePrompt: builder.mutation<
+      { mediumArticle: string },
+      { ideaId: string; prompt: string; article: string }
+    >({
+      query: ({ ideaId, prompt, article }) => ({
+        url: `/ideas/${encodeURIComponent(ideaId)}/article/apply`,
+        method: 'POST',
+        body: { prompt, article },
+      }),
+      transformResponse: (response: { data: { mediumArticle: string } }) => response.data,
+      invalidatesTags: (result, error, { ideaId }) => [{ type: 'Idea', id: ideaId }],
+    }),
+
     generateArticle: builder.mutation<{ mediumArticle: string }, string>({
       query: (ideaId) => ({
         url: `/ideas/${encodeURIComponent(ideaId)}/article`,
@@ -172,6 +185,7 @@ export const {
   useGetResearchMessagesQuery,
   useSendResearchMutation,
   useClearResearchMutation,
+  useApplyArticlePromptMutation,
   useGenerateArticleMutation,
   useUploadResearchTextMutation,
   useUploadResearchPdfMutation,
