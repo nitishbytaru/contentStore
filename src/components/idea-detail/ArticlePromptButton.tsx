@@ -237,18 +237,10 @@ export function ArticlePromptButton({
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-1.5 flex-wrap">
+                              <div className="flex items-center gap-1.5">
                                 <span className={`text-xs font-medium tracking-tight ${isSelected ? 'text-primary font-semibold' : 'text-foreground'}`}>
                                   {prompt.title || 'Untitled Prompt'}
                                 </span>
-                                {prompt.category && (
-                                  <Badge
-                                    variant="secondary"
-                                    className="px-1.5 py-0 text-[10px] font-normal text-muted-foreground"
-                                  >
-                                    {prompt.category}
-                                  </Badge>
-                                )}
                               </div>
                               <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground group-hover:text-foreground/80 transition-colors">
                                 {prompt.content}
