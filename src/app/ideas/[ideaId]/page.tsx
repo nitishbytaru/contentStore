@@ -7,7 +7,6 @@ import { useIdeaEditor } from '@/hooks';
 import {
   IdeaEditorSkeleton,
   IdeaEditorHeader,
-  IdeaBanner,
   IdeaContentTabs,
   IdeaFormatModal,
   IdeaVideoStagesModal,
@@ -79,21 +78,15 @@ export default function IdeaEditor({ params }: { params: Promise<{ ideaId: strin
 
   // WORKSPACE WITH DYNAMIC TABS
   return (
-    <div className="space-y-6 w-full max-w-full min-w-0 overflow-x-hidden">
-      {/* Top Bar Navigation & Controls */}
+    <div className="space-y-4 w-full max-w-full min-w-0 overflow-x-hidden">
       <IdeaEditorHeader
         idea={idea}
         saving={saving}
+        isArticleSelected={isArticleSelected}
+        isVideoSelected={isVideoSelected}
         onOpenFormatModal={() => setIsFormatModalOpen(true)}
         onSave={handleSave}
         onCompleteIdea={handleCompleteIdea}
-      />
-
-      {/* Idea Title Banner */}
-      <IdeaBanner
-        idea={idea}
-        isArticleSelected={isArticleSelected}
-        isVideoSelected={isVideoSelected}
         onCopyTitle={handleCopyContent}
       />
 

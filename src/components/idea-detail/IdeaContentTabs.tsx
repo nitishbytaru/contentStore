@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Idea } from '@/types';
+import { ResearchChat } from '@/components/idea-detail/ResearchChat';
 import { formatDateTimeDisplay, toDateTimeLocalValue } from '@/utils/dateTime';
 import { cn } from 'cn';
 
@@ -114,7 +115,7 @@ export function IdeaContentTabs({
                   className="focus-visible:outline-none focus-visible:ring-0 mt-0 w-full min-w-0"
                 >
                   {/* Section Toolbar / Info Bar */}
-                  <div className="flex items-center justify-between gap-2 mb-2 px-1">
+                  {tab.value !== 'baseArticle' && <div className="flex items-center justify-between gap-2 mb-2 px-1">
                     <div className="flex items-center gap-2 min-w-0">
                       {isVideoScript ? (
                         <span className="text-xs font-semibold text-rose-500 flex items-center gap-1.5 shrink-0">
@@ -182,7 +183,7 @@ export function IdeaContentTabs({
                         <span className="hidden sm:inline text-xs">Copy</span>
                       </Button>
                     </div>
-                  </div>
+                  </div>}
 
                   {/* Article Stage Progression Banner */}
                   {tab.value === 'mediumArticle' && (
@@ -419,7 +420,9 @@ export function IdeaContentTabs({
                   )}
 
                   <div className="relative group w-full min-w-0">
-                    {isVideoScript ? (
+                    {tab.value === 'baseArticle' ? (
+                      <ResearchChat ideaId={idea.ideaId} title={idea.idea} />
+                    ) : isVideoScript ? (
                       <Textarea
                         ref={videoScriptRef}
                         placeholder={tab.placeholder}

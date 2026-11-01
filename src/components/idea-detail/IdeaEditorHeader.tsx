@@ -1,97 +1,121 @@
 import Link from 'next/link';
-import { ArrowLeft, Settings2, Save, Loader2, Check } from 'lucide-react';
+import { ArrowLeft, Settings2, Save, Loader2, Check, Copy, FileText, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Idea } from '@/types';
-import { isIdeaCompleted, canCompleteIdea } from '@/utils/ideaStatus';
+import { isIdeaCompleted, canCompleteIdea, getIdeaPublishStatus } from '@/utils/ideaStatus';
+import { cn } from 'cn';
 
 interface IdeaEditorHeaderProps {
   idea: Idea;
   saving: boolean;
+  isArticleSelected: boolean;
+  isVideoSelected: boolean;
   onOpenFormatModal: () => void;
   onSave: () => void;
   onCompleteIdea: () => void;
+  onCopyTitle: (title: string) => void;
 }
 
 export function IdeaEditorHeader({
   idea,
   saving,
+  isArticleSelected,
+  isVideoSelected,
   onOpenFormatModal,
   onSave,
   onCompleteIdea,
+  onCopyTitle,
 }: IdeaEditorHeaderProps) {
   const completed = isIdeaCompleted(idea);
   const check = canCompleteIdea(idea);
+  const publishStatus = getIdeaPublishStatus(idea);
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full min-w-0">
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 w-full min-w-0 rounded-xl border border-border/70 bg-card/80 px-2 py-1.5">
       <Link
         href="/ideas"
-        className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors group"
+        className="inline-flex items-center text-xs font-medium text-muted-foreground hover:text-foreground transition-colors shrink-0"
+        title="Back to Ideas"
       >
-        <ArrowLeft className="w-4 h-4 mr-1.5 transition-transform group-hover:-translate-x-0.5" />
-        Back to Ideas
+        <ArrowLeft className="w-3.5 h-3.5 mr-1" />
+        <span className="hidden sm:inline">Ideas</span>
       </Link>
 
-      <div className="flex items-center gap-2 flex-wrap">
-        {/* Formats settings button */}
+      <h1 className="min-w-0 flex-1 basis-40 truncate text-sm font-semibold text-foreground" title={idea.idea}>
+        {idea.idea}
+      </h1>
+
+      <div className="flex items-center gap-1 flex-wrap">
+        {publishStatus && (
+          <span
+            className={cn(
+              'inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[10px] font-semibold uppercase tracking-wide',
+              publishStatus.badgeClass
+            )}
+          >
+            <span className={cn('w-1.5 h-1.5 rounded-full', publishStatus.dotClass)} />
+            {publishStatus.label}
+          </span>
+        )}
+        {isArticleSelected && (
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
+            <FileText className="w-3 h-3" /> Article
+          </span>
+        )}
+        {isVideoSelected && (
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-rose-500/10 text-rose-500 border border-rose-500/25">
+            <Video className="w-3 h-3" /> Video
+          </span>
+        )}
+      </div>
+
+      <div className="flex items-center gap-1 ml-auto">
         <Button
           type="button"
-          variant="outline"
-          size="sm"
-          onClick={onOpenFormatModal}
-          className="h-9 px-2.5 text-xs font-medium gap-1.5 text-muted-foreground hover:text-foreground border-border/80 cursor-pointer"
-          title="Configure Article and Video tabs"
+          size="icon"
+          variant="ghost"
+          className="h-8 w-8"
+          title="Copy title"
+          onClick={() => onCopyTitle(idea.idea)}
         >
-          <Settings2 className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Configure Formats</span>
+          <Copy className="h-3.5 w-3.5" />
         </Button>
-
         <Button
+          type="button"
+          size="icon"
+          variant="ghost"
+          className="h-8 w-8"
+          title="Configure formats"
+          onClick={onOpenFormatModal}
+        >
+          <Settings2 className="h-3.5 w-3.5" />
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="h-8 px-2.5 text-xs gap-1"
           onClick={onSave}
           disabled={saving}
-          variant="outline"
-          className="h-9 px-3.5 text-xs font-medium gap-1.5 border-border/80 cursor-pointer"
         >
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          <span>Save</span>
+          {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+          Save
         </Button>
-
-        {/* Top Right Completed Button */}
-        {completed ? (
-          <Button
-            type="button"
-            onClick={onCompleteIdea}
-            disabled={saving}
-            className="h-9 px-3.5 text-xs font-semibold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm cursor-pointer"
-            title="Idea is completed! Click if you want to reopen it"
-          >
-            <Check className="w-4 h-4" />
-            <span>Completed ✓</span>
-          </Button>
-        ) : check.allowed ? (
-          <Button
-            type="button"
-            onClick={onCompleteIdea}
-            disabled={saving}
-            className="h-9 px-4 text-xs font-bold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md animate-pulse hover:animate-none cursor-pointer"
-            title="All required formats are published! Click to finalize as Completed"
-          >
-            <Check className="w-4 h-4" />
-            <span>Complete Idea</span>
-          </Button>
-        ) : (
-          <Button
-            type="button"
-            onClick={onCompleteIdea}
-            disabled={saving}
-            variant="outline"
-            className="h-9 px-3.5 text-xs font-medium gap-1.5 border-border/80 text-muted-foreground hover:text-foreground cursor-pointer"
-            title={check.reason}
-          >
-            <Check className="w-4 h-4 opacity-40" />
-            <span>Complete Idea</span>
-          </Button>
-        )}
+        <Button
+          type="button"
+          size="sm"
+          variant={completed || check.allowed ? 'default' : 'outline'}
+          className={cn(
+            'h-8 px-2.5 text-xs gap-1',
+            (completed || check.allowed) && 'bg-emerald-600 hover:bg-emerald-700 text-white'
+          )}
+          onClick={onCompleteIdea}
+          disabled={saving}
+          title={completed ? 'Reopen this idea' : check.reason}
+        >
+          <Check className="w-3.5 h-3.5" />
+          {completed ? 'Completed' : 'Complete'}
+        </Button>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getGoogleSheet } from '@/lib/google-sheets';
 import { ideaIndexText } from '@/lib/idea-embeddings';
 import { deleteIdeaVector, replaceIdeaVector, upsertIdeaVector } from '@/lib/idea-index';
+import { deleteResearchForIdea } from '@/lib/research-index';
 import { matchesIdeaFilters } from '@/utils/ideaStatus';
 import { Idea, IdeaTypeFilter, IdeaStatusFilter } from '@/types';
 import { IdeaStatus } from '@/enums';
@@ -280,6 +281,7 @@ export async function DELETE(request: Request) {
     } catch (indexError) {
       console.warn('Idea deleted, but the search index was not updated:', indexError);
     }
+    await deleteResearchForIdea(ideaId);
 
     return NextResponse.json({ success: true, message: 'Idea deleted successfully' }, { status: 200 });
   } catch (error: any) {
