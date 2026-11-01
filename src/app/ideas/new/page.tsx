@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ArrowLeft, Loader2, Sparkles } from 'lucide-react';
 import { toast } from "sonner";
@@ -12,19 +11,17 @@ import Link from 'next/link';
 import { useAddIdeaMutation } from '@/store/api/ideasApi';
 
 export default function NewIdeaPage() {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [article, setArticle] = useState('');
   const router = useRouter();
   const [addIdea, { isLoading: isSubmitting }] = useAddIdeaMutation();
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!article.trim()) return;
 
     try {
-      const createdIdea = await addIdea({ 
-        idea: title.trim(), 
-        description: description.trim() 
+      const createdIdea = await addIdea({
+        idea: article.trim(),
       }).unwrap();
       toast.success('Idea created successfully!');
       router.push(`/ideas/${createdIdea.ideaId}`);
@@ -51,7 +48,7 @@ export default function NewIdeaPage() {
             <div>
               <CardTitle className="text-xl">Create New Idea</CardTitle>
               <CardDescription className="text-xs sm:text-sm mt-0.5">
-                Add title and notes. Your idea will be created in the Pending queue.
+                Add the article. Your idea will be created in the Pending queue.
               </CardDescription>
             </div>
           </div>
@@ -60,29 +57,16 @@ export default function NewIdeaPage() {
           <form onSubmit={handleCreate} className="space-y-4">
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-foreground">
-                Title <span className="text-destructive">*</span>
+                Article <span className="text-destructive">*</span>
               </label>
               <Input 
-                value={title} 
-                onChange={(e) => setTitle(e.target.value)} 
+                value={article} 
+                onChange={(e) => setArticle(e.target.value)} 
                 placeholder="e.g. 5 system design patterns every senior dev should know..." 
                 disabled={isSubmitting}
                 className="text-sm h-10"
                 autoFocus
                 required
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground">
-                Description
-              </label>
-              <Textarea 
-                value={description} 
-                onChange={(e) => setDescription(e.target.value)} 
-                placeholder="Add context, key bullet points, target audience, or research notes..." 
-                disabled={isSubmitting}
-                className="text-sm min-h-[140px] max-h-[360px] leading-relaxed resize-y"
               />
             </div>
 
@@ -97,7 +81,7 @@ export default function NewIdeaPage() {
               </Button>
               <Button 
                 type="submit" 
-                disabled={!title.trim() || isSubmitting} 
+                disabled={!article.trim() || isSubmitting} 
                 className="min-w-[140px] font-medium"
               >
                 {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
