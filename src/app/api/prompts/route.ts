@@ -21,7 +21,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { title, content, category } = await request.json();
+    const { title, content } = await request.json();
 
     if (!title || !content) {
       return NextResponse.json({ error: 'Title and content are required' }, { status: 400 });
@@ -37,7 +37,6 @@ export async function POST(request: Request) {
     const newPrompt = await createUserPrompt(supabase, user.id, {
       title,
       content,
-      category,
     });
 
     return NextResponse.json({ data: newPrompt }, { status: 201 });
