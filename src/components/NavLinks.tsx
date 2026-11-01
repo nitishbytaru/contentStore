@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 const links = [
   { href: '/ideas', label: 'Ideas' },
   { href: '/prompts', label: 'Prompts' },
+  { href: '/analytics', label: 'Analytics' },
 ];
 
 export function NavLinks() {
