@@ -1,4 +1,4 @@
-import { getGoogleSheet } from '@/lib/google-sheets';
+import { createClient } from '@/lib/supabase/server';
 import { replaceIdeaVector } from '@/lib/idea-index';
 import { appendResearchMessage, clearResearchMessages, listResearchMessages, ResearchMessage } from '@/lib/research-messages';
 import { clearResearchChunks, indexResearchSource, searchResearch } from '@/lib/research-index';
@@ -19,16 +19,15 @@ function readableAnswer(text: string): string {
 }
 
 async function saveBrief(ideaId: string, title: string, brief: string) {
-  const doc = await getGoogleSheet();
-  const sheet = doc.sheetsByIndex[0];
-  const rows = await sheet.getRows();
-  const row = rows.find((item) => (item.get('ideaId') || item.get('id')) === ideaId);
-  if (!row) return;
+  const supabase = await createClient();
   const notes = brief.slice(0, 4000);
-  row.set('baseArticle', notes);
-  await row.save();
+  await supabase
+    .from('ideas')
+    .update({ base_article: notes, updated_at: new Date().toISOString() })
+    .eq('id', ideaId);
+
   try {
-    await replaceIdeaVector({ ideaId, title: title || String(row.get('idea') || ''), notes });
+    await replaceIdeaVector({ ideaId, title, notes });
   } catch (error) {
     console.warn('Research brief saved, but the idea vector was not updated:', error);
   }
@@ -100,13 +99,13 @@ export async function saveResearchSource(
 }
 
 async function saveArticle(ideaId: string, article: string) {
-  const doc = await getGoogleSheet();
-  const sheet = doc.sheetsByIndex[0];
-  const rows = await sheet.getRows();
-  const row = rows.find((item) => (item.get('ideaId') || item.get('id')) === ideaId);
-  if (!row) throw new Error('Idea not found');
-  row.set('mediumArticle', article);
-  await row.save();
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('ideas')
+    .update({ medium_article: article, updated_at: new Date().toISOString() })
+    .eq('id', ideaId);
+
+  if (error) throw new Error('Idea not found: ' + error.message);
   return article;
 }
 

@@ -1,4 +1,4 @@
-import { getGoogleSheet } from '@/lib/google-sheets';
+import { createClient } from '@/lib/supabase/server';
 
 export interface IdeaCatalogEntry {
   ideaId: string;
@@ -7,18 +7,21 @@ export interface IdeaCatalogEntry {
 }
 
 /**
- * Reads idea ids, titles, and research notes from the ideas sheet.
+ * Reads idea ids, titles, and research notes from the ideas table in Supabase.
  */
 export async function listIdeaCatalog(): Promise<IdeaCatalogEntry[]> {
-  const doc = await getGoogleSheet();
-  const sheet = doc.sheetsByIndex[0];
-  const rows = await sheet.getRows();
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('ideas')
+    .select('id, idea, base_article');
 
-  return rows
+  if (error || !data) return [];
+
+  return data
     .map((row) => ({
-      ideaId: String(row.get('ideaId') || row.get('id') || ''),
-      title: String(row.get('idea') || '').trim(),
-      notes: String(row.get('baseArticle') || ''),
+      ideaId: row.id,
+      title: (row.idea || '').trim(),
+      notes: row.base_article || '',
     }))
     .filter((entry) => entry.ideaId && entry.title);
 }

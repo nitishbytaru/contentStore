@@ -91,3 +91,39 @@ CREATE POLICY "Users can delete own research messages"
     ON public.research_messages
     FOR DELETE
     USING (auth.uid() = user_id);
+
+-- 5. PROMPTS TABLE
+CREATE TABLE IF NOT EXISTS public.prompts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    category TEXT DEFAULT 'General',
+    created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_prompts_user_id ON public.prompts(user_id);
+
+ALTER TABLE public.prompts ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view prompts"
+    ON public.prompts
+    FOR SELECT
+    USING (auth.uid() = user_id OR user_id IS NULL);
+
+CREATE POLICY "Users can insert prompts"
+    ON public.prompts
+    FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update prompts"
+    ON public.prompts
+    FOR UPDATE
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete prompts"
+    ON public.prompts
+    FOR DELETE
+    USING (auth.uid() = user_id);
+

@@ -1,4 +1,4 @@
-import { getGoogleSheet } from '@/lib/google-sheets';
+import { createClient } from '@/lib/supabase/server';
 
 export async function rewriteArticleWithPrompt(ideaId: string, prompt: string, article: string) {
   const key = process.env.GROQ_API_KEY;
@@ -42,12 +42,16 @@ export async function rewriteArticleWithPrompt(ideaId: string, prompt: string, a
   const rewritten = String(body?.choices?.[0]?.message?.content || '').trim();
   if (!rewritten) throw new Error('Groq returned an empty article');
 
-  const doc = await getGoogleSheet();
-  const sheet = doc.sheetsByIndex[0];
-  const rows = await sheet.getRows();
-  const row = rows.find((item) => (item.get('ideaId') || item.get('id')) === ideaId);
-  if (!row) throw new Error('Idea not found');
-  row.set('mediumArticle', rewritten);
-  await row.save();
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('ideas')
+    .update({ medium_article: rewritten, updated_at: new Date().toISOString() })
+    .eq('id', ideaId);
+
+  if (error) {
+    console.error('Failed to save rewritten article to Supabase:', error);
+    throw new Error('Failed to save article: ' + error.message);
+  }
+
   return rewritten;
 }

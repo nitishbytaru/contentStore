@@ -1,4 +1,4 @@
-import { getGoogleSheet } from '@/lib/google-sheets';
+import { createClient } from '@/lib/supabase/server';
 
 export interface ResearchMessage {
   id: string;
@@ -8,47 +8,23 @@ export interface ResearchMessage {
   createdAt: string;
 }
 
-const HEADERS = ['id', 'ideaId', 'role', 'content', 'createdAt'];
-let ready = false;
-
-async function sheet() {
-  const doc = await getGoogleSheet();
-  let tab = doc.sheetsByTitle['ResearchMessages'];
-  if (!tab) {
-    tab = await doc.addSheet({ title: 'ResearchMessages', headerValues: HEADERS });
-    ready = true;
-  } else if (!ready) {
-    try {
-      await tab.loadHeaderRow();
-      const current = [...tab.headerValues];
-      const missing = HEADERS.filter((header) => !current.includes(header));
-      if (missing.length > 0) await tab.setHeaderRow([...current, ...missing]);
-    } catch {
-      await tab.setHeaderRow(HEADERS);
-    }
-    ready = true;
-  }
-  return tab;
-}
-
-function toMessage(row: { get: (key: string) => unknown }): ResearchMessage {
-  const role = String(row.get('role') || 'user');
-  return {
-    id: String(row.get('id') || ''),
-    ideaId: String(row.get('ideaId') || ''),
-    role: role === 'assistant' || role === 'source' ? role : 'user',
-    content: String(row.get('content') || ''),
-    createdAt: String(row.get('createdAt') || ''),
-  };
-}
-
 export async function listResearchMessages(ideaId: string): Promise<ResearchMessage[]> {
-  const tab = await sheet();
-  const rows = await tab.getRows();
-  return rows
-    .map(toMessage)
-    .filter((message) => message.ideaId === ideaId && message.id)
-    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('research_messages')
+    .select('*')
+    .eq('idea_id', ideaId)
+    .order('created_at', { ascending: true });
+
+  if (error || !data) return [];
+
+  return data.map((row) => ({
+    id: row.id,
+    ideaId: row.idea_id,
+    role: row.role,
+    content: row.content,
+    createdAt: row.created_at,
+  }));
 }
 
 export async function appendResearchMessage(
@@ -56,29 +32,41 @@ export async function appendResearchMessage(
   role: ResearchMessage['role'],
   content: string
 ): Promise<ResearchMessage> {
-  const tab = await sheet();
-  const message: ResearchMessage = {
-    id: crypto.randomUUID(),
-    ideaId,
-    role,
-    content: content.slice(0, 45000),
-    createdAt: new Date().toISOString(),
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error('User must be logged in to save research messages');
+  }
+
+  const { data, error } = await supabase
+    .from('research_messages')
+    .insert({
+      idea_id: ideaId,
+      user_id: user.id,
+      role,
+      content: content.slice(0, 45000),
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  return {
+    id: data.id,
+    ideaId: data.idea_id,
+    role: data.role,
+    content: data.content,
+    createdAt: data.created_at,
   };
-  await tab.addRow({
-    id: message.id,
-    ideaId: message.ideaId,
-    role: message.role,
-    content: message.content,
-    createdAt: message.createdAt,
-  });
-  return message;
 }
 
-export async function clearResearchMessages(ideaId: string) {
-  const tab = await sheet();
-  const rows = await tab.getRows();
-  const matches = rows.filter((row) => String(row.get('ideaId') || '') === ideaId);
-  for (let index = matches.length - 1; index >= 0; index -= 1) {
-    await matches[index].delete();
-  }
+export async function clearResearchMessages(ideaId: string): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('research_messages')
+    .delete()
+    .eq('idea_id', ideaId);
+
+  if (error) throw error;
 }

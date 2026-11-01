@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getPromptsSheet, parseRowToPrompt } from '@/lib/prompts-sheet';
+import { createClient } from '@/lib/supabase/server';
+import { updateUserPrompt } from '@/lib/supabase/prompts';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -19,16 +20,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'GROQ_API_KEY is not configured' }, { status: 500 });
     }
 
-    const sheet = await getPromptsSheet();
-    const rows = await sheet.getRows();
-    const rowToUpdate = rows.find((r) => r.get('id') === id);
+    const supabase = await createClient();
+    const { data: promptRow, error: fetchErr } = await supabase
+      .from('prompts')
+      .select('*')
+      .eq('id', id)
+      .single();
 
-    if (!rowToUpdate) {
+    if (fetchErr || !promptRow) {
       return NextResponse.json({ error: 'Prompt not found' }, { status: 404 });
     }
 
-    const title = rowToUpdate.get('title') || '';
-    const currentContent = String(rowToUpdate.get('content') || '').trim();
+    const title = promptRow.title || '';
+    const currentContent = String(promptRow.content || '').trim();
 
     if (!currentContent) {
       return NextResponse.json({ error: 'Prompt content is empty' }, { status: 400 });
@@ -63,31 +67,19 @@ export async function POST(request: Request) {
 
     const body = await response.json();
     if (!response.ok) {
-      throw new Error(body?.error?.message || 'Failed to enhance prompt with AI model');
+      throw new Error(body?.error?.message || 'Failed to enhance prompt with AI');
     }
 
-    let enhanced = String(body?.choices?.[0]?.message?.content || '').trim();
-
-    // Clean any accidental markdown fence wrapper
-    if (enhanced.startsWith('```') && enhanced.endsWith('```')) {
-      enhanced = enhanced.replace(/^```[a-zA-Z]*\n?/, '').replace(/\n?```$/, '').trim();
+    const enhancedContent = String(body?.choices?.[0]?.message?.content || '').trim();
+    if (!enhancedContent) {
+      throw new Error('AI returned empty response for enhanced prompt');
     }
 
-    if (!enhanced) {
-      throw new Error('AI returned an empty response');
-    }
+    const updated = await updateUserPrompt(supabase, id, { content: enhancedContent });
 
-    // Directly update and save to Google Sheets
-    rowToUpdate.set('content', enhanced);
-    rowToUpdate.set('updatedAt', new Date().toISOString());
-    await rowToUpdate.save();
-
-    return NextResponse.json({ data: parseRowToPrompt(rowToUpdate) }, { status: 200 });
+    return NextResponse.json({ data: updated }, { status: 200 });
   } catch (error: any) {
-    console.error('Enhance prompt error:', error);
-    return NextResponse.json(
-      { error: error?.message || 'Failed to enhance prompt' },
-      { status: 500 }
-    );
+    console.error('Error in prompt enhancement:', error);
+    return NextResponse.json({ error: error.message || 'Enhancement failed' }, { status: 500 });
   }
 }
