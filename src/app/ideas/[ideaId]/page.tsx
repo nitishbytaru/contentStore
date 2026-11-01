@@ -78,17 +78,21 @@ export default function IdeaEditor({ params }: { params: Promise<{ ideaId: strin
 
   // WORKSPACE WITH DYNAMIC TABS
   return (
-    <div className="space-y-4 w-full max-w-full min-w-0 overflow-x-hidden">
-      <IdeaEditorHeader
-        idea={idea}
-        saving={saving}
-        isArticleSelected={isArticleSelected}
-        isVideoSelected={isVideoSelected}
-        onOpenFormatModal={() => setIsFormatModalOpen(true)}
-        onSave={handleSave}
-        onCompleteIdea={handleCompleteIdea}
-        onCopyTitle={handleCopyContent}
-      />
+    <div className="w-full max-w-full min-w-0 overflow-x-hidden">
+      <div className="sticky top-0 z-40 -mx-4 md:-mx-6 -mt-6 md:-mt-8 mb-4 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="px-4 md:px-6">
+          <IdeaEditorHeader
+            idea={idea}
+            saving={saving}
+            isArticleSelected={isArticleSelected}
+            isVideoSelected={isVideoSelected}
+            onOpenFormatModal={() => setIsFormatModalOpen(true)}
+            onSave={handleSave}
+            onCompleteIdea={handleCompleteIdea}
+            onCopyTitle={handleCopyContent}
+          />
+        </div>
+      </div>
 
       {/* Main Content Area - Full width with dynamic navigation tabs */}
       <IdeaContentTabs

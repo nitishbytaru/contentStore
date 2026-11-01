@@ -71,7 +71,7 @@ Creating, renaming, or editing research updates the vector. If Qdrant is down, t
 
 One idea has three working areas:
 
-- **Research.** A chat for one idea. Paste notes or upload a PDF. The text is chunked into the Qdrant `research` collection, and the thread is stored on the `ResearchMessages` sheet. Questions go to Groq with those chunks. The latest reply is also saved in `baseArticle`, which is what marks the idea as researched. Set `GROQ_API_KEY` in `.env.local`.
+- **Research.** A chat for one idea. Paste notes or upload a PDF. The text is chunked into the Qdrant `research` collection, and the thread is stored on the `ResearchMessages` sheet. Questions go to Groq with those chunks. The latest reply is also saved in `baseArticle`, which is what marks the idea as researched. Set `GROQ_API_KEY` and `GROQ_MODEL` in `.env.local`.
 - **Article.** The Medium and Substack draft in `mediumArticle`, with drafted and published checkpoints and timestamps.
 - **Video script.** The script in `youtubeScript`. Shooting, editing, and uploaded are separate checkpoints with timestamps.
 

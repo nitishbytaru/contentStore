@@ -35,7 +35,7 @@ export async function POST(request: Request, context: { params: Promise<{ ideaId
     return NextResponse.json({ data: messages });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Research failed';
-    const status = message.includes('GROQ_API_KEY') ? 400 : 500;
+    const status = message.includes('GROQ_API_KEY') || message.includes('GROQ_MODEL') ? 400 : 500;
     return NextResponse.json({ error: message }, { status });
   }
 }

@@ -31,7 +31,7 @@ export function IdeaEditorHeader({
   const publishStatus = getIdeaPublishStatus(idea);
 
   return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 w-full min-w-0 rounded-xl border border-border/70 bg-card/80 px-2 py-1.5">
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 w-full min-w-0 min-h-14">
       <Link
         href="/ideas"
         className="inline-flex items-center text-xs font-medium text-muted-foreground hover:text-foreground transition-colors shrink-0"

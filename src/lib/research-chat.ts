@@ -5,6 +5,17 @@ import { indexResearchSource, searchResearch } from '@/lib/research-index';
 
 const SOURCE_MIN = 500;
 
+function readableAnswer(text: string): string {
+  return text
+    .replace(/\[\d+[^\]]*\]/g, '')
+    .replace(/【[^】]*】/g, '')
+    .replace(/\*\*|__|[*_`#>]+/g, '')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 async function saveBrief(ideaId: string, title: string, brief: string) {
   const doc = await getGoogleSheet();
   const sheet = doc.sheetsByIndex[0];
@@ -23,7 +34,9 @@ async function saveBrief(ideaId: string, title: string, brief: string) {
 
 async function askGroq(question: string, chunks: { sourceName: string; text: string }[], history: ResearchMessage[]) {
   const key = process.env.GROQ_API_KEY;
+  const model = process.env.GROQ_MODEL?.trim();
   if (!key) throw new Error('GROQ_API_KEY is not set');
+  if (!model) throw new Error('GROQ_MODEL is not set');
 
   const context = chunks.length
     ? chunks.map((chunk, index) => `[${index + 1}] ${chunk.sourceName}\n${chunk.text}`).join('\n\n')
@@ -41,13 +54,13 @@ async function askGroq(question: string, chunks: { sourceName: string; text: str
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
+      model,
       temperature: 0.3,
       messages: [
         {
           role: 'system',
           content:
-            'You are the research assistant for one content idea. Answer only from the supplied source chunks. If the chunks do not contain the answer, say what is missing. Keep the reply useful for a later article: claims, numbers, and quotes, each tied to the source name.',
+            'You are the research assistant for one content idea. Answer only from the supplied sources. If they do not contain the answer, say what is missing in a normal sentence. Write plain text a person can read aloud. Use short sentences. Do not use markdown, asterisks, headings, bullets, brackets, or citation markers.',
         },
         {
           role: 'user',
@@ -65,7 +78,9 @@ async function askGroq(question: string, chunks: { sourceName: string; text: str
   }
   const answer = body?.choices?.[0]?.message?.content;
   if (!answer || typeof answer !== 'string') throw new Error('Groq returned an empty reply');
-  return answer.trim();
+  const readable = readableAnswer(answer);
+  if (!readable) throw new Error('Groq returned an empty reply');
+  return readable;
 }
 
 export async function saveResearchSource(ideaId: string, sourceName: string, text: string, title = '') {
