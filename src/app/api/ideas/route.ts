@@ -6,6 +6,14 @@ import { deleteResearchForIdea } from '@/lib/research-index';
 import { matchesIdeaFilters } from '@/utils/ideaStatus';
 import { Idea, IdeaTypeFilter, IdeaStatusFilter } from '@/types';
 import { IdeaStatus } from '@/enums';
+import { createClient } from '@/lib/supabase/server';
+import {
+  fetchUserIdeas,
+  fetchUserIdeaById,
+  createUserIdea,
+  updateUserIdea,
+  deleteUserIdea,
+} from '@/lib/supabase/ideas';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,10 +40,6 @@ function indexedNotes(baseArticle: unknown, description: unknown): string {
 
 let isIdeasSheetInitialized = false;
 
-/**
- * Retrieves the Google Sheet for ideas and ensures headers and column capacity exist.
- * Uses in-memory caching so expensive resize/header operations only execute once.
- */
 async function getIdeasSheet() {
   const doc = await getGoogleSheet();
   const sheet = doc.sheetsByIndex[0];
@@ -59,34 +63,26 @@ async function getIdeasSheet() {
       const missingHeaders = HEADERS.filter(h => !currentHeaders.includes(h));
 
       if (missingHeaders.length > 0) {
-        const updatedHeaders = [...currentHeaders, ...missingHeaders];
-        if (updatedHeaders.length > (sheet.columnCount || 0)) {
-          await sheet.resize({
-            rowCount: Math.max(sheet.rowCount || 100, 100),
-            columnCount: updatedHeaders.length + 10,
-          });
-        }
-        await sheet.setHeaderRow(updatedHeaders);
+        await sheet.setHeaderRow([...currentHeaders, ...missingHeaders]);
       }
     } catch {
       await sheet.setHeaderRow(HEADERS);
     }
-
     isIdeasSheetInitialized = true;
   }
 
   return sheet;
 }
 
-/**
- * Transforms a raw Google Spreadsheet row into a typed Idea object with parsed booleans
- * and ideaId identifier.
- */
 function parseRowToIdea(row: any): Idea {
   const data: Record<string, any> = {};
   for (const header of HEADERS) {
-    const val = row.get(header) ?? '';
-    data[header] = BOOLEAN_SET.has(header) ? String(val).toLowerCase() === 'true' : val;
+    const rawVal = row.get(header);
+    if (BOOLEAN_SET.has(header)) {
+      data[header] = rawVal === true || rawVal === 'true';
+    } else {
+      data[header] = rawVal || '';
+    }
   }
   data.ideaId = String(row.get('ideaId') || row.get('id') || '');
   return data as Idea;
@@ -96,7 +92,35 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const ideaId = searchParams.get('ideaId');
+    const typeParam = searchParams.get('type') as IdeaTypeFilter | null;
+    const statusParam = searchParams.get('status') as IdeaStatusFilter | null;
 
+    // 1. Check if Supabase authenticated user exists
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      const supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        if (ideaId) {
+          const idea = await fetchUserIdeaById(supabase, user.id, ideaId);
+          if (!idea) {
+            return NextResponse.json({ error: 'Idea not found' }, { status: 404 });
+          }
+          return NextResponse.json({ data: idea }, { status: 200 });
+        }
+
+        const ideas = await fetchUserIdeas(supabase, user.id, typeParam || undefined, statusParam || undefined);
+        let filtered = ideas;
+        if (typeParam || statusParam) {
+          filtered = ideas.filter(item =>
+            matchesIdeaFilters(item, typeParam || 'all', statusParam || 'pending')
+          );
+        }
+        return NextResponse.json({ data: filtered }, { status: 200 });
+      }
+    }
+
+    // 2. Fallback to Google Sheets
     const sheet = await getIdeasSheet();
     const rows = await sheet.getRows();
 
@@ -109,10 +133,6 @@ export async function GET(request: Request) {
     }
 
     const data = rows.map(parseRowToIdea);
-
-    const typeParam = searchParams.get('type') as IdeaTypeFilter | null;
-    const statusParam = searchParams.get('status') as IdeaStatusFilter | null;
-
     let filteredData = data;
     if (typeParam || statusParam) {
       filteredData = data.filter(item =>
@@ -135,6 +155,33 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Title / Idea is required' }, { status: 400 });
     }
 
+    // 1. Supabase insert
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      const supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        const newIdea = await createUserIdea(supabase, user.id, {
+          idea,
+          description,
+          baseArticle,
+        });
+
+        try {
+          await upsertIdeaVector({
+            ideaId: newIdea.ideaId,
+            title: newIdea.idea,
+            notes: indexedNotes(newIdea.baseArticle, newIdea.description),
+          });
+        } catch (indexError) {
+          console.warn('Idea saved to Supabase, but the search index was not updated:', indexError);
+        }
+
+        return NextResponse.json({ data: newIdea }, { status: 201 });
+      }
+    }
+
+    // 2. Google Sheets insert fallback
     const sheet = await getIdeasSheet();
     const descText = description ? String(description).trim() : '';
     const generatedIdeaId = crypto.randomUUID();
@@ -151,12 +198,10 @@ export async function POST(request: Request) {
       youtubeScript: '',
     };
 
-    // Populate all boolean fields with default false
     for (const field of BOOLEAN_FIELDS) {
       newIdea[field] = false;
     }
 
-    // Default Article and Video formats to enabled
     newIdea.eligibleMedium = true;
     newIdea.eligibleSubstack = true;
     newIdea.eligibleYoutube = true;
@@ -168,13 +213,13 @@ export async function POST(request: Request) {
       await upsertIdeaVector({
         ideaId: generatedIdeaId,
         title: newIdea.idea,
-        notes: newIdea.baseArticle,
+        notes: indexedNotes(newIdea.baseArticle, newIdea.description),
       });
     } catch (indexError) {
-      console.warn('Idea saved, but the search index was not updated:', indexError);
+      console.warn('Idea saved to Sheet, but the search index was not updated:', indexError);
     }
 
-    return NextResponse.json({ data: newIdea as Idea }, { status: 201 });
+    return NextResponse.json({ data: newIdea }, { status: 201 });
   } catch (error: any) {
     console.error('Error creating idea:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -190,6 +235,29 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'ideaId is required' }, { status: 400 });
     }
 
+    // 1. Supabase update
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      const supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        const saved = await updateUserIdea(supabase, user.id, ideaId, payload);
+
+        try {
+          await replaceIdeaVector({
+            ideaId,
+            title: saved.idea,
+            notes: indexedNotes(saved.baseArticle, saved.description),
+          });
+        } catch (indexError) {
+          console.warn('Idea updated in Supabase, but the search index was not updated:', indexError);
+        }
+
+        return NextResponse.json({ data: saved }, { status: 200 });
+      }
+    }
+
+    // 2. Google Sheets update fallback
     const sheet = await getIdeasSheet();
     const rows = await sheet.getRows();
     const targetRow = rows.find(r => (r.get('ideaId') || r.get('id')) === ideaId);
@@ -213,10 +281,8 @@ export async function PUT(request: Request) {
       }
     }
 
-    // Set ideaId in target row
     targetRow.set('ideaId', ideaId);
 
-    // Handle posted status logic explicitly if passed
     if (payload.status === IdeaStatus.POSTED) {
       targetRow.set('datePosted', new Date().toISOString());
     } else if (payload.status === IdeaStatus.PENDING) {
@@ -255,6 +321,29 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'ideaId is required' }, { status: 400 });
     }
 
+    // 1. Supabase delete
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      const supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        await deleteUserIdea(supabase, user.id, ideaId);
+
+        // Concurrently purge vectors & research chunks from Qdrant
+        await Promise.allSettled([
+          deleteIdeaVector(ideaId).catch((err) =>
+            console.warn(`Failed to delete idea vector for ${ideaId}:`, err)
+          ),
+          deleteResearchForIdea(ideaId).catch((err) =>
+            console.warn(`Failed to delete research data for ${ideaId}:`, err)
+          ),
+        ]);
+
+        return NextResponse.json({ success: true, message: 'Idea and all associated data deleted successfully' }, { status: 200 });
+      }
+    }
+
+    // 2. Google Sheets delete fallback
     const sheet = await getIdeasSheet();
     const rows = await sheet.getRows();
     const targetRow = rows.find(r => (r.get('ideaId') || r.get('id')) === ideaId);
@@ -263,10 +352,8 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Idea not found' }, { status: 404 });
     }
 
-    // 1. Delete idea row from Google Sheets (removes idea, description, baseArticle, mediumArticle, youtubeScript, and status)
     await targetRow.delete();
 
-    // 2. Concurrently purge all associated vector embeddings, research chunks, and chat messages
     await Promise.allSettled([
       deleteIdeaVector(ideaId).catch((err) =>
         console.warn(`Failed to delete idea vector for ${ideaId}:`, err)

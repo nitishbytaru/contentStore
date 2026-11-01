@@ -12,18 +12,21 @@ const links = [
   { href: '/analytics', label: 'Analytics' },
 ];
 
+import { createClient } from '@/lib/supabase/client';
+
 export function NavLinks() {
   const pathname = usePathname();
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const isLoginPage = pathname === '/login';
+  const isAuthPage = pathname === '/login' || pathname === '/signup';
 
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
-      await fetch('/api/auth/logout', { method: 'POST' });
+      const supabase = createClient();
+      await supabase.auth.signOut();
       toast.success('Signed out successfully');
       setMobileMenuOpen(false);
       router.push('/login');
@@ -39,7 +42,7 @@ export function NavLinks() {
     <div className="w-full flex items-center justify-between min-w-0">
       {/* Brand Logo */}
       <Link
-        href={isLoginPage ? '#' : '/ideas'}
+        href={isAuthPage ? '#' : '/ideas'}
         onClick={() => setMobileMenuOpen(false)}
         className="font-bold text-base sm:text-lg tracking-tight shrink-0 text-foreground flex items-center gap-2 hover:opacity-90 transition-opacity min-w-0"
       >
@@ -47,7 +50,7 @@ export function NavLinks() {
         <span className="truncate">ContentStore</span>
       </Link>
 
-      {!isLoginPage && (
+      {!isAuthPage && (
         <>
           {/* Desktop Navigation Links */}
           <nav className="hidden md:flex items-center gap-1 text-sm font-medium ml-6">
