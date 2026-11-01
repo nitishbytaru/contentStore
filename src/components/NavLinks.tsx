@@ -7,7 +7,6 @@ import { LogOut, Menu, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 const links = [
-  { href: '/', label: 'Analytics' },
   { href: '/ideas', label: 'Ideas' },
   { href: '/prompts', label: 'Prompts' },
 ];
@@ -52,10 +51,7 @@ export function NavLinks() {
           {/* Desktop Navigation Links */}
           <nav className="hidden md:flex items-center gap-1 text-sm font-medium ml-6">
             {links.map(({ href, label }) => {
-              const isActive =
-                href === '/'
-                  ? pathname === '/'
-                  : pathname.startsWith(href);
+              const isActive = pathname.startsWith(href);
 
               return (
                 <Link
@@ -112,10 +108,7 @@ export function NavLinks() {
             <div className="md:hidden absolute top-14 left-0 right-0 w-full bg-background/95 backdrop-blur-xl border-b border-border/60 shadow-xl px-4 py-3 z-50 animate-in slide-in-from-top-2 duration-150">
               <div className="flex flex-col gap-1 max-w-6xl mx-auto w-full">
                 {links.map(({ href, label }) => {
-                  const isActive =
-                    href === '/'
-                      ? pathname === '/'
-                      : pathname.startsWith(href);
+                  const isActive = pathname.startsWith(href);
 
                   return (
                     <Link

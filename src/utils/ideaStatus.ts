@@ -73,7 +73,7 @@ export const hasIdeaResearch = (idea: IdeaChecklistFields): boolean => {
  * @returns `true` if published on any article channel or marked published, otherwise `false`.
  */
 export const isArticlePublished = (idea: IdeaChecklistFields): boolean => {
-  return Boolean(idea.articlePublishedDone || idea.publishedMedium || idea.publishedSubstack);
+  return isIdeaCompleted(idea) && isArticleIdea(idea);
 };
 
 /**
@@ -87,7 +87,7 @@ export const isArticlePublished = (idea: IdeaChecklistFields): boolean => {
  * @returns `true` if uploaded to YouTube or Instagram or marked uploaded, otherwise `false`.
  */
 export const isVideoPublished = (idea: IdeaChecklistFields): boolean => {
-  return Boolean(idea.videoUploadedDone || idea.publishedYoutube || idea.publishedInstagram);
+  return isIdeaCompleted(idea) && isVideoIdea(idea);
 };
 
 /**
@@ -197,31 +197,7 @@ export const isIdeaForVideos = (idea: IdeaChecklistFields): boolean => {
  * @param idea - The idea checklist object to inspect.
  * @returns An object with `allowed: true` if criteria are met, or `allowed: false` with a descriptive user-facing `reason`.
  */
-export const canCompleteIdea = (idea: IdeaChecklistFields): { allowed: boolean; reason?: string } => {
-  const isArticleRequired = Boolean(idea.eligibleMedium || idea.eligibleSubstack);
-  const isVideoRequired = Boolean(idea.eligibleYoutube || idea.eligibleInstagram);
-  const isArticlePublished = Boolean(idea.articlePublishedDone || idea.publishedMedium || idea.publishedSubstack);
-  const isVideoPublished = Boolean(idea.videoUploadedDone || idea.publishedYoutube || idea.publishedInstagram);
-
-  // If neither format was selected yet
-  if (!isArticleRequired && !isVideoRequired) {
-    return {
-      allowed: false,
-      reason: 'Please enable at least one format (Article or Video) via Configure Formats first.',
-    };
-  }
-
-  const missing: string[] = [];
-  if (isArticleRequired && !isArticlePublished) missing.push('Article');
-  if (isVideoRequired && !isVideoPublished) missing.push('Video');
-
-  if (missing.length > 0) {
-    return {
-      allowed: false,
-      reason: `Cannot complete idea yet: ${missing.join(' and ')} must be published first.`,
-    };
-  }
-
+export const canCompleteIdea = (_idea: IdeaChecklistFields): { allowed: boolean; reason?: string } => {
   return { allowed: true };
 };
 
@@ -255,10 +231,7 @@ export const getIdeaPublishStatus = (i: IdeaChecklistFields): PublishStatus => {
 
   const isArticleRequired = Boolean(i.eligibleMedium || i.eligibleSubstack);
   const isVideoRequired = Boolean(i.eligibleYoutube || i.eligibleInstagram);
-  const isArticlePublished = Boolean(i.articlePublishedDone || i.publishedMedium || i.publishedSubstack);
-  const isVideoPublished = Boolean(i.videoUploadedDone || i.publishedYoutube || i.publishedInstagram);
 
-  // Stage 1: Pending (No formats selected yet / awaiting research)
   if (!isArticleRequired && !isVideoRequired) {
     return {
       status: PublishStatusType.PENDING,
@@ -271,27 +244,10 @@ export const getIdeaPublishStatus = (i: IdeaChecklistFields): PublishStatus => {
     };
   }
 
-  const articleDone = !isArticleRequired || isArticlePublished;
-  const videoDone = !isVideoRequired || isVideoPublished;
-
-  // Ready to complete (all required published, awaiting user click on Completed button)
-  if (articleDone && videoDone) {
-    return {
-      status: PublishStatusType.READY_TO_COMPLETE,
-      label: 'Ready to Complete',
-      badgeClass: 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/25',
-      dotClass: 'bg-teal-500',
-      borderClass: 'border-l-teal-500',
-      bgClass: 'bg-teal-500/[0.02]',
-      accentGradient: 'from-teal-500/80 via-teal-400/40 to-transparent',
-    };
-  }
-
-  // Both formats in progress
-  if (isArticleRequired && isVideoRequired && !isArticlePublished && !isVideoPublished) {
+  if (isArticleRequired && isVideoRequired) {
     return {
       status: PublishStatusType.ARTICLES_AND_VIDEOS,
-      label: 'Articles & Videos',
+      label: 'Article & Video',
       badgeClass: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20',
       dotClass: 'bg-indigo-500',
       borderClass: 'border-l-indigo-500',
@@ -300,12 +256,10 @@ export const getIdeaPublishStatus = (i: IdeaChecklistFields): PublishStatus => {
     };
   }
 
-  // Article in progress
-  if (isArticleRequired && !isArticlePublished) {
-    const label = i.articleDraftedDone ? 'Article Drafted' : 'Writing Article';
+  if (isArticleRequired) {
     return {
       status: PublishStatusType.ARTICLES,
-      label,
+      label: 'Article',
       badgeClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
       dotClass: 'bg-amber-500',
       borderClass: 'border-l-amber-500',
@@ -314,17 +268,9 @@ export const getIdeaPublishStatus = (i: IdeaChecklistFields): PublishStatus => {
     };
   }
 
-  // Video in progress
-  let videoLabel = 'Writing Video';
-  if (i.videoEditingDone) {
-    videoLabel = 'Editing Done';
-  } else if (i.videoShootingDone) {
-    videoLabel = 'Shooting Done';
-  }
-
   return {
     status: PublishStatusType.VIDEOS,
-    label: videoLabel,
+    label: 'Video',
     badgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
     dotClass: 'bg-rose-500',
     borderClass: 'border-l-rose-500',

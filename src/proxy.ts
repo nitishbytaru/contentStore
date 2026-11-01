@@ -22,7 +22,7 @@ export async function proxy(request: NextRequest) {
   if (pathname === '/login') {
     if (isAuthenticated) {
       // Already authenticated -> redirect to dashboard
-      const from = request.nextUrl.searchParams.get('from') || '/';
+      const from = request.nextUrl.searchParams.get('from') || '/ideas';
       const redirectUrl = new URL(from.startsWith('/') ? from : '/', request.url);
       return NextResponse.redirect(redirectUrl);
     }

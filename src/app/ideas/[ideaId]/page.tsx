@@ -9,8 +9,6 @@ import {
   IdeaEditorHeader,
   IdeaContentTabs,
   IdeaFormatModal,
-  IdeaVideoStagesModal,
-  IdeaTimestampModal,
 } from '@/components/idea-detail';
 import { cn } from 'cn';
 
@@ -30,37 +28,11 @@ export default function IdeaEditor({ params }: { params: Promise<{ ideaId: strin
     setIsPrompterOpen,
     isFormatModalOpen,
     setIsFormatModalOpen,
-    isVideoModalOpen,
-    setIsVideoModalOpen,
-    tempShootingDone,
-    setTempShootingDone,
-    tempShootingAt,
-    setTempShootingAt,
-    tempEditingDone,
-    setTempEditingDone,
-    tempEditingAt,
-    setTempEditingAt,
-    tempUploadedDone,
-    setTempUploadedDone,
-    tempUploadedAt,
-    setTempUploadedAt,
-    editingDateKey,
-    setEditingDateKey,
-    editingDateValue,
-    setEditingDateValue,
     handleSave,
     handleTextChange,
     handleCopyContent,
     handleToggleFormat,
-    handleToggleDraftedArticle,
-    handleTogglePublishArticle,
-    handleQuickToggleShooting,
-    handleQuickToggleEditing,
-    handleQuickToggleUploaded,
-    handleSaveInlineDate,
     handleCompleteIdea,
-    handleOpenVideoModal,
-    handleSaveVideoModal,
   } = useIdeaEditor(ideaId);
 
   if (loading) {
@@ -112,16 +84,6 @@ export default function IdeaEditor({ params }: { params: Promise<{ ideaId: strin
         onTextChange={handleTextChange}
         onCopyContent={handleCopyContent}
         onOpenPrompter={() => setIsPrompterOpen(true)}
-        onOpenVideoModal={handleOpenVideoModal}
-        onToggleDraftedArticle={handleToggleDraftedArticle}
-        onTogglePublishArticle={handleTogglePublishArticle}
-        onQuickToggleShooting={handleQuickToggleShooting}
-        onQuickToggleEditing={handleQuickToggleEditing}
-        onQuickToggleUploaded={handleQuickToggleUploaded}
-        onEditDateKey={(key, currentVal) => {
-          setEditingDateKey(key);
-          setEditingDateValue(currentVal);
-        }}
         onResearchClearing={setClearingResearch}
         locked={clearingResearch}
       />
@@ -134,36 +96,6 @@ export default function IdeaEditor({ params }: { params: Promise<{ ideaId: strin
         saving={saving}
         onClose={() => setIsFormatModalOpen(false)}
         onToggleFormat={handleToggleFormat}
-      />
-
-      {/* Video Production Stages Update Modal */}
-      <IdeaVideoStagesModal
-        isOpen={isVideoModalOpen}
-        saving={saving}
-        tempShootingDone={tempShootingDone}
-        tempShootingAt={tempShootingAt}
-        tempEditingDone={tempEditingDone}
-        tempEditingAt={tempEditingAt}
-        tempUploadedDone={tempUploadedDone}
-        tempUploadedAt={tempUploadedAt}
-        onClose={() => setIsVideoModalOpen(false)}
-        onSave={handleSaveVideoModal}
-        setTempShootingDone={setTempShootingDone}
-        setTempShootingAt={setTempShootingAt}
-        setTempEditingDone={setTempEditingDone}
-        setTempEditingAt={setTempEditingAt}
-        setTempUploadedDone={setTempUploadedDone}
-        setTempUploadedAt={setTempUploadedAt}
-      />
-
-      {/* Inline Date & Time Editor Modal */}
-      <IdeaTimestampModal
-        editingDateKey={editingDateKey}
-        editingDateValue={editingDateValue}
-        saving={saving}
-        onClose={() => setEditingDateKey(null)}
-        onDateValueChange={setEditingDateValue}
-        onSaveDate={handleSaveInlineDate}
       />
 
       {/* Fullscreen Video Script Prompter */}

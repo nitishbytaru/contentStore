@@ -1,5 +1,5 @@
-import { AnalyticsDashboard } from '@/components/AnalyticsDashboard';
+import { redirect } from 'next/navigation';
 
-export default function Home() {
-  return <AnalyticsDashboard />;
+export default function HomePage() {
+  redirect('/ideas');
 }

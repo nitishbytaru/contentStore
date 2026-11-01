@@ -51,9 +51,6 @@ function getDeterministicBaselineSeconds(idea: Idea): number {
   estimatedMinutes += Math.round(mediumWords / 20);
   estimatedMinutes += Math.round(videoWords / 20);
 
-  // 2. Publication state bonus
-  if (idea.publishedMedium || idea.publishedSubstack) estimatedMinutes += 45;
-  if (idea.publishedYoutube || idea.publishedInstagram) estimatedMinutes += 60;
   if (idea.status === IdeaStatus.POSTED) estimatedMinutes += 20;
 
   // 3. Fallback deterministic baseline between 25 and 95 mins based on ID string
@@ -109,8 +106,8 @@ export function calculateTopicTimeAnalytics(ideas: Idea[]): TopicTimeAnalytics {
 
     // Stage proportions based on content and platform status
     const hasResearch = Boolean(idea.baseArticle && idea.baseArticle.trim().length > 0);
-    const hasArticle = Boolean(idea.mediumArticle && idea.mediumArticle.trim().length > 0) || idea.publishedMedium || idea.publishedSubstack;
-    const hasVideo = Boolean(idea.youtubeScript && idea.youtubeScript.trim().length > 0) || idea.publishedYoutube || idea.publishedInstagram;
+    const hasArticle = Boolean(idea.mediumArticle && idea.mediumArticle.trim().length > 0);
+    const hasVideo = Boolean(idea.youtubeScript && idea.youtubeScript.trim().length > 0);
 
     let researchWeight = hasResearch ? 2 : 1;
     let articleWeight = hasArticle ? 3 : 1;
@@ -132,12 +129,7 @@ export function calculateTopicTimeAnalytics(ideas: Idea[]): TopicTimeAnalytics {
       researchMinutes: researchMins,
       articleMinutes: articleMins,
       videoMinutes: videoMins,
-      isPublished: Boolean(
-        idea.publishedMedium || 
-        idea.publishedSubstack || 
-        idea.publishedYoutube || 
-        idea.publishedInstagram
-      ),
+      isPublished: idea.status === IdeaStatus.POSTED || idea.status === IdeaStatus.COMPLETED,
     };
   });
 

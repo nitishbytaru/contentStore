@@ -1,16 +1,13 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { 
-  Tv, FileText, Video, BookOpen, Film, Scissors, Upload, Copy, Edit3 
-} from 'lucide-react';
+import { Tv, FileText, BookOpen, Copy } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Idea } from '@/types';
 import { ResearchChat } from '@/components/idea-detail/ResearchChat';
-import { formatDateTimeDisplay, toDateTimeLocalValue } from '@/utils/dateTime';
 import { cn } from 'cn';
 
 interface ContentTabOption {
@@ -28,13 +25,6 @@ interface IdeaContentTabsProps {
   onTextChange: (field: keyof Idea, value: string) => void;
   onCopyContent: (text: string) => void;
   onOpenPrompter: () => void;
-  onOpenVideoModal: () => void;
-  onToggleDraftedArticle: () => void;
-  onTogglePublishArticle: () => void;
-  onQuickToggleShooting: () => void;
-  onQuickToggleEditing: () => void;
-  onQuickToggleUploaded: () => void;
-  onEditDateKey: (key: keyof Idea, currentVal: string) => void;
   onResearchClearing?: (clearing: boolean) => void;
   locked?: boolean;
 }
@@ -47,13 +37,6 @@ export function IdeaContentTabs({
   onTextChange,
   onCopyContent,
   onOpenPrompter,
-  onOpenVideoModal,
-  onToggleDraftedArticle,
-  onTogglePublishArticle,
-  onQuickToggleShooting,
-  onQuickToggleEditing,
-  onQuickToggleUploaded,
-  onEditDateKey,
   onResearchClearing,
   locked = false,
 }: IdeaContentTabsProps) {
@@ -147,21 +130,6 @@ export function IdeaContentTabs({
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
-                      {/* Video Stage Prompt button */}
-                      {isVideoScript && (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="default"
-                          onClick={onOpenVideoModal}
-                          className="h-7.5 px-3 text-xs font-semibold gap-1.5 bg-rose-600 hover:bg-rose-700 text-white shadow-xs cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]"
-                          title="Update Shooting, Editing, and Uploaded stages"
-                        >
-                          <Film className="h-3.5 w-3.5" />
-                          Update Video Stages
-                        </Button>
-                      )}
-
                       {isVideoScript && (
                         <Button
                           type="button"
@@ -190,239 +158,6 @@ export function IdeaContentTabs({
                     </div>
                   </div>}
 
-                  {/* Article Stage Progression Banner */}
-                  {tab.value === 'mediumArticle' && (
-                    <div className="mb-3 p-2.5 sm:p-3 rounded-xl border border-border/75 bg-muted/25 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                          Article Stages:
-                        </span>
-
-                        {/* Stage 1: Drafted */}
-                        <div
-                          className={cn(
-                            'inline-flex items-center gap-1.5 py-1 px-2.5 rounded-lg border text-xs transition-colors',
-                            idea.articleDraftedDone
-                              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-medium'
-                              : 'bg-card border-border/70 text-muted-foreground'
-                          )}
-                        >
-                          <button
-                            type="button"
-                            onClick={onToggleDraftedArticle}
-                            className="flex items-center gap-1.5 cursor-pointer hover:opacity-85 font-semibold"
-                          >
-                            <span
-                              className={cn(
-                                'w-2 h-2 rounded-full',
-                                idea.articleDraftedDone ? 'bg-emerald-500' : 'bg-muted-foreground/40'
-                              )}
-                            />
-                            <span>{idea.articleDraftedDone ? '1. Drafted ✓' : '1. Mark as Drafted'}</span>
-                          </button>
-                          {idea.articleDraftedDone && (
-                            <div className="flex items-center gap-1 pl-1.5 border-l border-border/60 text-[11px]">
-                              <span className="opacity-80">
-                                {formatDateTimeDisplay(idea.articleDraftedAt) || 'Recorded'}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  onEditDateKey('articleDraftedAt', toDateTimeLocalValue(idea.articleDraftedAt))
-                                }
-                                className="text-primary hover:underline p-0.5 ml-0.5 cursor-pointer"
-                                title="Edit date & time"
-                              >
-                                <Edit3 className="w-3 h-3" />
-                              </button>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Stage 2: Published */}
-                        <div
-                          className={cn(
-                            'inline-flex items-center gap-1.5 py-1 px-2.5 rounded-lg border text-xs transition-colors',
-                            idea.articlePublishedDone || idea.publishedMedium || idea.publishedSubstack
-                              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-medium'
-                              : 'bg-card border-border/70 text-muted-foreground'
-                          )}
-                        >
-                          <button
-                            type="button"
-                            onClick={onTogglePublishArticle}
-                            className="flex items-center gap-1.5 cursor-pointer hover:opacity-85 font-semibold"
-                          >
-                            <span
-                              className={cn(
-                                'w-2 h-2 rounded-full',
-                                idea.articlePublishedDone || idea.publishedMedium || idea.publishedSubstack
-                                  ? 'bg-emerald-500'
-                                  : 'bg-muted-foreground/40'
-                              )}
-                            />
-                            <span>
-                              {idea.articlePublishedDone || idea.publishedMedium || idea.publishedSubstack
-                                ? '2. Published ✓'
-                                : '2. Mark as Published'}
-                            </span>
-                          </button>
-                          {(idea.articlePublishedDone || idea.publishedMedium || idea.publishedSubstack) && (
-                            <div className="flex items-center gap-1 pl-1.5 border-l border-border/60 text-[11px]">
-                              <span className="opacity-80">
-                                {formatDateTimeDisplay(idea.articlePublishedAt) || 'Recorded'}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  onEditDateKey('articlePublishedAt', toDateTimeLocalValue(idea.articlePublishedAt))
-                                }
-                                className="text-primary hover:underline p-0.5 ml-0.5 cursor-pointer"
-                                title="Edit date & time"
-                              >
-                                <Edit3 className="w-3 h-3" />
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Video Stage Progression Banner */}
-                  {isVideoScript && (
-                    <div className="mb-3 p-2.5 sm:p-3 rounded-xl border border-border/75 bg-muted/25 flex flex-col md:flex-row md:items-center justify-between gap-2.5">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                          Video Stages:
-                        </span>
-
-                        {/* Stage 1: Shooting */}
-                        <div
-                          className={cn(
-                            'inline-flex items-center gap-1.5 py-1 px-2.5 rounded-lg border text-xs transition-colors',
-                            idea.videoShootingDone
-                              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-medium'
-                              : 'bg-card border-border/70 text-muted-foreground'
-                          )}
-                        >
-                          <button
-                            type="button"
-                            onClick={onQuickToggleShooting}
-                            className="flex items-center gap-1.5 cursor-pointer hover:opacity-85 font-semibold"
-                          >
-                            <Film className="w-3 h-3 opacity-70" />
-                            <span>{idea.videoShootingDone ? '1. Shooting ✓' : '1. Shooting Pending'}</span>
-                          </button>
-                          {idea.videoShootingDone && (
-                            <div className="flex items-center gap-1 pl-1.5 border-l border-border/60 text-[11px]">
-                              <span className="opacity-80">
-                                {formatDateTimeDisplay(idea.videoShootingAt) || 'Recorded'}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  onEditDateKey('videoShootingAt', toDateTimeLocalValue(idea.videoShootingAt))
-                                }
-                                className="text-primary hover:underline p-0.5 ml-0.5 cursor-pointer"
-                                title="Edit date & time"
-                              >
-                                <Edit3 className="w-3 h-3" />
-                              </button>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Stage 2: Editing */}
-                        <div
-                          className={cn(
-                            'inline-flex items-center gap-1.5 py-1 px-2.5 rounded-lg border text-xs transition-colors',
-                            idea.videoEditingDone
-                              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-medium'
-                              : 'bg-card border-border/70 text-muted-foreground'
-                          )}
-                        >
-                          <button
-                            type="button"
-                            onClick={onQuickToggleEditing}
-                            className="flex items-center gap-1.5 cursor-pointer hover:opacity-85 font-semibold"
-                          >
-                            <Scissors className="w-3 h-3 opacity-70" />
-                            <span>{idea.videoEditingDone ? '2. Editing ✓' : '2. Editing Pending'}</span>
-                          </button>
-                          {idea.videoEditingDone && (
-                            <div className="flex items-center gap-1 pl-1.5 border-l border-border/60 text-[11px]">
-                              <span className="opacity-80">
-                                {formatDateTimeDisplay(idea.videoEditingAt) || 'Recorded'}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  onEditDateKey('videoEditingAt', toDateTimeLocalValue(idea.videoEditingAt))
-                                }
-                                className="text-primary hover:underline p-0.5 ml-0.5 cursor-pointer"
-                                title="Edit date & time"
-                              >
-                                <Edit3 className="w-3 h-3" />
-                              </button>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Stage 3: Uploaded */}
-                        <div
-                          className={cn(
-                            'inline-flex items-center gap-1.5 py-1 px-2.5 rounded-lg border text-xs transition-colors',
-                            idea.videoUploadedDone || idea.publishedYoutube || idea.publishedInstagram
-                              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-medium'
-                              : 'bg-card border-border/70 text-muted-foreground'
-                          )}
-                        >
-                          <button
-                            type="button"
-                            onClick={onQuickToggleUploaded}
-                            className="flex items-center gap-1.5 cursor-pointer hover:opacity-85 font-semibold"
-                          >
-                            <Upload className="w-3 h-3 opacity-70" />
-                            <span>
-                              {idea.videoUploadedDone || idea.publishedYoutube || idea.publishedInstagram
-                                ? '3. Uploaded ✓'
-                                : '3. Upload Pending'}
-                            </span>
-                          </button>
-                          {(idea.videoUploadedDone || idea.publishedYoutube || idea.publishedInstagram) && (
-                            <div className="flex items-center gap-1 pl-1.5 border-l border-border/60 text-[11px]">
-                              <span className="opacity-80">
-                                {formatDateTimeDisplay(idea.videoUploadedAt) || 'Recorded'}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  onEditDateKey('videoUploadedAt', toDateTimeLocalValue(idea.videoUploadedAt))
-                                }
-                                className="text-primary hover:underline p-0.5 ml-0.5 cursor-pointer"
-                                title="Edit date & time"
-                              >
-                                <Edit3 className="w-3 h-3" />
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={onOpenVideoModal}
-                        className="h-7 text-xs font-semibold gap-1 text-rose-600 hover:text-rose-700 hover:bg-rose-500/10 p-1.5 shrink-0 cursor-pointer"
-                        title="Open full stages dialog"
-                      >
-                        <Film className="w-3.5 h-3.5" />
-                        Update Stages &amp; Timestamps
-                      </Button>
-                    </div>
-                  )}
 
                   <div className="relative group w-full min-w-0">
                     {tab.value === 'baseArticle' ? (

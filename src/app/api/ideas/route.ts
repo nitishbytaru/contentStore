@@ -14,17 +14,11 @@ const HEADERS = [
   'baseArticle', 'mediumArticle', 'youtubeScript',
   'eligibleMedium', 'eligibleSubstack', 'eligibleYoutube', 'eligibleInstagram',
   'ineligibleMedium', 'ineligibleSubstack', 'ineligibleYoutube', 'ineligibleInstagram',
-  'publishedMedium', 'publishedSubstack', 'publishedYoutube', 'publishedInstagram',
-  'articleDraftedDone', 'articleDraftedAt', 'articlePublishedDone', 'articlePublishedAt',
-  'videoShootingDone', 'videoShootingAt', 'videoEditingDone', 'videoEditingAt', 'videoUploadedDone', 'videoUploadedAt'
 ];
 
 const BOOLEAN_FIELDS = [
   'eligibleMedium', 'eligibleSubstack', 'eligibleYoutube', 'eligibleInstagram',
   'ineligibleMedium', 'ineligibleSubstack', 'ineligibleYoutube', 'ineligibleInstagram',
-  'publishedMedium', 'publishedSubstack', 'publishedYoutube', 'publishedInstagram',
-  'articleDraftedDone', 'articlePublishedDone',
-  'videoShootingDone', 'videoEditingDone', 'videoUploadedDone'
 ];
 
 const BOOLEAN_SET = new Set(BOOLEAN_FIELDS);
@@ -155,11 +149,6 @@ export async function POST(request: Request) {
       baseArticle: baseArticle || descText,
       mediumArticle: '',
       youtubeScript: '',
-      articleDraftedAt: '',
-      articlePublishedAt: '',
-      videoShootingAt: '',
-      videoEditingAt: '',
-      videoUploadedAt: '',
     };
 
     // Populate all boolean fields with default false

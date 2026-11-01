@@ -1,6 +1,6 @@
 # ContentStore
 
-ContentStore is a personal content operating system. It tracks an idea from a title, through research, an article draft, and a video script, until the piece is published. Google Sheets is the record of ideas and prompts. A local Qdrant index is used only to find similar ideas before a new one is created.
+ContentStore is a personal content operating system. It keeps an idea title, the research conversation, an article draft, and a video script. Google Sheets is the record of ideas and prompts. A local Qdrant index is used only to find similar ideas before a new one is created.
 
 The planned AI architecture in [AI_INTEGRATION_README.md](./AI_INTEGRATION_README.md) is not what the app runs today. The live AI feature is **Scan through ideas**.
 
@@ -33,25 +33,15 @@ Open [http://localhost:3000](http://localhost:3000). Sign in with `APP_PASSWORD`
 
 Every page except `/login` and `/api/auth` requires a session cookie (`cs_auth_session`). The password is checked on the server. A normal session lasts 30 days. Remember me lasts 90 days. Sign out clears the cookie.
 
-## Analytics (`/`)
-
-The home page reads every idea and summarizes the pipeline:
-
-- How many ideas exist, how many have research, and how many are in the article or video tracks
-- A conversion funnel from the idea pool through research, a chosen format, and a published piece
-- Article and video stage counts, and how long those stages took when timestamps were recorded
-
-Nothing on this page writes data.
-
 ## Ideas (`/ideas`)
 
-The ideas list is the first worksheet in the Google Sheet. Each row is one idea: title, research (`baseArticle`), article draft (`mediumArticle`), video script (`youtubeScript`), platform flags, and stage timestamps.
+The ideas list is the first worksheet in the Google Sheet. Each row is one idea: title, research (`baseArticle`), article draft (`mediumArticle`), video script (`youtubeScript`), and which formats are turned on.
 
 The list can be searched and filtered by type (all, research, article, video) and by pending or completed. A card can be renamed, copied, or deleted. Deleting a row also removes its vector from Qdrant.
 
 A mobile timer on this page is a local rehearsal clock. It does not change the sheet.
 
-New ideas are created eligible for Medium, Substack, YouTube, and Instagram, with status `pending`. An idea is completed when its required article and video stages are published and you mark it complete. Completed ideas use status `posted` or `completed`.
+New ideas are created eligible for Medium, Substack, YouTube, and Instagram, with status `pending`. **Complete** marks the idea posted. Completed ideas use status `posted` or `completed`.
 
 ### Create an idea (`/ideas/new`)
 
@@ -72,10 +62,10 @@ Creating, renaming, or editing research updates the vector. If Qdrant is down, t
 One idea has three working areas:
 
 - **Research.** A chat for one idea. Paste notes or upload a PDF. The text is chunked into the Qdrant `research` collection, and the thread is stored on the `ResearchMessages` sheet. Questions go to Groq with those chunks. The latest reply is also saved in `baseArticle`, which is what marks the idea as researched. Set `GROQ_API_KEY` and `GROQ_MODEL` in `.env.local`.
-- **Article.** The Medium and Substack draft in `mediumArticle`, with drafted and published checkpoints and timestamps.
-- **Video script.** The script in `youtubeScript`. Shooting, editing, and uploaded are separate checkpoints with timestamps.
+- **Article.** The Medium and Substack draft in `mediumArticle`.
+- **Video script.** The script in `youtubeScript`.
 
-**Configure Formats** turns the article tabs and the video tab on or off. The article track follows Medium and Substack. The video track follows YouTube and Instagram. **Save** writes the open idea back to the sheet. **Complete Idea** closes it once every enabled track is published.
+**Configure Formats** turns the article tab and the video tab on or off. The article track follows Medium and Substack. The video track follows YouTube and Instagram. **Save** writes the open idea back to the sheet. **Complete** marks the idea posted.
 
 The video script can open a full-screen teleprompter. It scrolls the script, and you can change speed, font size, mirroring, and an eye line. The prompter does not record audio and does not write to the sheet.
 
@@ -89,7 +79,7 @@ You can search, filter by category, create a category, and add, edit, copy, or d
 
 | Data | Store |
 | :--- | :--- |
-| Ideas, research, drafts, scripts, stage flags | First worksheet of the Google Sheet |
+| Ideas, research, drafts, scripts, format flags | First worksheet of the Google Sheet |
 | Prompts | `Prompts` worksheet |
 | Prompt categories | `PromptCategories` worksheet |
 | Similar-idea vectors | Qdrant collection `ideas` |

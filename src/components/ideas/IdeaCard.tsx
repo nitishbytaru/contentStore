@@ -105,48 +105,18 @@ export function IdeaCard({
                       Needs Research
                     </Link>
                   )}
-                  {Boolean(idea.eligibleMedium || idea.eligibleSubstack) && (() => {
-                    const isPub = Boolean(idea.articlePublishedDone || idea.publishedMedium || idea.publishedSubstack);
-                    const isDraft = Boolean(idea.articleDraftedDone || (idea.mediumArticle && idea.mediumArticle.trim()));
-                    return (
-                      <span
-                        className={cn(
-                          'inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium border',
-                          isPub
-                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25'
-                            : isDraft
-                            ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25'
-                            : 'bg-muted text-muted-foreground border-border/70'
-                        )}
-                      >
-                        <FileText className="w-3 h-3 shrink-0" />
-                        Article: {isPub ? 'Published ✓' : isDraft ? 'Drafted' : 'Drafting'}
-                      </span>
-                    );
-                  })()}
-                  {Boolean(idea.eligibleYoutube || idea.eligibleInstagram) && (() => {
-                    const isUploaded = Boolean(idea.videoUploadedDone || idea.publishedYoutube || idea.publishedInstagram);
-                    let stageLabel = 'Scripting';
-                    if (isUploaded) stageLabel = 'Uploaded ✓';
-                    else if (idea.videoEditingDone) stageLabel = 'Editing Done';
-                    else if (idea.videoShootingDone) stageLabel = 'Shooting Done';
-
-                    return (
-                      <span
-                        className={cn(
-                          'inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium border',
-                          isUploaded
-                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25'
-                            : (idea.videoEditingDone || idea.videoShootingDone)
-                            ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25 font-semibold'
-                            : 'bg-muted text-muted-foreground border-border/70'
-                        )}
-                      >
-                        <Video className="w-3 h-3 shrink-0" />
-                        Video: {stageLabel}
-                      </span>
-                    );
-                  })()}
+                  {Boolean(idea.eligibleMedium || idea.eligibleSubstack) && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium border bg-muted text-muted-foreground border-border/70">
+                      <FileText className="w-3 h-3 shrink-0" />
+                      Article
+                    </span>
+                  )}
+                  {Boolean(idea.eligibleYoutube || idea.eligibleInstagram) && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium border bg-muted text-muted-foreground border-border/70">
+                      <Video className="w-3 h-3 shrink-0" />
+                      Video
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="shrink-0 pt-0.5">

@@ -32,23 +32,9 @@ export interface Idea {
   ineligibleSubstack: boolean;
   ineligibleYoutube: boolean;
   ineligibleInstagram: boolean;
-  publishedMedium: boolean;
-  publishedSubstack: boolean;
-  publishedYoutube: boolean;
-  publishedInstagram: boolean;
   baseArticle: string;
   mediumArticle: string;
   youtubeScript: string;
-  articleDraftedDone?: boolean;
-  articleDraftedAt?: string;
-  articlePublishedDone?: boolean;
-  articlePublishedAt?: string;
-  videoShootingDone?: boolean;
-  videoShootingAt?: string;
-  videoEditingDone?: boolean;
-  videoEditingAt?: string;
-  videoUploadedDone?: boolean;
-  videoUploadedAt?: string;
 }
 
 /**
