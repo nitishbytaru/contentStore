@@ -16,7 +16,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       closeButton
       duration={4000}
       offset="16px"
-      mobileOffset={{ bottom: "16px", right: "16px", left: "auto", top: "auto" }}
+      mobileOffset={{ bottom: "16px", right: "16px", left: "16px" }}
       icons={{
         success: (
           <CircleCheckIcon className="size-4 text-white shrink-0" />
