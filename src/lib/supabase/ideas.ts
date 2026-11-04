@@ -82,24 +82,35 @@ export async function fetchUserIdeaById(supabase: SupabaseClient, userId: string
 export async function createUserIdea(
   supabase: SupabaseClient,
   userId: string,
-  params: { idea: string; description?: string; baseArticle?: string }
+  params: {
+    idea: string;
+    description?: string;
+    baseArticle?: string;
+    /** Content formats to enable. Defaults to both article and video. */
+    formats?: { article: boolean; video: boolean };
+    /** Create the idea already marked as completed (posted). */
+    completed?: boolean;
+  }
 ): Promise<Idea> {
+  const article = params.formats?.article ?? true;
+  const video = params.formats?.video ?? true;
   const newRow = {
     user_id: userId,
     idea: params.idea.trim(),
     description: (params.description || '').trim(),
-    status: 'pending',
+    status: params.completed ? 'posted' : 'pending',
+    date_posted: params.completed ? new Date().toISOString() : null,
     base_article: params.baseArticle || params.description || '',
     medium_article: '',
     youtube_script: '',
-    eligible_medium: true,
-    eligible_substack: true,
-    ineligible_medium: false,
-    ineligible_substack: false,
-    eligible_youtube: true,
-    eligible_instagram: true,
-    ineligible_youtube: false,
-    ineligible_instagram: false,
+    eligible_medium: article,
+    eligible_substack: article,
+    ineligible_medium: !article,
+    ineligible_substack: !article,
+    eligible_youtube: video,
+    eligible_instagram: video,
+    ineligible_youtube: !video,
+    ineligible_instagram: !video,
   };
 
   const { data, error } = await supabase
