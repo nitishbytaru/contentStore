@@ -19,7 +19,7 @@ async function callTelegram(method: string, payload: Record<string, unknown>) {
 }
 
 /** Splits text into chunks that fit Telegram's 4096-char limit, preferring line breaks. */
-export function splitMessage(text: string, limit = MAX_MESSAGE_LENGTH): string[] {
+function splitMessage(text: string, limit = MAX_MESSAGE_LENGTH): string[] {
   const chunks: string[] = [];
   let rest = text.trim();
   while (rest.length > limit) {

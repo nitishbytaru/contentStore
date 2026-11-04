@@ -137,55 +137,6 @@ export const matchesIdeaFilters = (
 };
 
 /**
- * Identifies whether an idea is in Stage 1: Pending (Unconfigured).
- *
- * An idea is in the initial pending state when it is not yet completed and
- * neither Article nor Video deliverables have been selected yet (awaiting
- * initial research submission and format decisions).
- *
- * @param idea - The idea checklist object to evaluate.
- * @returns `true` if awaiting initial format selection and research, otherwise `false`.
- */
-export const isIdeaPending = (idea: IdeaChecklistFields): boolean => {
-  if (isIdeaCompleted(idea)) return false;
-  const isArticleRequired = Boolean(idea.eligibleMedium || idea.eligibleSubstack);
-  const isVideoRequired = Boolean(idea.eligibleYoutube || idea.eligibleInstagram);
-  return !isArticleRequired && !isVideoRequired;
-};
-
-/**
- * Identifies whether an idea is in Stage 2: Articles in Progress.
- *
- * An idea is in this stage if the user configured an article deliverable
- * (Medium or Substack) and the article has not yet been published.
- *
- * @param idea - The idea checklist object to evaluate.
- * @returns `true` if writing/drafting an article is currently in progress, otherwise `false`.
- */
-export const isIdeaForArticles = (idea: IdeaChecklistFields): boolean => {
-  if (isIdeaCompleted(idea)) return false;
-  const isArticleRequired = Boolean(idea.eligibleMedium || idea.eligibleSubstack);
-  const isArticlePub = isArticlePublished(idea);
-  return isArticleRequired && !isArticlePub;
-};
-
-/**
- * Identifies whether an idea is in Stage 3: Videos in Progress.
- *
- * An idea is in this stage if the user configured a video deliverable
- * (YouTube or Instagram) and the video has not yet been uploaded/published.
- *
- * @param idea - The idea checklist object to evaluate.
- * @returns `true` if video scripting, shooting, or editing is in progress, otherwise `false`.
- */
-export const isIdeaForVideos = (idea: IdeaChecklistFields): boolean => {
-  if (isIdeaCompleted(idea)) return false;
-  const isVideoRequired = Boolean(idea.eligibleYoutube || idea.eligibleInstagram);
-  const isVideoPub = isVideoPublished(idea);
-  return isVideoRequired && !isVideoPub;
-};
-
-/**
  * Validates whether all mandatory publication requirements are satisfied
  * before an idea can be marked as fully completed.
  *

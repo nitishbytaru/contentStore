@@ -6,4 +6,3 @@ export interface PromptItem {
   updatedAt: string;
 }
 
-export type CreatePromptInput = Omit<PromptItem, 'id' | 'createdAt' | 'updatedAt'>;

@@ -5,14 +5,12 @@ export interface IdeasUIState {
   searchQuery: string;
   typeFilter: IdeaTypeFilter;
   statusFilter: IdeaStatusFilter;
-  activeTab: string;
 }
 
 const initialState: IdeasUIState = {
   searchQuery: '',
   typeFilter: 'all',
   statusFilter: 'pending',
-  activeTab: 'pending',
 };
 
 const ideasSlice = createSlice({
@@ -28,11 +26,8 @@ const ideasSlice = createSlice({
     setStatusFilter: (state, action: PayloadAction<IdeaStatusFilter>) => {
       state.statusFilter = action.payload;
     },
-    setActiveTab: (state, action: PayloadAction<string>) => {
-      state.activeTab = action.payload;
-    },
   },
 });
 
-export const { setSearchQuery, setTypeFilter, setStatusFilter, setActiveTab } = ideasSlice.actions;
+export const { setSearchQuery, setTypeFilter, setStatusFilter } = ideasSlice.actions;
 export default ideasSlice.reducer;

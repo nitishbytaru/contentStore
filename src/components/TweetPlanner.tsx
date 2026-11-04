@@ -14,10 +14,8 @@ import {
   useUpdateIdeaMutation, 
   useDeleteIdeaMutation 
 } from '@/store/api/ideasApi';
-import { Idea } from '@/types';
 import { RootState, AppDispatch } from '@/store';
 import { matchesIdeaFilters } from '@/utils/ideaStatus';
-import { MobileTimer } from '@/components/MobileTimer';
 import {
   IdeaCard,
   IdeaFilterBar,
@@ -148,8 +146,6 @@ export function IdeasPlanner() {
         onNewIdea={() => router.push('/ideas/new')}
       />
 
-      {/* Mobile-Only Session Timer */}
-      <MobileTimer />
 
       {/* Two-Group Filter Controls */}
       <IdeaFilterBar
@@ -210,4 +206,3 @@ export function IdeasPlanner() {
   );
 }
 
-export const TweetPlanner = IdeasPlanner;
