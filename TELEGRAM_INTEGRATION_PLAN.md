@@ -1,6 +1,6 @@
 # Telegram Bot Integration Plan ("ContentStore" bot)
 
-Status: **Planned, not started** (saved 2026-11-03)
+Status: **Implemented** (2026-11-04) — needs env keys, SQL migration and webhook registration
 
 ## Goal
 

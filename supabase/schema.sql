@@ -126,3 +126,24 @@ CREATE POLICY "Users can delete prompts"
     FOR DELETE
     USING (auth.uid() = user_id);
 
+
+-- Telegram bot account links (chat_id <-> user_id)
+CREATE TABLE IF NOT EXISTS public.telegram_links (
+    user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    chat_id BIGINT UNIQUE,
+    link_code TEXT UNIQUE,
+    code_expires_at TIMESTAMPTZ,
+    linked_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT now() NOT NULL
+);
+
+ALTER TABLE public.telegram_links ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own telegram link"
+    ON public.telegram_links FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own telegram link"
+    ON public.telegram_links FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own telegram link"
+    ON public.telegram_links FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own telegram link"
+    ON public.telegram_links FOR DELETE USING (auth.uid() = user_id);
