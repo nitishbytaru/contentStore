@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { replaceIdeaVector } from '@/lib/idea-index';
 import { appendResearchMessage, clearResearchMessages, listResearchMessages, ResearchMessage } from '@/lib/research-messages';
 import { clearResearchChunks, indexResearchSource, searchResearch } from '@/lib/research-index';
+import { guardedSystemPrompt, isOutOfScope, OUT_OF_SCOPE, OutOfScopeError } from '@/lib/llm-guard';
 
 const NO_CONTEXT = 'I have no context. Please add context.';
 const OUTSIDE_CONTEXT = 'I can only answer from the context you added. That question is outside it.';
@@ -53,8 +54,10 @@ async function askGroq(question: string, chunks: { sourceName: string; text: str
       messages: [
         {
           role: 'system',
-          content:
-            'You answer from the provided context excerpts (notes and documents uploaded by the user). Understand summaries, overviews, and questions related to the content. If the question is completely unrelated and cannot be answered from the excerpts, reply with only: I can only answer from the context you added. That question is outside it. When answering, write plain, clear, and helpful sentences without markdown formatting, bullets, asterisks, or citation markers.',
+          content: guardedSystemPrompt(
+            'You are the research assistant for one content idea. Answer the question using ONLY the provided context excerpts (notes and documents the user added). Summaries, overviews, comparisons and explanations of that content are fine. Do not add facts from your own knowledge, and do not answer questions the excerpts do not cover, even if you know the answer. Write plain, clear sentences without markdown formatting, bullets, asterisks, or citation markers.',
+            OUTSIDE_CONTEXT
+          ),
         },
         {
           role: 'user',
@@ -70,6 +73,7 @@ async function askGroq(question: string, chunks: { sourceName: string; text: str
   }
   const answer = body?.choices?.[0]?.message?.content;
   if (!answer || typeof answer !== 'string') throw new Error('Groq returned an empty reply');
+  if (isOutOfScope(answer)) return OUTSIDE_CONTEXT;
   const readable = readableAnswer(answer);
   if (!readable) throw new Error('Groq returned an empty reply');
   return readable;
@@ -146,8 +150,9 @@ export async function generateArticleFromResearch(ideaId: string) {
       messages: [
         {
           role: 'system',
-          content:
-            'Write a generic article from the conversation. Use only what the person and the assistant said. Write plain paragraphs a reader can follow. Use normal sentences. Do not use markdown, asterisks, headings, bullets, or citation markers.',
+          content: guardedSystemPrompt(
+            `Write an article from this research conversation. Use only the facts the person and the assistant stated in it; do not add facts from your own knowledge. Skip any exchange where the assistant declined to answer. If the conversation contains no usable research material for an article, reply with exactly: ${OUT_OF_SCOPE}. Write plain paragraphs a reader can follow, in normal sentences. Do not use markdown, asterisks, headings, bullets, or citation markers.`
+          ),
         },
         { role: 'user', content: transcript },
       ],
@@ -158,7 +163,11 @@ export async function generateArticleFromResearch(ideaId: string) {
   if (!response.ok) {
     throw new Error(body?.error?.message || 'Groq request failed');
   }
-  const article = readableAnswer(String(body?.choices?.[0]?.message?.content || ''));
+  const raw = String(body?.choices?.[0]?.message?.content || '');
+  if (isOutOfScope(raw)) {
+    throw new OutOfScopeError('The research conversation has no material to write an article from. Add context and ask questions about it first.');
+  }
+  const article = readableAnswer(raw);
   if (!article) throw new Error('Groq returned an empty article');
   return saveArticle(ideaId, article);
 }

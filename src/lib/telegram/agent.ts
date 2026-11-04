@@ -1,5 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { executeTool, siteUrl, toolDefinitions } from '@/lib/telegram/tools';
+import { guardedSystemPrompt, isOutOfScope, OUT_OF_SCOPE_MESSAGE } from '@/lib/llm-guard';
 
 const MAX_ROUNDS = 5;
 
@@ -13,8 +14,9 @@ type ChatMessage = {
 function systemPrompt() {
   const today = new Date().toISOString().slice(0, 10);
   const site = siteUrl();
-  return [
+  const task = [
     `You are ContentStore, a Telegram assistant for a content creator. Today is ${today}.`,
+    "Your task: answer questions about the user's own ContentStore data (ideas and saved prompts) using the tools, create new ideas when asked, and explain what you can do. Greetings, thanks and 'what can you do' are fine to answer briefly.",
     'The person chatting is the verified owner of this account, so share any of their data they ask for: titles, status, stage, formats, platforms, dates, descriptions, research notes, article drafts, video scripts, links, ids and saved prompts.',
     'Always use the tools to get data. Never guess numbers, titles or content.',
     "'Pending' means not completed yet; 'completed' means posted. Stages: Pending (no format chosen), Article, Video, Article & Video, Completed.",
@@ -24,8 +26,11 @@ function systemPrompt() {
     'Editing or deleting: you CANNOT update, rename, change the stage/status of, or delete an EXISTING idea. If the user asks for that, politely decline, find the idea with search_ideas (or list_ideas), and give them the direct link to that idea on the website so they can do it there. If you cannot identify the idea, give them ' +
       `${site}/ideas instead.`,
     '',
+    'Questions that use the content of their ideas are in scope (e.g. "summarize the research for my RAG idea"). Questions that merely mention a topic but are not about their ContentStore data are out of scope (e.g. "who is the president", "what is RAG", "write me a poem").',
+    '',
     'Reply in plain text suitable for a chat app. No markdown tables, no bold/italics markers. Simple numbered or dash lists are fine. Include links as plain URLs.',
   ].join('\n');
+  return guardedSystemPrompt(task);
 }
 
 async function groqChat(messages: ChatMessage[], withTools: boolean) {
@@ -53,6 +58,7 @@ async function groqChat(messages: ChatMessage[], withTools: boolean) {
 }
 
 function cleanReply(text: string): string {
+  if (isOutOfScope(text)) return OUT_OF_SCOPE_MESSAGE;
   return text.replace(/\*\*|__/g, '').replace(/\n{3,}/g, '\n\n').trim();
 }
 

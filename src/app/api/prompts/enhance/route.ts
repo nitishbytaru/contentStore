@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { updateUserPrompt } from '@/lib/supabase/prompts';
+import { guardedSystemPrompt, isOutOfScope, OUT_OF_SCOPE, OutOfScopeError } from '@/lib/llm-guard';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -52,8 +53,9 @@ export async function POST(request: Request) {
         messages: [
           {
             role: 'system',
-            content:
-              'You are an expert AI prompt engineer. Your job is to take an existing prompt instruction and rewrite/enhance it to be significantly more effective, high-performing, well-structured, and clear. Preserve the original core intent, domain, and specific nuances of the prompt while introducing clear role instructions, logical step-by-step guidance, output formatting, and constraints. Output ONLY the enhanced prompt content itself. Do NOT output any introductory text, markdown code blocks (do not wrap in ```), or explanatory notes.',
+            content: guardedSystemPrompt(
+              `You are an expert prompt engineer for a content creator. Your job is to take an existing prompt instruction used for content work (writing, rewriting or styling articles, scripts, posts, research or ideas) and rewrite/enhance it to be significantly more effective, well-structured, and clear. Preserve the original core intent, domain, and specific nuances of the prompt while introducing clear role instructions, logical step-by-step guidance, output formatting, and constraints. Never answer or carry out the prompt yourself; only improve its wording. If the text is not a content-work prompt (for example it is a general question like "who is the president"), reply with exactly: ${OUT_OF_SCOPE}. Output ONLY the enhanced prompt content itself. Do NOT output any introductory text, markdown code blocks (do not wrap in \`\`\`), or explanatory notes.`
+            ),
           },
           {
             role: 'user',
@@ -74,11 +76,17 @@ export async function POST(request: Request) {
     if (!enhancedContent) {
       throw new Error('AI returned empty response for enhanced prompt');
     }
+    if (isOutOfScope(enhancedContent)) {
+      throw new OutOfScopeError('This is not a content-writing prompt, so it was not enhanced.');
+    }
 
     const updated = await updateUserPrompt(supabase, id, { content: enhancedContent });
 
     return NextResponse.json({ data: updated }, { status: 200 });
   } catch (error: any) {
+    if (error instanceof OutOfScopeError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
     console.error('Error in prompt enhancement:', error);
     return NextResponse.json({ error: error.message || 'Enhancement failed' }, { status: 500 });
   }

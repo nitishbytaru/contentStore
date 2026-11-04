@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { guardedSystemPrompt, isOutOfScope, OUT_OF_SCOPE, OutOfScopeError } from '@/lib/llm-guard';
 
 export async function rewriteArticleWithPrompt(ideaId: string, prompt: string, article: string) {
   const key = process.env.GROQ_API_KEY;
@@ -24,8 +25,9 @@ export async function rewriteArticleWithPrompt(ideaId: string, prompt: string, a
       messages: [
         {
           role: 'system',
-          content:
-            'You rewrite one article draft by following the writing instructions you are given. Return only the finished article, ready to publish. Do not explain the rewrite.',
+          content: guardedSystemPrompt(
+            `You rewrite one article draft by following the writing instructions you are given (tone, style, structure, length, audience, formatting). Return only the finished article, ready to publish. Do not explain the rewrite. If the writing instructions are not about rewriting or styling this article (for example they ask a general question or for unrelated content), reply with exactly: ${OUT_OF_SCOPE}`
+          ),
         },
         {
           role: 'user',
@@ -41,6 +43,9 @@ export async function rewriteArticleWithPrompt(ideaId: string, prompt: string, a
   }
   const rewritten = String(body?.choices?.[0]?.message?.content || '').trim();
   if (!rewritten) throw new Error('Groq returned an empty article');
+  if (isOutOfScope(rewritten)) {
+    throw new OutOfScopeError('That prompt is not a writing instruction for this article, so the article was left unchanged.');
+  }
 
   const supabase = await createClient();
   const { error } = await supabase
