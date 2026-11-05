@@ -4,6 +4,8 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner"
 import ReduxProvider from "@/components/ReduxProvider";
 import { SiteHeader } from "@/components/SiteHeader";
+import { BlockingOverlay } from "@/components/BlockingOverlay";
+import { APP_SHELL_ID } from "@/lib/app-shell";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,12 +34,16 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans w-full max-w-full overflow-x-hidden">
         <ReduxProvider>
-        <SiteHeader />
-        <main className="flex-1 w-full max-w-full overflow-x-hidden">
-          <div className="max-w-6xl mx-auto w-full px-4 md:px-6 py-6 md:py-8 box-border min-w-0">
-            {children}
-          </div>
-        </main>
+        {/* display:contents keeps the body flex layout; BlockingOverlay marks this inert during deletes */}
+        <div id={APP_SHELL_ID} className="contents">
+          <SiteHeader />
+          <main className="flex-1 w-full max-w-full overflow-x-hidden">
+            <div className="max-w-6xl mx-auto w-full px-4 md:px-6 py-6 md:py-8 box-border min-w-0">
+              {children}
+            </div>
+          </main>
+        </div>
+        <BlockingOverlay />
         <Toaster />
         </ReduxProvider>
       </body>

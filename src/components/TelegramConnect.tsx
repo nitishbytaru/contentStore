@@ -3,6 +3,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { BotMessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
+import { useDispatch } from 'react-redux';
+import { endBlocking, startBlocking } from '@/store/slices/uiSlice';
 
 const POLL_INTERVAL_MS = 3000;
 const POLL_TIMEOUT_MS = 10 * 60 * 1000;
@@ -10,6 +12,7 @@ const POLL_TIMEOUT_MS = 10 * 60 * 1000;
 export function TelegramConnect({ className = '', onDone }: { className?: string; onDone?: () => void }) {
   const [linked, setLinked] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
+  const dispatch = useDispatch();
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const stopPolling = () => {
@@ -79,6 +82,8 @@ export function TelegramConnect({ className = '', onDone }: { className?: string
 
   const disconnect = async () => {
     if (!window.confirm('Disconnect Telegram from your ContentStore account?')) return;
+    const task = 'Disconnecting Telegram…';
+    dispatch(startBlocking(task));
     try {
       setBusy(true);
       const res = await fetch('/api/telegram/link', { method: 'DELETE' });
@@ -90,6 +95,7 @@ export function TelegramConnect({ className = '', onDone }: { className?: string
       const error = err instanceof Error ? err : new Error(String(err));
       toast.error(error.message || 'Failed to disconnect Telegram');
     } finally {
+      dispatch(endBlocking(task));
       setBusy(false);
     }
   };
