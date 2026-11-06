@@ -6,6 +6,7 @@ import ReduxProvider from "@/components/ReduxProvider";
 import { SiteHeader } from "@/components/SiteHeader";
 import { BlockingOverlay } from "@/components/BlockingOverlay";
 import { APP_SHELL_ID } from "@/lib/app-shell";
+import { Analytics } from "@vercel/analytics/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,6 +47,7 @@ export default function RootLayout({
         <BlockingOverlay />
         <Toaster />
         </ReduxProvider>
+        <Analytics />
       </body>
     </html>
   );
