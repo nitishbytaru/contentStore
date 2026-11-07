@@ -1,11 +1,13 @@
 /**
- * Steps of the onboarding product tour.
+ * Steps of the onboarding product tour, grouped into short sections that can be skipped.
  *
  * - `route`: 'ideas' is /ideas, 'editor' is the sample idea's editor page.
  * - `target`: value of a `data-tour` attribute. Missing or hidden targets fall back
  *   to a centred card.
  * - `advance`: 'next' shows a Next button; 'click' waits for a click on the target;
  *   { signal } waits for a component to dispatch tourSignal(signal) after an action succeeds.
+ * - `needs`: sample data this step depends on. When the user skips ahead to it, the
+ *   tour prepares that data first (see /api/onboarding/sample/prepare).
  */
 
 export type TourRoute = 'ideas' | 'editor';
@@ -18,239 +20,328 @@ export type TourSignal =
   | 'prompter-opened'
   | 'prompter-closed';
 
+export type TourNeed = 'context' | 'article';
+
+export type TourSectionId = 'ideas' | 'research' | 'ask' | 'article' | 'video' | 'wrap-up';
+
+export interface TourSection {
+  id: TourSectionId;
+  title: string;
+}
+
 export interface TourStep {
   id: string;
+  section: TourSectionId;
   route: TourRoute;
   target?: string;
   title: string;
   body: string;
   advance: 'next' | 'click' | { signal: TourSignal };
-  /** Hint shown under the body while the tour waits for the user. */
+  /** Short instruction shown while the tour waits for the user. */
   waitingHint?: string;
+  /** Shown with the tracing-border loader while the awaited action runs. */
+  busyText?: string;
+  needs?: TourNeed;
+  /** data-tour id of an editor tab to switch to when this step starts (if not already open). */
+  openTab?: 'tab-baseArticle' | 'tab-mediumArticle';
 }
 
+export const TOUR_SECTIONS: TourSection[] = [
+  { id: 'ideas', title: 'Ideas' },
+  { id: 'research', title: 'Research' },
+  { id: 'ask', title: 'Ask AI' },
+  { id: 'article', title: 'Article' },
+  { id: 'video', title: 'Video' },
+  { id: 'wrap-up', title: 'Wrap-up' },
+];
+
 export const TOUR_STEPS: TourStep[] = [
+  // 1. Ideas
   {
     id: 'sample-idea',
+    section: 'ideas',
     route: 'ideas',
     target: 'sample-idea',
-    title: 'Meet your first idea',
-    body: 'Every piece of content starts as an idea. We added one for you so you can try the whole flow without writing anything yourself.',
+    title: 'Your first idea',
+    body: 'We added a sample so you can try everything.',
     advance: 'next',
   },
   {
     id: 'filters',
+    section: 'ideas',
     route: 'ideas',
     target: 'idea-filters',
-    title: 'Track every stage',
-    body: 'Filter ideas by stage (research, article, video) and switch between pending and completed work.',
+    title: 'Track progress',
+    body: 'Filter ideas by stage and status.',
     advance: 'next',
   },
   {
     id: 'new-idea',
+    section: 'ideas',
     route: 'ideas',
     target: 'new-idea',
-    title: 'Add your own ideas here',
-    body: 'When you add a new idea, ContentStore checks your existing ideas first so you never write the same thing twice. We will come back to this at the end.',
+    title: 'Add your own',
+    body: 'Create ideas here. Duplicates get flagged.',
     advance: 'next',
   },
   {
     id: 'open-sample',
+    section: 'ideas',
     route: 'ideas',
     target: 'sample-idea-open',
-    title: 'Open the idea',
+    title: 'Open it',
     body: 'Click the idea to open its workspace.',
     advance: 'click',
-    waitingHint: 'Click the highlighted idea',
+    waitingHint: 'Click the idea',
   },
+
+  // 2. Research
   {
     id: 'editor-header',
+    section: 'research',
     route: 'editor',
     target: 'editor-title',
-    title: 'The idea workspace',
-    body: 'Everything for one idea lives here: research, the article draft and the video script. The badges show its current stage.',
+    title: 'The workspace',
+    body: 'Research, article and script for one idea.',
     advance: 'next',
   },
   {
     id: 'formats',
+    section: 'research',
     route: 'editor',
     target: 'editor-formats',
-    title: 'Pick your formats',
-    body: 'Use this button to turn the Article and Video Script tabs on or off for an idea.',
-    advance: 'next',
-  },
-  {
-    id: 'research-chat',
-    route: 'editor',
-    target: 'research-chat',
-    title: 'Your research assistant',
-    body: 'Add PDFs or notes as context, then ask questions. The assistant answers only from the sources you add.',
+    title: 'Formats',
+    body: 'Turn the Article and Video tabs on or off.',
     advance: 'next',
   },
   {
     id: 'add-context',
+    section: 'research',
     route: 'editor',
     target: 'research-add-context',
-    title: 'Add some context',
-    body: 'Click "Add context" to give the assistant something to research.',
+    title: 'Add research',
+    body: 'Give the AI something to read.',
     advance: 'click',
     waitingHint: 'Click "Add context"',
   },
   {
     id: 'upload-text',
+    section: 'research',
     route: 'editor',
     target: 'research-upload-text',
-    title: 'Paste notes or upload a PDF',
-    body: 'You can upload a PDF or paste text. Let\'s paste some notes. Click "Upload text".',
+    title: 'Paste or upload',
+    body: 'Add a PDF or paste notes.',
     advance: 'click',
     waitingHint: 'Click "Upload text"',
   },
   {
     id: 'sample-notes',
+    section: 'research',
     route: 'editor',
     target: 'research-sample-notes',
-    title: 'Use our sample notes',
-    body: 'We prepared research notes on the 2-minute rule. Click "Use sample notes" to fill them in.',
+    title: 'Use our notes',
+    body: 'We prepared research notes for you.',
     advance: 'click',
     waitingHint: 'Click "Use sample notes"',
   },
   {
     id: 'add-text',
+    section: 'research',
     route: 'editor',
     target: 'research-add-text',
-    title: 'Save the context',
-    body: 'Click "Add text". The notes are split into sections and indexed so the assistant can search them.',
+    title: 'Save them',
+    body: 'The AI indexes your notes for search.',
     advance: { signal: 'source-added' },
-    waitingHint: 'Click "Add text" and wait for it to finish',
+    waitingHint: 'Click "Add text"',
+    busyText: 'Reading your notes…',
   },
+
+  // 3. Ask AI
   {
     id: 'suggestions',
+    section: 'ask',
     route: 'editor',
     target: 'research-suggestions',
     title: 'Ask a question',
-    body: 'Pick one of these questions to put it in the message box.',
+    body: 'Pick a suggested question.',
     advance: 'click',
     waitingHint: 'Click a question',
+    needs: 'context',
+    openTab: 'tab-baseArticle',
   },
   {
     id: 'ask',
+    section: 'ask',
     route: 'editor',
     target: 'research-ask',
     title: 'Send it',
-    body: 'Press "Ask". The assistant searches your notes and answers from them.',
+    body: 'Answers come only from your notes.',
     advance: { signal: 'answered' },
-    waitingHint: 'Press "Ask" and wait for the answer',
+    waitingHint: 'Click "Ask"',
+    busyText: 'Finding the answer…',
+    needs: 'context',
+    openTab: 'tab-baseArticle',
   },
   {
     id: 'generate',
+    section: 'ask',
     route: 'editor',
     target: 'research-generate',
-    title: 'Turn research into an article',
-    body: 'Ask as many questions as you like. When you are ready, "Generate article" writes a full draft from the conversation. Try it now.',
+    title: 'Write the article',
+    body: 'Turn the chat into a full draft.',
     advance: { signal: 'article-generated' },
-    waitingHint: 'Click "Generate article" and wait for the draft',
+    waitingHint: 'Click "Generate article"',
+    busyText: 'Writing your article…',
+    needs: 'context',
+    openTab: 'tab-baseArticle',
   },
+
+  // 4. Article
   {
     id: 'article',
+    section: 'article',
     route: 'editor',
     target: 'article-editor',
-    title: 'Your article draft',
-    body: 'The draft is saved to the Article tab. Edit it freely, then press Save.',
+    title: 'Your draft',
+    body: 'Edit freely, then press Save.',
     advance: 'next',
+    needs: 'article',
+    openTab: 'tab-mediumArticle',
   },
   {
     id: 'use-prompt',
+    section: 'article',
     route: 'editor',
     target: 'article-use-prompt',
-    title: 'Rewrite it with a prompt',
-    body: 'Prompts are reusable writing instructions, for example a tone, structure or audience. Click "Use a prompt".',
+    title: 'Rewrite with a prompt',
+    body: 'Prompts are reusable writing styles.',
     advance: 'click',
     waitingHint: 'Click "Use a prompt"',
+    needs: 'article',
+    openTab: 'tab-mediumArticle',
   },
   {
     id: 'pick-prompt',
+    section: 'article',
     route: 'editor',
     target: 'prompt-sample',
-    title: 'Choose a prompt',
-    body: 'Select "Punchy hook-first rewrite". We added it to your prompt library for you.',
+    title: 'Pick one',
+    body: 'Choose "Punchy hook-first rewrite".',
     advance: 'click',
     waitingHint: 'Select the highlighted prompt',
+    needs: 'article',
   },
   {
     id: 'apply-prompt',
+    section: 'article',
     route: 'editor',
     target: 'prompt-apply',
-    title: 'Rewrite the article',
-    body: 'Click "Rewrite Article" to apply the prompt to your draft.',
+    title: 'Apply it',
+    body: 'The AI rewrites your draft in that style.',
     advance: { signal: 'prompt-applied' },
-    waitingHint: 'Click "Rewrite Article" and wait',
+    waitingHint: 'Click "Rewrite Article"',
+    busyText: 'Rewriting your article…',
+    needs: 'article',
   },
+
+  // 5. Video
   {
     id: 'video-tab',
+    section: 'video',
     route: 'editor',
     target: 'tab-youtubeScript',
-    title: 'Now the video',
-    body: 'The same idea can become a YouTube or Instagram video. Open the Video Script tab.',
+    title: 'Video script',
+    body: 'Same idea, ready for YouTube or Reels.',
     advance: 'click',
     waitingHint: 'Click "Video Script"',
   },
   {
     id: 'open-prompter',
+    section: 'video',
     route: 'editor',
     target: 'open-prompter',
-    title: 'Record with the teleprompter',
-    body: 'We drafted a script for this idea. Click "Prompter" to read it full screen while you record.',
+    title: 'Teleprompter',
+    body: 'Read your script full screen.',
     advance: { signal: 'prompter-opened' },
     waitingHint: 'Click "Prompter"',
   },
   {
     id: 'prompter-play',
+    section: 'video',
     route: 'editor',
     target: 'prompter-play',
-    title: 'Hands-free reading',
-    body: 'Press Play (or Space) to auto-scroll. You can change the speed and text size, and mirror the text for teleprompter glass.',
+    title: 'Play',
+    body: 'Auto-scrolls. Space plays or pauses.',
     advance: 'next',
   },
   {
     id: 'prompter-exit',
+    section: 'video',
     route: 'editor',
     target: 'prompter-exit',
-    title: 'Close the prompter',
-    body: 'Click "Exit Prompter" or press Esc to return to the workspace.',
+    title: 'Exit',
+    body: 'Press Esc or "Exit Prompter".',
     advance: { signal: 'prompter-closed' },
     waitingHint: 'Exit the prompter',
   },
   {
     id: 'complete',
+    section: 'video',
     route: 'editor',
     target: 'editor-complete',
-    title: 'Mark it complete',
-    body: 'When the article and video are published, press Complete. The idea moves to your completed list and counts in Analytics.',
+    title: 'Complete it',
+    body: 'Mark the idea done once published.',
     advance: 'next',
   },
+
+  // 6. Wrap-up
   {
     id: 'nav-prompts',
+    section: 'wrap-up',
     route: 'ideas',
     target: 'nav-prompts',
-    title: 'Your prompt library',
-    body: 'Create, edit and enhance your writing prompts here. The sample prompt you just used is already there.',
+    title: 'Prompt library',
+    body: 'Your saved writing styles live here.',
     advance: 'next',
   },
   {
     id: 'nav-telegram',
+    section: 'wrap-up',
     route: 'ideas',
     target: 'nav-telegram',
-    title: 'Capture ideas on the go',
-    body: 'Connect Telegram to save new ideas or check your pipeline by chatting with the ContentStore bot.',
+    title: 'Telegram',
+    body: 'Capture ideas from your phone.',
     advance: 'next',
   },
   {
     id: 'finish',
+    section: 'wrap-up',
     route: 'ideas',
     title: "You're all set!",
-    body: 'That is the whole flow: idea, research, article, video. The sample idea stays for 2 days unless you edit it. Delete it now or keep exploring, then add your own idea.',
+    body: 'Keep the sample (gone in 2 days) or start fresh.',
     advance: 'next',
   },
 ];
 
-export const TOUR_STORAGE_KEY = 'contentstore-tour';
+/** Index of the first step of the next section, or -1 if this is the last section. */
+export function nextSectionStart(stepIndex: number): number {
+  const section = TOUR_STEPS[stepIndex]?.section;
+  return TOUR_STEPS.findIndex((step, i) => i > stepIndex && step.section !== section);
+}
+
+/** Where a step sits: its section, and its position inside that section. */
+export function stepPosition(stepIndex: number) {
+  const step = TOUR_STEPS[stepIndex];
+  const sectionIndex = TOUR_SECTIONS.findIndex((section) => section.id === step?.section);
+  const inSection = TOUR_STEPS.filter((s) => s.section === step?.section);
+  return {
+    sectionIndex,
+    sectionTitle: TOUR_SECTIONS[sectionIndex]?.title ?? '',
+    step: inSection.findIndex((s) => s.id === step?.id) + 1,
+    stepCount: inSection.length,
+    isLastInSection: inSection[inSection.length - 1]?.id === step?.id,
+  };
+}
+
+/** Bumped when the step list changes, so progress saved by an older tour is not resumed. */
+export const TOUR_STORAGE_KEY = 'contentstore-tour-v2';

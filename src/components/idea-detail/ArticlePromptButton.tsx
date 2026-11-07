@@ -32,7 +32,7 @@ import {
 import { useGetPromptsQuery, useEnhancePromptMutation } from '@/store/api/promptsApi';
 import { useApplyArticlePromptMutation } from '@/store/api/ideasApi';
 import { useDispatch } from 'react-redux';
-import { tourSignal } from '@/store/slices/tourSlice';
+import { tourBusy, tourSignal } from '@/store/slices/tourSlice';
 import type { AppDispatch } from '@/store';
 
 export function ArticlePromptButton({
@@ -89,6 +89,7 @@ export function ArticlePromptButton({
     if (!chosen) return;
     setOpen(false);
     onApplyingChange?.(true);
+    dispatch(tourBusy(true));
     try {
       const result = await applyPrompt({
         ideaId,
@@ -106,6 +107,7 @@ export function ArticlePromptButton({
       toast.error(message || 'The article could not be rewritten');
     } finally {
       onApplyingChange?.(false);
+      dispatch(tourBusy(false));
     }
   };
 

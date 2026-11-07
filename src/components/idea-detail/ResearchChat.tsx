@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { FileText, FileUp, Send, Sparkles, Trash2, Type } from 'lucide-react';
+import { FileText, FileUp, Loader2, Send, Sparkles, Trash2, Type } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -33,7 +33,7 @@ import {
 } from '@/store/api/ideasApi';
 import { cn } from 'cn';
 import { useDispatch } from 'react-redux';
-import { tourSignal } from '@/store/slices/tourSlice';
+import { tourBusy, tourSignal } from '@/store/slices/tourSlice';
 import { isSampleContext, SAMPLE_CONTEXT } from '@/lib/onboarding/sample-content';
 import type { AppDispatch } from '@/store';
 
@@ -100,6 +100,7 @@ export function ResearchChat({
     if (!content || busy) return;
     setPending({ role: 'user', content });
     setDraft('');
+    dispatch(tourBusy(true));
     try {
       await sendResearch({ ideaId, content, mode: 'ask', title }).unwrap();
       dispatch(tourSignal('answered'));
@@ -108,6 +109,7 @@ export function ResearchChat({
       toast.error(errorText(err));
     } finally {
       setPending(null);
+      dispatch(tourBusy(false));
     }
   };
 
@@ -127,6 +129,7 @@ export function ResearchChat({
 
   const onGenerate = async () => {
     if (busy) return;
+    dispatch(tourBusy(true));
     try {
       const result = await generateArticle(ideaId).unwrap();
       onArticleGenerated?.(result.mediumArticle);
@@ -134,6 +137,8 @@ export function ResearchChat({
       dispatch(tourSignal('article-generated'));
     } catch (err) {
       toast.error(errorText(err));
+    } finally {
+      dispatch(tourBusy(false));
     }
   };
 
@@ -158,6 +163,7 @@ export function ResearchChat({
     const content = contextText.trim();
     if (!content || busy) return;
     setPending({ role: 'source', content: content.slice(0, 180) });
+    dispatch(tourBusy(true));
     try {
       await uploadText({ ideaId, content, title }).unwrap();
       setContextText('');
@@ -176,6 +182,7 @@ export function ResearchChat({
       toast.error(errorText(err));
     } finally {
       setPending(null);
+      dispatch(tourBusy(false));
     }
   };
 
@@ -418,7 +425,8 @@ export function ResearchChat({
                     onClick={() => void onText()}
                     data-tour="research-add-text"
                   >
-                    Add text
+                    {isUploadingText && <Loader2 data-icon="inline-start" className="animate-spin" />}
+                    {isUploadingText ? 'Adding…' : 'Add text'}
                   </Button>
                 </DialogFooter>
               </DialogContent>
