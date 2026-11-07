@@ -35,6 +35,8 @@ export interface Idea {
   baseArticle: string;
   mediumArticle: string;
   youtubeScript: string;
+  /** Onboarding sample idea created for the product tour. */
+  isSample?: boolean;
 }
 
 /**

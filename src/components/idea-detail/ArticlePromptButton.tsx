@@ -31,6 +31,9 @@ import {
 
 import { useGetPromptsQuery, useEnhancePromptMutation } from '@/store/api/promptsApi';
 import { useApplyArticlePromptMutation } from '@/store/api/ideasApi';
+import { useDispatch } from 'react-redux';
+import { tourSignal } from '@/store/slices/tourSlice';
+import type { AppDispatch } from '@/store';
 
 export function ArticlePromptButton({
   ideaId,
@@ -43,6 +46,7 @@ export function ArticlePromptButton({
   onArticle: (article: string) => void;
   onApplyingChange?: (applying: boolean) => void;
 }) {
+  const dispatch = useDispatch<AppDispatch>();
   const { data: prompts = [], isLoading } = useGetPromptsQuery();
   const [applyPrompt] = useApplyArticlePromptMutation();
   const [enhancePrompt] = useEnhancePromptMutation();
@@ -93,6 +97,7 @@ export function ArticlePromptButton({
       }).unwrap();
       onArticle(result.mediumArticle);
       toast.success('Article updated successfully');
+      dispatch(tourSignal('prompt-applied'));
     } catch (err) {
       const message =
         err && typeof err === 'object' && 'data' in err
@@ -112,6 +117,7 @@ export function ArticlePromptButton({
           size="sm"
           variant="outline"
           onClick={() => setOpen(true)}
+          data-tour="article-use-prompt"
           className="group relative gap-2 border-primary/20 bg-background/80 shadow-xs transition-all duration-200 hover:border-primary/40 hover:bg-primary/5 active:scale-[0.98]"
         >
           <Sparkles className="h-3.5 w-3.5 text-primary transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110" />
@@ -263,6 +269,7 @@ export function ArticlePromptButton({
                           type="button"
                           disabled={isEnhancing}
                           onClick={() => setChosenId(prompt.id)}
+                          data-tour={prompt.isSample ? 'prompt-sample' : undefined}
                           onDoubleClick={() => {
                             if (!isEnhancing) {
                               setChosenId(prompt.id);
@@ -283,6 +290,9 @@ export function ArticlePromptButton({
                                 <span className={`text-xs font-medium tracking-tight ${isSelected ? 'text-primary font-semibold' : 'text-foreground'}`}>
                                   {prompt.title || 'Untitled Prompt'}
                                 </span>
+                                {prompt.isSample && (
+                                  <Badge variant="secondary" className="px-1.5 py-0 text-[9px] font-medium">Sample</Badge>
+                                )}
                               </div>
                               <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground group-hover:text-foreground/80 transition-colors">
                                 {prompt.content}
@@ -382,6 +392,7 @@ export function ArticlePromptButton({
                 size="sm"
                 disabled={!chosen || isEnhancing}
                 onClick={() => void apply()}
+                data-tour="prompt-apply"
                 className="h-8 gap-1.5 text-xs shadow-xs"
               >
                 <Sparkles className="h-3.5 w-3.5" />

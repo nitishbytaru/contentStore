@@ -17,6 +17,7 @@ export async function fetchUserPrompts(supabase: SupabaseClient): Promise<Prompt
     content: row.content,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    isSample: Boolean(row.is_sample),
   }));
 }
 
@@ -59,6 +60,8 @@ export async function updateUserPrompt(
 
   if (updates.title !== undefined) dbUpdates.title = updates.title.trim();
   if (updates.content !== undefined) dbUpdates.content = updates.content.trim();
+  // Editing an onboarding sample prompt means the user keeps it (no-op for normal prompts).
+  dbUpdates.sample_expires_at = null;
 
   const { data, error } = await supabase
     .from('prompts')

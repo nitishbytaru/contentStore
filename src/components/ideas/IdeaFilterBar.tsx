@@ -45,7 +45,7 @@ export function IdeaFilterBar({
   ];
 
   return (
-    <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-2 sm:p-2.5 rounded-2xl border border-border/75 bg-muted/20 backdrop-blur-xs">
+    <div data-tour="idea-filters" className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-2 sm:p-2.5 rounded-2xl border border-border/75 bg-muted/20 backdrop-blur-xs">
       {/* Group 1: Content Type (All, Research, Article, Video) */}
       <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
         <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground pl-1.5 pr-0.5">

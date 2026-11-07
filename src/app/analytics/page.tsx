@@ -50,7 +50,9 @@ export default function AnalyticsPage() {
     setMounted(true);
   }, []);
 
-  const { data: ideas = [], isLoading: ideasLoading } = useGetIdeasQuery();
+  const { data: allIdeas = [], isLoading: ideasLoading } = useGetIdeasQuery();
+  // Onboarding sample ideas are not real work, so they stay out of the numbers.
+  const ideas = useMemo(() => allIdeas.filter((idea) => !idea.isSample), [allIdeas]);
   const { data: prompts = [], isLoading: promptsLoading } = useGetPromptsQuery();
 
   const metrics = useMemo(() => {

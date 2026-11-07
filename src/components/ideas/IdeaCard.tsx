@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { 
-  Clock, Trash2, Edit, Save, X, Copy, FileText, Video, Loader2, ExternalLink 
+  Clock, Trash2, Edit, Save, X, Copy, FileText, Video, Loader2, ExternalLink, Sparkles
 } from 'lucide-react';
 import { Idea } from '@/types';
 import { getIdeaPublishStatus } from '@/utils/ideaStatus';
@@ -44,7 +44,7 @@ export function IdeaCard({
   );
 
   return (
-    <Card className={cardClasses}>
+    <Card className={cardClasses} data-tour={idea.isSample ? 'sample-idea' : undefined}>
       <CardContent className="p-4 sm:p-5 flex flex-col justify-between gap-3 min-h-[104px]">
         {isEditing ? (
           <div className="flex items-center gap-2 w-full py-1">
@@ -87,6 +87,7 @@ export function IdeaCard({
                   href={`/ideas/${idea.ideaId}`}
                   className="text-sm sm:text-base font-medium leading-snug hover:underline cursor-pointer transition-colors hover:text-primary block line-clamp-2"
                   title={idea.idea}
+                  data-tour={idea.isSample ? 'sample-idea-open' : undefined}
                 >
                   {idea.idea}
                 </Link>
@@ -96,6 +97,15 @@ export function IdeaCard({
                   </p>
                 )}
                 <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                  {idea.isSample && (
+                    <span
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-primary/10 text-primary border border-primary/25"
+                      title="Created for the product tour. It is removed after 2 days unless you edit it."
+                    >
+                      <Sparkles className="w-3 h-3 shrink-0" />
+                      Sample
+                    </span>
+                  )}
                   {!hasBaseArticle && (
                     <Link
                       href={`/ideas/${idea.ideaId}`}

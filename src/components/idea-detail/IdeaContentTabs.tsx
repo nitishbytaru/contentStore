@@ -10,6 +10,7 @@ import { Idea } from '@/types';
 import { ArticlePromptButton } from '@/components/idea-detail/ArticlePromptButton';
 import { ResearchChat } from '@/components/idea-detail/ResearchChat';
 import { cn } from 'cn';
+import { SAMPLE_QA } from '@/lib/onboarding/sample-content';
 
 interface ContentTabOption {
   value: 'baseArticle' | 'mediumArticle' | 'youtubeScript';
@@ -78,6 +79,7 @@ export function IdeaContentTabs({
                     key={tab.value}
                     value={tab.value}
                     disabled={locked}
+                    data-tour={`tab-${tab.value}`}
                     className={cn(
                       'text-xs sm:text-sm py-2 px-2 text-center truncate min-w-0 font-medium rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer',
                       isActive
@@ -139,6 +141,7 @@ export function IdeaContentTabs({
                           size="sm"
                           variant="outline"
                           onClick={onOpenPrompter}
+                          data-tour="open-prompter"
                           className="h-7.5 px-2.5 text-xs font-medium gap-1.5 border-border/70 hover:bg-muted cursor-pointer"
                           title="Open full-screen prompter for recording from a distance"
                         >
@@ -167,6 +170,8 @@ export function IdeaContentTabs({
                       <ResearchChat
                         ideaId={idea.ideaId}
                         title={idea.idea}
+                        isSample={Boolean(idea.isSample)}
+                        suggestions={idea.isSample ? SAMPLE_QA.map((qa) => qa.question) : undefined}
                         onArticleGenerated={(article) => {
                           onTextChange('mediumArticle', article);
                           onTabChange('mediumArticle');
@@ -192,6 +197,7 @@ export function IdeaContentTabs({
                           value={contentText}
                           disabled={locked}
                           onChange={(e) => onTextChange(tab.value as keyof Idea, e.target.value)}
+                          data-tour={tab.value === 'mediumArticle' ? 'article-editor' : undefined}
                           className="h-[440px] sm:h-[520px] md:h-[580px] max-h-[72vh] w-full max-w-full resize-none sm:resize-y text-sm p-3.5 sm:p-5 leading-relaxed break-words overflow-x-hidden overflow-y-auto overscroll-contain"
                         />
                         {contentText.trim() && (

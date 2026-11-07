@@ -3,6 +3,8 @@ import { replaceIdeaVector } from '@/lib/idea-index';
 import { appendResearchMessage, clearResearchMessages, listResearchMessages, ResearchMessage } from '@/lib/research-messages';
 import { clearResearchChunks, indexResearchSource, searchResearch } from '@/lib/research-index';
 import { guardedSystemPrompt, isOutOfScope, OUT_OF_SCOPE, OutOfScopeError } from '@/lib/llm-guard';
+import { getSampleState, keepSample } from '@/lib/onboarding/sample';
+import { findSampleAnswer, isSampleContext, SAMPLE_ARTICLE, simulateLatency } from '@/lib/onboarding/sample-content';
 
 const NO_CONTEXT = 'I have no context. Please add context.';
 const OUTSIDE_CONTEXT = 'I can only answer from the context you added. That question is outside it.';
@@ -87,6 +89,7 @@ export async function saveResearchSource(
   identity?: { sourceKey: string; matchName?: boolean; maxChunks?: number }
 ) {
   const indexed = await indexResearchSource(ideaId, sourceName, text, identity);
+  if (!isSampleContext(text) && (await getSampleState(ideaId)).unused) await keepSample(ideaId);
   if (indexed.count === 0) throw new Error('That source did not contain readable text');
   const preview = text.replace(/\s+/g, ' ').trim().slice(0, 700);
   await appendResearchMessage(
@@ -133,6 +136,12 @@ export async function generateArticleFromResearch(ideaId: string) {
     throw new Error('Ask a few questions first so there is a conversation to write from');
   }
 
+  // Onboarding sample: the pre-written article, with a realistic generation delay.
+  if ((await getSampleState(ideaId)).unused) {
+    await simulateLatency(6000, 9000);
+    return saveArticle(ideaId, SAMPLE_ARTICLE);
+  }
+
   const key = process.env.GROQ_API_KEY;
   const model = process.env.GROQ_MODEL?.trim();
   if (!key) throw new Error('GROQ_API_KEY is not set');
@@ -174,6 +183,26 @@ export async function generateArticleFromResearch(ideaId: string) {
 
 export async function askResearch(ideaId: string, question: string, title = '') {
   const trimmed = question.trim();
+
+  // Onboarding sample: scripted questions get pre-written answers, with a realistic delay.
+  // Any other question on a sample goes to the real model, and the sample is kept.
+  const sample = await getSampleState(ideaId);
+  if (sample.isSample) {
+    const scripted = findSampleAnswer(trimmed);
+    if (scripted) {
+      const hasContext = (await listResearchMessages(ideaId)).some((message) => message.role === 'source');
+      if (hasContext) {
+        await appendResearchMessage(ideaId, 'user', trimmed);
+        await simulateLatency(2500, 4000);
+        await appendResearchMessage(ideaId, 'assistant', scripted.answer);
+        await saveBrief(ideaId, title, scripted.answer);
+        return listResearchMessages(ideaId);
+      }
+    } else if (sample.unused) {
+      await keepSample(ideaId);
+    }
+  }
+
   await appendResearchMessage(ideaId, 'user', trimmed);
   const found = await searchResearch(ideaId, trimmed, 6);
 

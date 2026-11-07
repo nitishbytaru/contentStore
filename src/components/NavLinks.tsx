@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LogOut, Menu, X } from 'lucide-react';
+import { Compass, LogOut, Menu, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 const links = [
@@ -14,12 +14,19 @@ const links = [
 
 import { createClient } from '@/lib/supabase/client';
 import { TelegramConnect } from '@/components/TelegramConnect';
+import { useOnboarding } from '@/hooks/useOnboarding';
 
 export function NavLinks() {
   const pathname = usePathname();
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { beginTour, starting: tourStarting } = useOnboarding();
+
+  const handleTour = () => {
+    setMobileMenuOpen(false);
+    void beginTour();
+  };
 
   const isAuthPage = pathname === '/login' || pathname === '/signup';
 
@@ -62,6 +69,7 @@ export function NavLinks() {
                 <Link
                   key={href}
                   href={href}
+                  data-tour={`nav-${label.toLowerCase()}`}
                   className={`px-3 py-1.5 rounded-md transition-colors ${
                     isActive
                       ? 'text-foreground bg-muted font-semibold'
@@ -76,7 +84,18 @@ export function NavLinks() {
 
           {/* Desktop Sign out Button */}
           <div className="hidden md:flex items-center gap-2 ml-auto">
+            <button
+              onClick={handleTour}
+              disabled={tourStarting}
+              title="Take the product tour"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/70 border border-transparent hover:border-border/60 transition-all cursor-pointer disabled:opacity-50"
+            >
+              <Compass className="w-3.5 h-3.5" />
+              <span>{tourStarting ? 'Preparing…' : 'Tour'}</span>
+            </button>
+            <span data-tour="nav-telegram" className="inline-flex">
             <TelegramConnect className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/70 border border-transparent hover:border-border/60 transition-all cursor-pointer disabled:opacity-50" />
+            </span>
             <button
               onClick={handleLogout}
               disabled={isLoggingOut}
@@ -136,6 +155,14 @@ export function NavLinks() {
                 })}
 
                 <div className="pt-2 mt-1 border-t border-border/40 flex flex-col gap-1">
+                  <button
+                    onClick={handleTour}
+                    disabled={tourStarting}
+                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors disabled:opacity-50 text-left cursor-pointer"
+                  >
+                    <Compass className="w-4 h-4" />
+                    <span>{tourStarting ? 'Preparing…' : 'Take the tour'}</span>
+                  </button>
                   <TelegramConnect
                     onDone={() => setMobileMenuOpen(false)}
                     className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors disabled:opacity-50 text-left cursor-pointer"

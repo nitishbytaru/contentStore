@@ -50,7 +50,7 @@ export function IdeaEditorHeader({
         <span className="hidden sm:inline">Ideas</span>
       </Link>
 
-      <h1 className="min-w-0 flex-1 basis-40 truncate text-sm font-semibold text-foreground" title={idea.idea}>
+      <h1 data-tour="editor-title" className="min-w-0 flex-1 basis-40 truncate text-sm font-semibold text-foreground" title={idea.idea}>
         {idea.idea}
       </h1>
 
@@ -96,6 +96,7 @@ export function IdeaEditorHeader({
           variant="ghost"
           className="h-8 w-8"
           title="Configure formats"
+          data-tour="editor-formats"
           disabled={locked}
           onClick={onOpenFormatModal}
         >
@@ -129,6 +130,7 @@ export function IdeaEditorHeader({
           type="button"
           size="sm"
           variant={completed || check.allowed ? 'default' : 'outline'}
+          data-tour="editor-complete"
           className={cn(
             'h-8 px-2.5 text-xs gap-1',
             (completed || check.allowed) && 'bg-emerald-600 hover:bg-emerald-700 text-white'

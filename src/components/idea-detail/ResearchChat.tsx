@@ -32,6 +32,10 @@ import {
   useUploadResearchTextMutation,
 } from '@/store/api/ideasApi';
 import { cn } from 'cn';
+import { useDispatch } from 'react-redux';
+import { tourSignal } from '@/store/slices/tourSlice';
+import { isSampleContext, SAMPLE_CONTEXT } from '@/lib/onboarding/sample-content';
+import type { AppDispatch } from '@/store';
 
 function readable(text: string) {
   return text
@@ -49,12 +53,19 @@ export function ResearchChat({
   title,
   onArticleGenerated,
   onClearingChange,
+  isSample = false,
+  suggestions,
 }: {
   ideaId: string;
   title: string;
+  /** Onboarding sample idea: offers the sample notes in the "Upload text" dialog. */
+  isSample?: boolean;
+  /** Suggested questions shown as chips above the message box. */
+  suggestions?: string[];
   onArticleGenerated?: (article: string) => void;
   onClearingChange?: (clearing: boolean) => void;
 }) {
+  const dispatch = useDispatch<AppDispatch>();
   const { data: messages = [], isLoading } = useGetResearchMessagesQuery(ideaId);
   const [sendResearch, { isLoading: isSending }] = useSendResearchMutation();
   const [clearResearch, { isLoading: isClearing }] = useClearResearchMutation();
@@ -91,6 +102,7 @@ export function ResearchChat({
     setDraft('');
     try {
       await sendResearch({ ideaId, content, mode: 'ask', title }).unwrap();
+      dispatch(tourSignal('answered'));
     } catch (err) {
       setDraft(content);
       toast.error(errorText(err));
@@ -119,6 +131,7 @@ export function ResearchChat({
       const result = await generateArticle(ideaId).unwrap();
       onArticleGenerated?.(result.mediumArticle);
       toast.success('Article saved');
+      dispatch(tourSignal('article-generated'));
     } catch (err) {
       toast.error(errorText(err));
     }
@@ -149,7 +162,17 @@ export function ResearchChat({
       await uploadText({ ideaId, content, title }).unwrap();
       setContextText('');
       setTextOpen(false);
+      dispatch(tourSignal('source-added'));
     } catch (err) {
+      // Re-adding the sample notes (e.g. replaying the tour) is fine: the context is already there.
+      const alreadyAdded = err && typeof err === 'object' && 'status' in err && (err as { status?: unknown }).status === 409;
+      if (alreadyAdded && isSampleContext(content)) {
+        setContextText('');
+        setTextOpen(false);
+        toast.info('These notes are already saved on this idea');
+        dispatch(tourSignal('source-added'));
+        return;
+      }
       toast.error(errorText(err));
     } finally {
       setPending(null);
@@ -157,7 +180,7 @@ export function ResearchChat({
   };
 
   return (
-    <div className="flex flex-col min-h-[420px] max-h-[72vh] rounded-xl border border-border/70 bg-background overflow-hidden">
+    <div data-tour="research-chat" className="flex flex-col min-h-[420px] max-h-[72vh] rounded-xl border border-border/70 bg-background overflow-hidden">
       <div className="flex items-center gap-2 px-3 py-2 border-b border-border/60">
         <span className="relative grid h-6 w-6 place-items-center">
           <span
@@ -277,6 +300,21 @@ export function ResearchChat({
           void submit();
         }}
       >
+        {suggestions && suggestions.length > 0 && (
+          <div data-tour="research-suggestions" className="flex flex-wrap gap-1.5">
+            {suggestions.map((question) => (
+              <button
+                key={question}
+                type="button"
+                disabled={busy}
+                onClick={() => setDraft(question)}
+                className="rounded-full border border-primary/25 bg-primary/5 px-2.5 py-1 text-[11px] text-primary transition-colors hover:bg-primary/10 disabled:opacity-50 cursor-pointer"
+              >
+                {question}
+              </button>
+            ))}
+          </div>
+        )}
         <Textarea
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
@@ -307,6 +345,7 @@ export function ResearchChat({
               size="sm"
               disabled={busy}
               onClick={() => setContextOpen(true)}
+              data-tour="research-add-context"
             >
               Add context
             </Button>
@@ -337,6 +376,7 @@ export function ResearchChat({
                       setContextOpen(false);
                       setTextOpen(true);
                     }}
+                    data-tour="research-upload-text"
                   >
                     <Type className="h-3.5 w-3.5" />
                     Upload text
@@ -357,8 +397,25 @@ export function ResearchChat({
                   disabled={busy}
                   className="min-h-64 max-h-[50vh] text-sm"
                 />
-                <DialogFooter>
-                  <Button type="button" disabled={!contextText.trim() || busy} onClick={() => void onText()}>
+                <DialogFooter className={cn(isSample && 'sm:justify-between')}>
+                  {isSample && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={busy}
+                      onClick={() => setContextText(SAMPLE_CONTEXT)}
+                      data-tour="research-sample-notes"
+                    >
+                      <Sparkles className="h-3.5 w-3.5" />
+                      Use sample notes
+                    </Button>
+                  )}
+                  <Button
+                    type="button"
+                    disabled={!contextText.trim() || busy}
+                    onClick={() => void onText()}
+                    data-tour="research-add-text"
+                  >
                     Add text
                   </Button>
                 </DialogFooter>
@@ -372,11 +429,12 @@ export function ResearchChat({
               size="sm"
               disabled={!hasConversation || busy}
               onClick={() => void onGenerate()}
+              data-tour="research-generate"
             >
               <FileText className="h-3.5 w-3.5" />
               Generate article
             </Button>
-            <Button type="submit" size="sm" disabled={!draft.trim() || busy}>
+            <Button type="submit" size="sm" disabled={!draft.trim() || busy} data-tour="research-ask">
               <Send className="h-3.5 w-3.5" />
               Ask
             </Button>

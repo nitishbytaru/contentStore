@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useDispatch } from 'react-redux';
+import { tourSignal } from '@/store/slices/tourSlice';
+import type { AppDispatch } from '@/store';
 import {
   PrompterHeader,
   PrompterEyeline,
@@ -22,6 +25,11 @@ export default function ScriptPrompter({
   title,
   script,
 }: ScriptPrompterProps) {
+  const dispatch = useDispatch<AppDispatch>();
+  useEffect(() => {
+    if (isOpen) dispatch(tourSignal('prompter-opened'));
+  }, [isOpen, dispatch]);
+
   // Prompter configuration states
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(3); // 1 to 10
@@ -65,7 +73,8 @@ export default function ScriptPrompter({
       document.exitFullscreen().catch(() => {});
     }
     onClose();
-  }, [onClose]);
+    dispatch(tourSignal('prompter-closed'));
+  }, [onClose, dispatch]);
 
   // Lock body scroll when open
   useEffect(() => {

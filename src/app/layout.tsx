@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner"
 import ReduxProvider from "@/components/ReduxProvider";
 import { SiteHeader } from "@/components/SiteHeader";
 import { BlockingOverlay } from "@/components/BlockingOverlay";
+import { TourOverlay } from "@/components/onboarding/TourOverlay";
 import { APP_SHELL_ID } from "@/lib/app-shell";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -45,6 +46,7 @@ export default function RootLayout({
           </main>
         </div>
         <BlockingOverlay />
+        <TourOverlay />
         <Toaster />
         </ReduxProvider>
         <Analytics />

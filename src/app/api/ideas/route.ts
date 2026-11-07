@@ -12,6 +12,7 @@ import {
   updateUserIdea,
   deleteUserIdea,
 } from '@/lib/supabase/ideas';
+import { cleanupExpiredSamples, keepSample } from '@/lib/onboarding/sample';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,6 +45,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ data: idea }, { status: 200 });
     }
 
+    await cleanupExpiredSamples(supabase, user.id);
     const ideas = await fetchUserIdeas(supabase, user.id, typeParam || undefined, statusParam || undefined);
     let filtered = ideas;
     if (typeParam || statusParam) {
@@ -113,7 +115,16 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'Unauthorized. Please sign in.' }, { status: 401 });
     }
 
+    const before = await fetchUserIdeaById(supabase, user.id, ideaId);
     const saved = await updateUserIdea(supabase, user.id, ideaId, payload);
+
+    // A sample idea stops expiring once the user actually changes its content.
+    if (before?.isSample) {
+      // baseArticle is skipped: the server rewrites it during research, so the editor's copy can be stale.
+      const fields = ['idea', 'mediumArticle', 'youtubeScript', 'status'] as const;
+      const changed = fields.some((field) => (before[field] ?? '') !== (saved[field] ?? ''));
+      if (changed) await keepSample(ideaId, supabase);
+    }
 
     try {
       await replaceIdeaVector({

@@ -21,6 +21,8 @@ export interface DbIdeaRow {
   eligible_instagram: boolean;
   ineligible_youtube: boolean;
   ineligible_instagram: boolean;
+  is_sample?: boolean;
+  sample_expires_at?: string | null;
 }
 
 export function mapDbRowToIdea(row: DbIdeaRow): Idea {
@@ -42,6 +44,7 @@ export function mapDbRowToIdea(row: DbIdeaRow): Idea {
     eligibleInstagram: row.eligible_instagram,
     ineligibleYoutube: row.ineligible_youtube,
     ineligibleInstagram: row.ineligible_instagram,
+    isSample: Boolean(row.is_sample),
   };
 }
 

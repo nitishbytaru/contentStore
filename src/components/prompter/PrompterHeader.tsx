@@ -88,6 +88,7 @@ export function PrompterHeader({
               size="sm"
               variant="default"
               onClick={onTogglePlay}
+              data-tour="prompter-play"
               className={`h-9 px-4 font-semibold rounded-xl gap-2 transition-transform active:scale-95 cursor-pointer ${
                 isPlaying
                   ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-900/40 shadow-lg'

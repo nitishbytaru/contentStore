@@ -10,6 +10,7 @@ export function PrompterExitButton({ onExit }: PrompterExitButtonProps) {
       <button
         type="button"
         onClick={onExit}
+        data-tour="prompter-exit"
         className="flex items-center gap-2.5 px-5 py-3 rounded-full bg-zinc-900/95 hover:bg-zinc-800 text-white font-semibold text-sm shadow-[0_10px_35px_rgba(0,0,0,0.8)] border border-zinc-700/80 backdrop-blur-md transition-all duration-200 hover:scale-105 active:scale-95 group cursor-pointer"
         title="Exit Prompter and return to normal screen (Esc)"
       >

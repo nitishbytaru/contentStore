@@ -365,6 +365,14 @@ export default function PromptsPage() {
                   <CardHeader className="pb-2 flex flex-row items-start justify-between space-y-0 gap-2">
                     <CardTitle className="text-sm font-semibold truncate leading-tight flex-1" title={p.title}>
                       {p.title}
+                      {p.isSample && (
+                        <span
+                          className="ml-2 align-middle inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-primary/10 text-primary border border-primary/25"
+                          title="Created for the product tour. It is removed after 2 days unless you edit it."
+                        >
+                          Sample
+                        </span>
+                      )}
                     </CardTitle>
                     <Button 
                       size="icon-xs" 

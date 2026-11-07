@@ -147,3 +147,11 @@ CREATE POLICY "Users can update own telegram link"
     ON public.telegram_links FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete own telegram link"
     ON public.telegram_links FOR DELETE USING (auth.uid() = user_id);
+
+
+-- Onboarding sample data (product tour). A sample row is auto-deleted once
+-- sample_expires_at passes; it is set to NULL as soon as the user really uses it.
+ALTER TABLE public.ideas   ADD COLUMN IF NOT EXISTS is_sample BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE public.ideas   ADD COLUMN IF NOT EXISTS sample_expires_at TIMESTAMPTZ;
+ALTER TABLE public.prompts ADD COLUMN IF NOT EXISTS is_sample BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE public.prompts ADD COLUMN IF NOT EXISTS sample_expires_at TIMESTAMPTZ;

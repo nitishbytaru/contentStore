@@ -38,6 +38,7 @@ export function IdeaSearchBar({
       </div>
       <Button
         onClick={onNewIdea}
+        data-tour="new-idea"
         className="shrink-0 h-10 px-4 text-xs sm:text-sm font-semibold gap-1.5 shadow-xs cursor-pointer"
         title="Open Dedicated Idea Creator"
       >

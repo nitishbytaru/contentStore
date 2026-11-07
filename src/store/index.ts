@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import { setupListeners } from '@reduxjs/toolkit/query';
 import ideasReducer from './slices/ideasSlice';
 import uiReducer from './slices/uiSlice';
+import tourReducer from './slices/tourSlice';
 import { ideasApi } from './api/ideasApi';
 import { promptsApi } from './api/promptsApi';
 
@@ -9,6 +10,7 @@ export const store = configureStore({
   reducer: {
     ideas: ideasReducer,
     ui: uiReducer,
+    tour: tourReducer,
     [ideasApi.reducerPath]: ideasApi.reducer,
     [promptsApi.reducerPath]: promptsApi.reducer,
   },

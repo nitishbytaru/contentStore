@@ -1,7 +1,31 @@
 import { createClient } from '@/lib/supabase/server';
 import { guardedSystemPrompt, isOutOfScope, OUT_OF_SCOPE, OutOfScopeError } from '@/lib/llm-guard';
+import { getSampleState, keepSample } from '@/lib/onboarding/sample';
+import { isSamplePrompt, SAMPLE_REWRITTEN_ARTICLE, simulateLatency } from '@/lib/onboarding/sample-content';
+
+async function saveRewrite(ideaId: string, rewritten: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('ideas')
+    .update({ medium_article: rewritten, updated_at: new Date().toISOString() })
+    .eq('id', ideaId);
+
+  if (error) {
+    console.error('Failed to save rewritten article to Supabase:', error);
+    throw new Error('Failed to save article: ' + error.message);
+  }
+  return rewritten;
+}
 
 export async function rewriteArticleWithPrompt(ideaId: string, prompt: string, article: string) {
+  // Onboarding sample: the sample prompt returns a pre-written rewrite with a realistic delay.
+  const sample = await getSampleState(ideaId);
+  if (sample.isSample && isSamplePrompt(prompt) && article.trim()) {
+    await simulateLatency(5000, 8000);
+    return saveRewrite(ideaId, SAMPLE_REWRITTEN_ARTICLE);
+  }
+  if (sample.unused) await keepSample(ideaId);
+
   const key = process.env.GROQ_API_KEY;
   const model = process.env.GROQ_MODEL?.trim();
   if (!key) throw new Error('GROQ_API_KEY is not set');
@@ -47,16 +71,5 @@ export async function rewriteArticleWithPrompt(ideaId: string, prompt: string, a
     throw new OutOfScopeError('That prompt is not a writing instruction for this article, so the article was left unchanged.');
   }
 
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from('ideas')
-    .update({ medium_article: rewritten, updated_at: new Date().toISOString() })
-    .eq('id', ideaId);
-
-  if (error) {
-    console.error('Failed to save rewritten article to Supabase:', error);
-    throw new Error('Failed to save article: ' + error.message);
-  }
-
-  return rewritten;
+  return saveRewrite(ideaId, rewritten);
 }

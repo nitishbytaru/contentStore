@@ -4,5 +4,7 @@ export interface PromptItem {
   content: string;
   createdAt: string;
   updatedAt: string;
+  /** Onboarding sample prompt created for the product tour. */
+  isSample?: boolean;
 }
 

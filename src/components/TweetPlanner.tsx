@@ -23,6 +23,10 @@ import {
   IdeaListSkeleton,
   IdeaEmptyState,
 } from './ideas';
+import { Button } from '@/components/ui/button';
+import { Sparkles } from 'lucide-react';
+import { OnboardingGate } from '@/components/onboarding/OnboardingGate';
+import { useOnboarding } from '@/hooks/useOnboarding';
 
 export function IdeasPlanner() {
   const router = useRouter();
@@ -35,6 +39,7 @@ export function IdeasPlanner() {
 
   const { data: ideas = [], isLoading: loading, error: queryError } = useGetIdeasQuery();
   const [deleteIdea] = useDeleteIdeaMutation();
+  const { beginTour, starting: tourStarting } = useOnboarding();
   const [updateIdea] = useUpdateIdeaMutation();
 
   const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
@@ -138,6 +143,8 @@ export function IdeasPlanner() {
 
   return (
     <div className="space-y-6">
+      <OnboardingGate ideasLoaded={!loading} ideaCount={ideas.length} />
+
       {/* Search & Actions Bar */}
       <IdeaSearchBar
         searchQuery={searchQuery}
@@ -180,7 +187,17 @@ export function IdeasPlanner() {
         {loading ? (
           <IdeaListSkeleton />
         ) : currentFilteredIdeas.length === 0 ? (
-          <IdeaEmptyState message={getEmptyMessage()} />
+          <IdeaEmptyState
+            message={getEmptyMessage()}
+            actionButton={
+              ideas.length === 0 ? (
+                <Button variant="outline" size="sm" disabled={tourStarting} onClick={() => void beginTour()}>
+                  <Sparkles className="h-3.5 w-3.5" />
+                  {tourStarting ? 'Preparing…' : 'Take a 2-minute tour'}
+                </Button>
+              ) : undefined
+            }
+          />
         ) : (
           currentFilteredIdeas.map((idea) => (
             <IdeaCard
