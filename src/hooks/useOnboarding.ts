@@ -73,6 +73,12 @@ export function useOnboarding() {
     setSkipping(true);
     dispatch(endTour());
     if (sampleIdeaId && pathname === `/ideas/${sampleIdeaId}`) router.push('/ideas');
+
+    // Hide the sample data right away. The server delete below takes a few seconds, and the
+    // sample card must not stay clickable while its idea is being removed.
+    dispatch(ideasApi.util.updateQueryData('getIdeas', undefined, (ideas) => ideas.filter((idea) => !idea.isSample)));
+    dispatch(promptsApi.util.updateQueryData('getPrompts', undefined, (prompts) => prompts.filter((prompt) => !prompt.isSample)));
+
     try {
       const res = await fetch('/api/onboarding/sample', { method: 'DELETE' });
       if (!res.ok) throw new Error();

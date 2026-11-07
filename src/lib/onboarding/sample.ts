@@ -2,7 +2,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { createUserIdea } from '@/lib/supabase/ideas';
 import { deleteIdeaVector, upsertIdeaVector } from '@/lib/idea-index';
-import { deleteResearchForIdea } from '@/lib/research-index';
+import { clearResearchChunks } from '@/lib/research-index';
 import { SAMPLE_IDEA, SAMPLE_PROMPT, SAMPLE_SCRIPT } from '@/lib/onboarding/sample-content';
 
 /** How long an untouched sample idea / prompt lives before it is removed. */
@@ -126,12 +126,19 @@ async function deleteSamples(supabase: SupabaseClient, userId: string, expiredOn
   const { data: ideas, error } = await ideasQuery;
   if (error) throw error;
 
-  for (const row of ideas ?? []) {
-    // Research messages go first (they need the idea row for RLS), then the idea.
-    await deleteResearchForIdea(row.id);
-    await supabase.from('ideas').delete().eq('id', row.id).eq('user_id', userId);
-    await deleteIdeaVector(row.id).catch((err) =>
-      console.warn(`Failed to delete sample idea vector for ${row.id}:`, err)
+  const ids = (ideas ?? []).map((row) => row.id as string);
+  if (ids.length > 0) {
+    // Delete the idea rows first so the sample disappears for the user immediately
+    // (research messages are removed with them by ON DELETE CASCADE)...
+    const { error: deleteError } = await supabase.from('ideas').delete().in('id', ids).eq('user_id', userId);
+    if (deleteError) throw deleteError;
+
+    // ...then clean up the search index in parallel.
+    await Promise.allSettled(
+      ids.flatMap((id) => [
+        clearResearchChunks(id).catch((err) => console.warn(`Failed to delete sample research for ${id}:`, err)),
+        deleteIdeaVector(id).catch((err) => console.warn(`Failed to delete sample idea vector for ${id}:`, err)),
+      ])
     );
   }
 
