@@ -12,6 +12,9 @@ import {
 } from '@/components/idea-detail';
 import { ArticleWritingOverlay } from '@/components/idea-detail/ArticlePromptButton';
 import { cn } from 'cn';
+import { Lightbulb, SearchX } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { StatusPage } from '@/components/StatusPage';
 
 export default function IdeaEditor({ params }: { params: Promise<{ ideaId: string }> }) {
   const { ideaId } = use(params);
@@ -45,12 +48,18 @@ export default function IdeaEditor({ params }: { params: Promise<{ ideaId: strin
 
   if (!idea) {
     return (
-      <div className="py-12 text-center text-muted-foreground w-full">
-        Idea not found.{' '}
-        <Link href="/ideas" className="text-primary hover:underline">
-          Go back to Ideas
-        </Link>
-      </div>
+      <StatusPage
+        code="404"
+        icon={SearchX}
+        title="Idea not found"
+        description="This idea doesn't exist or may have been deleted. It might also belong to a different account."
+        actions={
+          <Button nativeButton={false} render={<Link href="/ideas" />}>
+            <Lightbulb data-icon="inline-start" />
+            Back to my ideas
+          </Button>
+        }
+      />
     );
   }
 
