@@ -16,10 +16,13 @@ interface ScreenshotProps {
 
 /**
  * Real product screenshot from public/landing/. Until the file exists it shows a
- * labelled placeholder of the same size instead of fake UI.
+ * labelled placeholder in development and renders nothing in production.
  */
 export function Screenshot({ file, alt, priority = false, className }: ScreenshotProps) {
   const [missing, setMissing] = useState(false);
+
+  // Placeholders help while building; visitors never see an empty box.
+  if (missing && process.env.NODE_ENV === 'production') return null;
 
   return (
     <div
