@@ -67,12 +67,12 @@ export function IdeaEditorHeader({
           </span>
         )}
         {isArticleSelected && (
-          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-muted text-foreground border border-border">
             <FileText className="w-3 h-3" /> Article
           </span>
         )}
         {isVideoSelected && (
-          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-rose-500/10 text-rose-500 border border-rose-500/25">
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-muted text-foreground border border-border">
             <Video className="w-3 h-3" /> Video
           </span>
         )}
@@ -133,7 +133,6 @@ export function IdeaEditorHeader({
           data-tour="editor-complete"
           className={cn(
             'h-8 px-2.5 text-xs gap-1',
-            (completed || check.allowed) && 'bg-emerald-600 hover:bg-emerald-700 text-white'
           )}
           onClick={onCompleteIdea}
           disabled={saving || locked}

@@ -6,7 +6,8 @@ import { NavLinks } from '@/components/NavLinks';
 export function SiteHeader() {
   const pathname = usePathname();
   const isIdeaEditor = /^\/ideas\/(?!new$)[^/]+$/.test(pathname);
-  if (isIdeaEditor) return null;
+  // The landing page (/) and auth pages render their own branding.
+  if (isIdeaEditor || pathname === '/' || pathname === '/login' || pathname === '/signup') return null;
 
   return (
     <header className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full max-w-full">

@@ -56,7 +56,7 @@ export function NavLinks() {
         onClick={() => setMobileMenuOpen(false)}
         className="font-bold text-base sm:text-lg tracking-tight shrink-0 text-foreground flex items-center gap-2 hover:opacity-90 transition-opacity min-w-0"
       >
-        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+        <span className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse shrink-0" />
         <span className="truncate">ContentStore</span>
       </Link>
 
@@ -152,7 +152,7 @@ export function NavLinks() {
                     >
                       <span>{label}</span>
                       {isActive && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary" />
                       )}
                     </Link>
                   );

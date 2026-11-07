@@ -11,12 +11,12 @@ export function PrompterExitButton({ onExit }: PrompterExitButtonProps) {
         type="button"
         onClick={onExit}
         data-tour="prompter-exit"
-        className="flex items-center gap-2.5 px-5 py-3 rounded-full bg-zinc-900/95 hover:bg-zinc-800 text-white font-semibold text-sm shadow-[0_10px_35px_rgba(0,0,0,0.8)] border border-zinc-700/80 backdrop-blur-md transition-all duration-200 hover:scale-105 active:scale-95 group cursor-pointer"
+        className="flex items-center gap-2.5 px-5 py-3 rounded-full bg-card/95 hover:bg-accent text-white font-semibold text-sm shadow-[0_10px_35px_rgba(0,0,0,0.8)] border border-border backdrop-blur-md transition-all duration-200 hover:scale-105 active:scale-95 group cursor-pointer"
         title="Exit Prompter and return to normal screen (Esc)"
       >
-        <Minimize2 className="w-4 h-4 text-zinc-300 group-hover:text-white transition-colors" />
+        <Minimize2 className="w-4 h-4 text-muted-foreground group-hover:text-white transition-colors" />
         <span>Exit Prompter</span>
-        <kbd className="text-[10px] bg-zinc-800 text-zinc-300 px-1.5 py-0.5 rounded border border-zinc-700 font-mono shadow-inner">
+        <kbd className="text-[10px] bg-secondary text-muted-foreground px-1.5 py-0.5 rounded border border-border font-mono shadow-inner">
           Esc
         </kbd>
       </button>

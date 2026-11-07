@@ -6,13 +6,14 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Label } from '@/components/ui/label';
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 import { AuthUrlError } from '@/components/auth/AuthUrlError';
 import { OrDivider } from '@/components/auth/OrDivider';
+import { AuthShell } from '@/components/auth/AuthShell';
+import { PasswordInput } from '@/components/auth/PasswordInput';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -70,101 +71,83 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center px-4 py-8">
-      <Card className="w-full max-w-md shadow-lg border-border/60">
-        <CardHeader className="space-y-2 text-center pb-6">
-          <div className="mx-auto w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-1">
-            <Sparkles className="w-5 h-5" />
+    <AuthShell title="Create your account" description="Free to start. Your first idea is a minute away.">
+      <div className="flex flex-col gap-5">
+        <Suspense fallback={null}>
+          <AuthUrlError />
+        </Suspense>
+        <GoogleSignInButton label="Sign up with Google" disabled={loading} />
+        <OrDivider label="or with email" />
+        <form onSubmit={handleSignup} className="flex flex-col gap-4" noValidate>
+          {error && (
+            <Alert variant="destructive" className="py-2.5">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="text-xs">{error}</AlertDescription>
+            </Alert>
+          )}
+
+          {successMessage && (
+            <Alert className="py-2.5 bg-primary/10 border-primary/40 text-primary">
+              <CheckCircle2 className="h-4 w-4" />
+              <AlertDescription className="text-xs">{successMessage}</AlertDescription>
+            </Alert>
+          )}
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              className="h-10"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={loading}
+              autoComplete="email"
+            />
           </div>
-          <CardTitle className="text-2xl font-bold tracking-tight">Create an account</CardTitle>
-          <CardDescription className="text-sm text-muted-foreground">
-            Get started managing your ideas and content
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Suspense fallback={null}>
-            <AuthUrlError />
-          </Suspense>
-          <GoogleSignInButton label="Sign up with Google" disabled={loading} />
-          <OrDivider label="or with email" />
-          <form onSubmit={handleSignup} className="space-y-4">
-            {error && (
-              <Alert variant="destructive" className="py-2.5">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription className="text-xs">{error}</AlertDescription>
-              </Alert>
-            )}
 
-            {successMessage && (
-              <Alert className="py-2.5 bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400">
-                <CheckCircle2 className="h-4 w-4" />
-                <AlertDescription className="text-xs">{successMessage}</AlertDescription>
-              </Alert>
-            )}
-
-            <div className="space-y-1.5">
-              <Label className="text-xs" htmlFor="email">
-                Email address
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={loading}
-                autoComplete="email"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs" htmlFor="password">
-                Password
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="At least 6 characters"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={loading}
-                autoComplete="new-password"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs" htmlFor="confirmPassword">
-                Confirm Password
-              </Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="Repeat password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                disabled={loading}
-                autoComplete="new-password"
-              />
-            </div>
-
-            <Button type="submit" className="w-full gap-2 mt-2" disabled={loading}>
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-              {loading ? 'Creating account...' : 'Create Account'}
-            </Button>
-          </form>
-        </CardContent>
-        <CardFooter className="flex flex-col gap-3 text-center border-t border-border/40 pt-4 text-xs text-muted-foreground">
-          <div>
-            Already have an account?{' '}
-            <Link href="/login" className="font-semibold text-primary hover:underline">
-              Sign in
-            </Link>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="password">Password</Label>
+            <PasswordInput
+              id="password"
+              className="h-10"
+              placeholder="At least 6 characters"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={loading}
+              autoComplete="new-password"
+            />
           </div>
-        </CardFooter>
-      </Card>
-    </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="confirmPassword">Confirm password</Label>
+            <PasswordInput
+              id="confirmPassword"
+              className="h-10"
+              placeholder="Type it again"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              disabled={loading}
+              autoComplete="new-password"
+            />
+          </div>
+
+          <Button type="submit" size="lg" className="mt-1 h-10 w-full font-semibold" disabled={loading}>
+            {loading ? <Loader2 data-icon="inline-start" className="animate-spin" /> : null}
+            {loading ? 'Creating account…' : 'Create account'}
+          </Button>
+        </form>
+        <p className="text-sm text-muted-foreground">
+          Already have an account?{' '}
+          <Link href="/login" className="font-medium text-foreground underline underline-offset-4 decoration-foreground/30 hover:decoration-foreground">
+            Log in
+          </Link>
+        </p>
+      </div>
+    </AuthShell>
   );
 }

@@ -40,15 +40,15 @@ const Toaster = ({ ...props }: ToasterProps) => {
           "--normal-text": "var(--popover-foreground)",
           "--normal-border": "var(--border)",
           "--border-radius": "var(--radius)",
-          "--success-bg": "#16a34a",
-          "--success-text": "#ffffff",
-          "--success-border": "#15803d",
+          "--success-bg": "#2cff05",
+          "--success-text": "#000000",
+          "--success-border": "#2cff05",
         } as React.CSSProperties
       }
       toastOptions={{
         classNames: {
           toast: "cn-toast",
-          success: "!bg-green-600 !text-white !border-green-700 shadow-lg shadow-green-950/20",
+          success: "!bg-primary !text-primary-foreground !border-primary shadow-lg",
           error: "!bg-red-600 !text-white !border-red-700 shadow-lg shadow-red-950/20",
         },
       }}

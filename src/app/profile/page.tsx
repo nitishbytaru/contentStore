@@ -231,9 +231,9 @@ export default function ProfilePage() {
                 <Separator />
                 <DetailRow icon={BadgeCheck} label="Email status">
                   {profile.emailConfirmed ? (
-                    <Badge variant="outline" className="border-emerald-500/30 text-emerald-600 dark:text-emerald-400">Verified</Badge>
+                    <Badge variant="outline" className="border-primary/40 text-primary">Verified</Badge>
                   ) : (
-                    <Badge variant="outline" className="border-amber-500/30 text-amber-600 dark:text-amber-400">Not verified</Badge>
+                    <Badge variant="outline" className="border-highlight/50 text-highlight">Not verified</Badge>
                   )}
                 </DetailRow>
                 <Separator />
@@ -243,7 +243,7 @@ export default function ProfilePage() {
                 <Separator />
                 <DetailRow icon={Send} label="Telegram">
                   {profile.telegramLinked ? (
-                    <Badge variant="outline" className="border-emerald-500/30 text-emerald-600 dark:text-emerald-400">Connected</Badge>
+                    <Badge variant="outline" className="border-primary/40 text-primary">Connected</Badge>
                   ) : (
                     <Badge variant="outline" className="text-muted-foreground">Not connected</Badge>
                   )}

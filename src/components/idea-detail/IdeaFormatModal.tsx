@@ -50,7 +50,7 @@ export function IdeaFormatModal({
           {/* Article format toggle */}
           <div className="flex items-center justify-between p-3 rounded-lg border border-border/70 bg-muted/20">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <div className="p-2 rounded-lg bg-muted text-foreground">
                 <FileText className="w-4 h-4" />
               </div>
               <div>
@@ -60,12 +60,12 @@ export function IdeaFormatModal({
             </div>
             <Button
               size="sm"
-              variant={isArticleSelected ? 'default' : 'outline'}
+              variant="outline"
               onClick={() => onToggleFormat('article', !isArticleSelected)}
               disabled={saving}
               className={cn(
                 'h-8 text-xs font-medium cursor-pointer',
-                isArticleSelected && 'bg-emerald-600 hover:bg-emerald-700'
+                isArticleSelected && 'border-highlight/50 bg-highlight/15 text-foreground hover:bg-highlight/25'
               )}
             >
               {isArticleSelected ? <Check className="w-3.5 h-3.5 mr-1" /> : null}
@@ -76,7 +76,7 @@ export function IdeaFormatModal({
           {/* Video format toggle */}
           <div className="flex items-center justify-between p-3 rounded-lg border border-border/70 bg-muted/20">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-lg bg-rose-500/10 text-rose-500">
+              <div className="p-2 rounded-lg bg-muted text-foreground">
                 <Video className="w-4 h-4" />
               </div>
               <div>
@@ -86,10 +86,10 @@ export function IdeaFormatModal({
             </div>
             <Button
               size="sm"
-              variant={isVideoSelected ? 'default' : 'outline'}
+              variant="outline"
               onClick={() => onToggleFormat('video', !isVideoSelected)}
               disabled={saving}
-              className={cn('h-8 text-xs font-medium cursor-pointer', isVideoSelected && 'bg-rose-600 hover:bg-rose-700')}
+              className={cn('h-8 text-xs font-medium cursor-pointer', isVideoSelected && 'border-highlight/50 bg-highlight/15 text-foreground hover:bg-highlight/25')}
             >
               {isVideoSelected ? <Check className="w-3.5 h-3.5 mr-1" /> : null}
               {isVideoSelected ? 'Enabled' : 'Enable'}

@@ -40,6 +40,29 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Supabase falls back to the Site URL (e.g. `/?code=…`) when an OAuth redirectTo is not on
+  // its allow-list. Without this, the code is never exchanged, the visitor bounces to /login and
+  // the browser autofills the password form instead of finishing Google sign-in.
+  const strayCode = request.nextUrl.searchParams.get('code');
+  if (!user && strayCode && !request.nextUrl.pathname.startsWith('/auth')) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/auth/callback';
+    if (!url.searchParams.get('next')) url.searchParams.set('next', '/ideas');
+    return NextResponse.redirect(url);
+  }
+
+  const isLanding = request.nextUrl.pathname === '/';
+
+  // Public landing page: signed-in users go straight to their ideas.
+  if (isLanding) {
+    if (user) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/ideas';
+      return NextResponse.redirect(url);
+    }
+    return supabaseResponse;
+  }
+
   const isAuthRoute =
     request.nextUrl.pathname.startsWith('/login') ||
     request.nextUrl.pathname.startsWith('/signup') ||

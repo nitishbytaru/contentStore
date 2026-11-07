@@ -111,12 +111,12 @@ export function IdeaContentTabs({
                   {tab.value !== 'baseArticle' && <div className="flex items-center justify-between gap-2 mb-2 px-1">
                     <div className="flex items-center gap-2 min-w-0">
                       {isVideoScript ? (
-                        <span className="text-xs font-semibold text-rose-500 flex items-center gap-1.5 shrink-0">
+                        <span className="text-xs font-semibold text-foreground flex items-center gap-1.5 shrink-0">
                           <Tv className="w-3.5 h-3.5" />
                           Video Script
                         </span>
                       ) : tab.value === 'mediumArticle' ? (
-                        <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 shrink-0">
+                        <span className="text-xs font-semibold text-foreground flex items-center gap-1.5 shrink-0">
                           <FileText className="w-3.5 h-3.5" />
                           Article Draft
                         </span>
@@ -145,7 +145,7 @@ export function IdeaContentTabs({
                           className="h-7.5 px-2.5 text-xs font-medium gap-1.5 border-border/70 hover:bg-muted cursor-pointer"
                           title="Open full-screen prompter for recording from a distance"
                         >
-                          <Tv className="w-3.5 h-3.5 text-rose-500" />
+                          <Tv className="w-3.5 h-3.5 text-muted-foreground" />
                           Prompter
                         </Button>
                       )}

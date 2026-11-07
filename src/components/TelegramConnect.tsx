@@ -109,7 +109,7 @@ export function TelegramConnect({ className = '', onDone }: { className?: string
       title={linked ? 'Telegram connected — click to disconnect' : 'Connect the ContentStore Telegram bot'}
       className={className}
     >
-      <BotMessageSquare className={`w-3.5 h-3.5 ${linked ? 'text-emerald-500' : ''}`} />
+      <BotMessageSquare className={`w-3.5 h-3.5 ${linked ? 'text-primary' : ''}`} />
       <span>{busy ? 'Working...' : linked ? 'Telegram connected' : 'Connect Telegram'}</span>
     </button>
   );

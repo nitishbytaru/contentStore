@@ -35,7 +35,7 @@ export function PrompterScriptViewer({
       {/* Generous top & bottom padding so the first & last paragraphs can align to the eye-line */}
       <div className="pt-[35vh] pb-[60vh] max-w-4xl mx-auto px-6 sm:px-12 md:px-16 space-y-12">
         {paragraphs.length === 0 ? (
-          <div className="py-24 text-center text-zinc-500 text-xl font-light">
+          <div className="py-24 text-center text-muted-foreground text-xl font-light">
             No script text provided. Please draft your video script in the editor first.
           </div>
         ) : (
@@ -52,8 +52,8 @@ export function PrompterScriptViewer({
                   isActive
                     ? 'text-white opacity-100 scale-[1.02] drop-shadow-[0_0_24px_rgba(255,255,255,0.25)]'
                     : highlightMode
-                    ? 'text-zinc-400 opacity-35 hover:opacity-75 hover:text-zinc-200'
-                    : 'text-zinc-100 opacity-95'
+                    ? 'text-muted-foreground opacity-35 hover:opacity-75 hover:text-foreground'
+                    : 'text-foreground opacity-95'
                 }`}
                 style={{
                   fontSize: `${fontSize}px`,

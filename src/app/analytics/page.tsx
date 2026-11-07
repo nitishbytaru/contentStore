@@ -114,18 +114,18 @@ export default function AnalyticsPage() {
   // Chart 1: Format Distribution
   const formatChartData = useMemo(() => {
     return [
-      { name: 'Articles Only', value: metrics.articlesOnlyCount, fill: '#3b82f6' },
-      { name: 'Videos Only', value: metrics.videosOnlyCount, fill: '#f43f5e' },
-      { name: 'Articles & Videos', value: metrics.bothCount, fill: '#8b5cf6' },
-      { name: 'Unassigned / Research', value: metrics.researchOnlyCount, fill: '#10b981' },
+      { name: 'Articles Only', value: metrics.articlesOnlyCount, fill: 'var(--chart-1)' },
+      { name: 'Videos Only', value: metrics.videosOnlyCount, fill: 'var(--chart-2)' },
+      { name: 'Articles & Videos', value: metrics.bothCount, fill: 'var(--chart-5)' },
+      { name: 'Unassigned / Research', value: metrics.researchOnlyCount, fill: 'var(--chart-3)' },
     ].filter((item) => item.value > 0);
   }, [metrics]);
 
   const formatChartConfig = {
-    articles: { label: 'Articles Only', color: '#3b82f6' },
-    videos: { label: 'Videos Only', color: '#f43f5e' },
-    both: { label: 'Articles & Videos', color: '#8b5cf6' },
-    research: { label: 'Research', color: '#10b981' },
+    articles: { label: 'Articles Only', color: 'var(--chart-1)' },
+    videos: { label: 'Videos Only', color: 'var(--chart-2)' },
+    both: { label: 'Articles & Videos', color: 'var(--chart-5)' },
+    research: { label: 'Research', color: 'var(--chart-3)' },
   } satisfies ChartConfig;
 
   // Chart 2: Pipeline Stage Progress
@@ -150,22 +150,22 @@ export default function AnalyticsPage() {
   }, [metrics]);
 
   const pipelineChartConfig = {
-    Completed: { label: 'Completed', color: '#10b981' },
-    Pending: { label: 'In Progress', color: '#3b82f6' },
+    Completed: { label: 'Completed', color: 'var(--chart-1)' },
+    Pending: { label: 'In Progress', color: 'var(--chart-2)' },
   } satisfies ChartConfig;
 
   // Chart 3: Platform Eligibility Distribution
   const platformChartData = useMemo(() => {
     return [
-      { platform: 'Medium', count: metrics.mediumCount, fill: '#10b981' },
-      { platform: 'Substack', count: metrics.substackCount, fill: '#f97316' },
-      { platform: 'YouTube', count: metrics.youtubeCount, fill: '#ef4444' },
-      { platform: 'Instagram', count: metrics.instagramCount, fill: '#ec4899' },
+      { platform: 'Medium', count: metrics.mediumCount, fill: 'var(--chart-3)' },
+      { platform: 'Substack', count: metrics.substackCount, fill: 'var(--chart-4)' },
+      { platform: 'YouTube', count: metrics.youtubeCount, fill: 'var(--chart-2)' },
+      { platform: 'Instagram', count: metrics.instagramCount, fill: 'var(--chart-5)' },
     ];
   }, [metrics]);
 
   const platformChartConfig = {
-    count: { label: 'Eligible Ideas', color: '#8b5cf6' },
+    count: { label: 'Eligible Ideas', color: 'var(--chart-5)' },
   } satisfies ChartConfig;
 
   const isLoading = ideasLoading || promptsLoading;
@@ -186,7 +186,7 @@ export default function AnalyticsPage() {
 
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-xs px-2.5 py-1 gap-1.5 font-medium">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
             Live Database Sync
           </Badge>
           <Link href="/ideas">
@@ -226,19 +226,19 @@ export default function AnalyticsPage() {
                 <span className="text-xs text-muted-foreground">in library</span>
               </div>
               <div className="mt-2 text-[11px] text-muted-foreground flex items-center gap-1.5">
-                <span className="text-emerald-500 font-medium">{metrics.completedIdeas} completed</span>
+                <span className="text-primary font-medium">{metrics.completedIdeas} completed</span>
                 <span>•</span>
-                <span className="text-blue-500 font-medium">{metrics.pendingIdeas} active</span>
+                <span className="text-highlight font-medium">{metrics.pendingIdeas} active</span>
               </div>
             </CardContent>
           </Card>
 
           {/* Articles */}
-          <Card className="border-border/60 shadow-xs hover:border-blue-500/40 transition-all">
+          <Card className="border-border/60 shadow-xs hover:border-foreground/25 transition-all">
             <CardContent className="p-4 sm:p-5">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium text-muted-foreground">Articles</span>
-                <div className="h-8 w-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                <div className="h-8 w-8 rounded-lg bg-muted text-foreground flex items-center justify-center">
                   <FileText className="h-4 w-4" />
                 </div>
               </div>
@@ -255,17 +255,17 @@ export default function AnalyticsPage() {
               <div className="mt-2 text-[11px] text-muted-foreground flex items-center gap-1.5">
                 <span className="text-foreground font-medium">{metrics.articleDrafts} drafts</span>
                 <span>•</span>
-                <span className="text-emerald-500 font-medium">{metrics.completedArticles} published</span>
+                <span className="text-primary font-medium">{metrics.completedArticles} published</span>
               </div>
             </CardContent>
           </Card>
 
           {/* Videos */}
-          <Card className="border-border/60 shadow-xs hover:border-rose-500/40 transition-all">
+          <Card className="border-border/60 shadow-xs hover:border-foreground/25 transition-all">
             <CardContent className="p-4 sm:p-5">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium text-muted-foreground">Videos</span>
-                <div className="h-8 w-8 rounded-lg bg-rose-500/10 text-rose-500 flex items-center justify-center">
+                <div className="h-8 w-8 rounded-lg bg-muted text-foreground flex items-center justify-center">
                   <Video className="h-4 w-4" />
                 </div>
               </div>
@@ -282,17 +282,17 @@ export default function AnalyticsPage() {
               <div className="mt-2 text-[11px] text-muted-foreground flex items-center gap-1.5">
                 <span className="text-foreground font-medium">{metrics.videoScripts} scripted</span>
                 <span>•</span>
-                <span className="text-emerald-500 font-medium">{metrics.completedVideos} published</span>
+                <span className="text-primary font-medium">{metrics.completedVideos} published</span>
               </div>
             </CardContent>
           </Card>
 
           {/* Completion Rate */}
-          <Card className="border-border/60 shadow-xs hover:border-emerald-500/40 transition-all">
+          <Card className="border-border/60 shadow-xs hover:border-foreground/25 transition-all">
             <CardContent className="p-4 sm:p-5">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium text-muted-foreground">Completion Rate</span>
-                <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                <div className="h-8 w-8 rounded-lg bg-muted text-foreground flex items-center justify-center">
                   <TrendingUp className="h-4 w-4" />
                 </div>
               </div>
@@ -313,7 +313,7 @@ export default function AnalyticsPage() {
       {/* Secondary Quick Metrics Row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="rounded-lg border border-border/50 bg-card/60 p-3 flex items-center gap-3">
-          <div className="h-9 w-9 rounded-md bg-purple-500/10 text-purple-500 flex items-center justify-center shrink-0">
+          <div className="h-9 w-9 rounded-md bg-muted text-foreground flex items-center justify-center shrink-0">
             <Layers className="h-4 w-4" />
           </div>
           <div className="min-w-0">
@@ -323,7 +323,7 @@ export default function AnalyticsPage() {
         </div>
 
         <div className="rounded-lg border border-border/50 bg-card/60 p-3 flex items-center gap-3">
-          <div className="h-9 w-9 rounded-md bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
+          <div className="h-9 w-9 rounded-md bg-muted text-foreground flex items-center justify-center shrink-0">
             <Compass className="h-4 w-4" />
           </div>
           <div className="min-w-0">
@@ -333,7 +333,7 @@ export default function AnalyticsPage() {
         </div>
 
         <div className="rounded-lg border border-border/50 bg-card/60 p-3 flex items-center gap-3">
-          <div className="h-9 w-9 rounded-md bg-cyan-500/10 text-cyan-500 flex items-center justify-center shrink-0">
+          <div className="h-9 w-9 rounded-md bg-muted text-foreground flex items-center justify-center shrink-0">
             <Clock className="h-4 w-4" />
           </div>
           <div className="min-w-0">
@@ -404,22 +404,22 @@ export default function AnalyticsPage() {
                 {/* Legend Chips */}
                 <div className="grid grid-cols-2 gap-2 text-xs pt-1">
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#3b82f6] shrink-0" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-chart-1 shrink-0" />
                     <span className="text-muted-foreground">Articles Only:</span>
                     <span className="font-semibold text-foreground ml-auto">{metrics.articlesOnlyCount}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#f43f5e] shrink-0" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-chart-2 shrink-0" />
                     <span className="text-muted-foreground">Videos Only:</span>
                     <span className="font-semibold text-foreground ml-auto">{metrics.videosOnlyCount}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#8b5cf6] shrink-0" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-chart-5 shrink-0" />
                     <span className="text-muted-foreground">Both Formats:</span>
                     <span className="font-semibold text-foreground ml-auto">{metrics.bothCount}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#10b981] shrink-0" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-chart-3 shrink-0" />
                     <span className="text-muted-foreground">Research:</span>
                     <span className="font-semibold text-foreground ml-auto">{metrics.researchOnlyCount}</span>
                   </div>
@@ -462,18 +462,18 @@ export default function AnalyticsPage() {
                     <XAxis dataKey="category" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
                     <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11 }} allowDecimals={false} />
                     <ChartTooltip content={<ChartTooltipContent />} />
-                    <Bar dataKey="Completed" stackId="a" fill="#10b981" radius={[0, 0, 4, 4]} />
-                    <Bar dataKey="Pending" stackId="a" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="Completed" stackId="a" fill="var(--chart-1)" radius={[0, 0, 4, 4]} />
+                    <Bar dataKey="Pending" stackId="a" fill="var(--chart-2)" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ChartContainer>
 
                 <div className="flex items-center justify-center gap-6 text-xs pt-1">
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-sm bg-[#10b981]" />
+                    <span className="w-2.5 h-2.5 rounded-sm bg-chart-1" />
                     <span className="text-muted-foreground">Completed / Shipped</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-sm bg-[#3b82f6]" />
+                    <span className="w-2.5 h-2.5 rounded-sm bg-chart-2" />
                     <span className="text-muted-foreground">Active in Progress</span>
                   </div>
                 </div>
@@ -533,7 +533,7 @@ export default function AnalyticsPage() {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs">
                 <span className="flex items-center gap-1.5 font-medium text-foreground">
-                  <Compass className="h-3.5 w-3.5 text-amber-500" /> Research Ready
+                  <Compass className="h-3.5 w-3.5 text-muted-foreground" /> Research Ready
                 </span>
                 <span className="text-muted-foreground font-mono">
                   {metrics.researchedIdeas} / {metrics.totalIdeas}
@@ -549,7 +549,7 @@ export default function AnalyticsPage() {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs">
                 <span className="flex items-center gap-1.5 font-medium text-foreground">
-                  <FileText className="h-3.5 w-3.5 text-blue-500" /> Article Drafted
+                  <FileText className="h-3.5 w-3.5 text-muted-foreground" /> Article Drafted
                 </span>
                 <span className="text-muted-foreground font-mono">
                   {metrics.articleDrafts} / {metrics.articlesCount || 1}
@@ -565,7 +565,7 @@ export default function AnalyticsPage() {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs">
                 <span className="flex items-center gap-1.5 font-medium text-foreground">
-                  <Video className="h-3.5 w-3.5 text-rose-500" /> Video Scripted
+                  <Video className="h-3.5 w-3.5 text-muted-foreground" /> Video Scripted
                 </span>
                 <span className="text-muted-foreground font-mono">
                   {metrics.videoScripts} / {metrics.videosCount || 1}
@@ -581,7 +581,7 @@ export default function AnalyticsPage() {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs">
                 <span className="flex items-center gap-1.5 font-medium text-foreground">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Fully Completed
+                  <CheckCircle2 className="h-3.5 w-3.5 text-primary" /> Fully Completed
                 </span>
                 <span className="text-muted-foreground font-mono">
                   {metrics.completedIdeas} / {metrics.totalIdeas}
@@ -624,12 +624,12 @@ export default function AnalyticsPage() {
               {/* Articles Row */}
               <tr className="hover:bg-muted/20 transition-colors">
                 <td className="py-3 px-4 font-medium flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-blue-500" />
+                  <FileText className="h-4 w-4 text-muted-foreground" />
                   <span>Articles (Medium / Substack)</span>
                 </td>
                 <td className="py-3 px-4 font-mono font-medium">{metrics.articlesCount}</td>
-                <td className="py-3 px-4 font-mono text-blue-500">{metrics.pendingArticles}</td>
-                <td className="py-3 px-4 font-mono text-emerald-500">{metrics.completedArticles}</td>
+                <td className="py-3 px-4 font-mono text-highlight">{metrics.pendingArticles}</td>
+                <td className="py-3 px-4 font-mono text-primary">{metrics.completedArticles}</td>
                 <td className="py-3 px-4">
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-[11px] w-9">
@@ -653,12 +653,12 @@ export default function AnalyticsPage() {
               {/* Videos Row */}
               <tr className="hover:bg-muted/20 transition-colors">
                 <td className="py-3 px-4 font-medium flex items-center gap-2">
-                  <Video className="h-4 w-4 text-rose-500" />
+                  <Video className="h-4 w-4 text-muted-foreground" />
                   <span>Videos (YouTube / Instagram)</span>
                 </td>
                 <td className="py-3 px-4 font-mono font-medium">{metrics.videosCount}</td>
-                <td className="py-3 px-4 font-mono text-rose-500">{metrics.pendingVideos}</td>
-                <td className="py-3 px-4 font-mono text-emerald-500">{metrics.completedVideos}</td>
+                <td className="py-3 px-4 font-mono text-highlight">{metrics.pendingVideos}</td>
+                <td className="py-3 px-4 font-mono text-primary">{metrics.completedVideos}</td>
                 <td className="py-3 px-4">
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-[11px] w-9">
@@ -682,14 +682,14 @@ export default function AnalyticsPage() {
               {/* Dual Formats Row */}
               <tr className="hover:bg-muted/20 transition-colors">
                 <td className="py-3 px-4 font-medium flex items-center gap-2">
-                  <Layers className="h-4 w-4 text-purple-500" />
+                  <Layers className="h-4 w-4 text-muted-foreground" />
                   <span>Dual Pipeline (Both Formats)</span>
                 </td>
                 <td className="py-3 px-4 font-mono font-medium">{metrics.bothCount}</td>
-                <td className="py-3 px-4 font-mono text-purple-500">
+                <td className="py-3 px-4 font-mono text-highlight">
                   {ideas.filter((i) => isArticleIdea(i) && isVideoIdea(i) && !isIdeaCompleted(i)).length}
                 </td>
-                <td className="py-3 px-4 font-mono text-emerald-500">
+                <td className="py-3 px-4 font-mono text-primary">
                   {ideas.filter((i) => isArticleIdea(i) && isVideoIdea(i) && isIdeaCompleted(i)).length}
                 </td>
                 <td className="py-3 px-4">
@@ -729,8 +729,8 @@ export default function AnalyticsPage() {
                   <span>Overall Total</span>
                 </td>
                 <td className="py-3 px-4 font-mono">{metrics.totalIdeas}</td>
-                <td className="py-3 px-4 font-mono text-blue-500">{metrics.pendingIdeas}</td>
-                <td className="py-3 px-4 font-mono text-emerald-500">{metrics.completedIdeas}</td>
+                <td className="py-3 px-4 font-mono text-highlight">{metrics.pendingIdeas}</td>
+                <td className="py-3 px-4 font-mono text-primary">{metrics.completedIdeas}</td>
                 <td className="py-3 px-4">
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-[11px] w-9">{metrics.completionRate}%</span>

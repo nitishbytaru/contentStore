@@ -172,11 +172,11 @@ export const getIdeaPublishStatus = (i: IdeaChecklistFields): PublishStatus => {
     return {
       status: PublishStatusType.COMPLETED,
       label: 'Completed',
-      badgeClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
-      dotClass: 'bg-emerald-500',
-      borderClass: 'border-l-emerald-500',
-      bgClass: 'bg-emerald-500/[0.02]',
-      accentGradient: 'from-emerald-500/80 via-emerald-400/40 to-transparent',
+      badgeClass: 'bg-primary/10 text-primary border-primary/30',
+      dotClass: 'bg-primary',
+      borderClass: 'border-l-primary',
+      bgClass: 'bg-primary/[0.03]',
+      accentGradient: 'from-primary/80 via-primary/30 to-transparent',
     };
   }
 
@@ -187,11 +187,11 @@ export const getIdeaPublishStatus = (i: IdeaChecklistFields): PublishStatus => {
     return {
       status: PublishStatusType.PENDING,
       label: 'Pending',
-      badgeClass: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20',
-      dotClass: 'bg-violet-500',
-      borderClass: 'border-l-violet-500',
-      bgClass: 'bg-violet-500/[0.02]',
-      accentGradient: 'from-violet-500/80 via-violet-400/40 to-transparent',
+      badgeClass: 'bg-highlight/15 text-foreground border-highlight/40',
+      dotClass: 'bg-highlight',
+      borderClass: 'border-l-highlight',
+      bgClass: 'bg-highlight/[0.04]',
+      accentGradient: 'from-highlight/80 via-highlight/30 to-transparent',
     };
   }
 
@@ -199,11 +199,11 @@ export const getIdeaPublishStatus = (i: IdeaChecklistFields): PublishStatus => {
     return {
       status: PublishStatusType.ARTICLES_AND_VIDEOS,
       label: 'Article & Video',
-      badgeClass: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20',
-      dotClass: 'bg-indigo-500',
-      borderClass: 'border-l-indigo-500',
-      bgClass: 'bg-indigo-500/[0.02]',
-      accentGradient: 'from-indigo-500/80 via-indigo-400/40 to-transparent',
+      badgeClass: 'bg-muted text-foreground border-border',
+      dotClass: 'bg-muted-foreground',
+      borderClass: 'border-l-border',
+      bgClass: 'bg-transparent',
+      accentGradient: 'from-foreground/30 via-foreground/10 to-transparent',
     };
   }
 
@@ -211,21 +211,21 @@ export const getIdeaPublishStatus = (i: IdeaChecklistFields): PublishStatus => {
     return {
       status: PublishStatusType.ARTICLES,
       label: 'Article',
-      badgeClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
-      dotClass: 'bg-amber-500',
-      borderClass: 'border-l-amber-500',
-      bgClass: 'bg-amber-500/[0.02]',
-      accentGradient: 'from-amber-500/80 via-amber-400/40 to-transparent',
+      badgeClass: 'bg-muted text-foreground border-border',
+      dotClass: 'bg-muted-foreground',
+      borderClass: 'border-l-border',
+      bgClass: 'bg-transparent',
+      accentGradient: 'from-foreground/30 via-foreground/10 to-transparent',
     };
   }
 
   return {
     status: PublishStatusType.VIDEOS,
     label: 'Video',
-    badgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
-    dotClass: 'bg-rose-500',
-    borderClass: 'border-l-rose-500',
-    bgClass: 'bg-rose-500/[0.02]',
-    accentGradient: 'from-rose-500/80 via-rose-400/40 to-transparent',
+    badgeClass: 'bg-muted text-foreground border-border',
+    dotClass: 'bg-muted-foreground',
+    borderClass: 'border-l-border',
+    bgClass: 'bg-transparent',
+    accentGradient: 'from-foreground/30 via-foreground/10 to-transparent',
   };
 };

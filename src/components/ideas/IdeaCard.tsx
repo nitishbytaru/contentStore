@@ -111,7 +111,7 @@ export function IdeaCard({
                   {!hasBaseArticle && (
                     <Link
                       href={`/ideas/${idea.ideaId}`}
-                      className="relative z-10 inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25 hover:bg-amber-500/20 transition-colors"
+                      className="relative z-10 inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-highlight/15 text-foreground border border-highlight/40 hover:bg-highlight/25 transition-colors"
                     >
                       <FileText className="w-3 h-3 shrink-0 opacity-80" />
                       Needs Research
