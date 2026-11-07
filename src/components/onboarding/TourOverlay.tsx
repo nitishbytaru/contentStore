@@ -55,7 +55,7 @@ export function TourOverlay() {
   const router = useRouter();
   const pathname = usePathname();
   const { active, stepIndex, sampleIdeaId, hydrated } = useSelector((state: RootState) => state.tour);
-  const { completeOnboarding } = useOnboarding();
+  const { completeOnboarding, skipTour, skipping } = useOnboarding();
   const [deleteIdea, { isLoading: deleting }] = useDeleteIdeaMutation();
 
   // Measurements are tagged with the step (and page) they belong to, so a new step
@@ -230,8 +230,16 @@ export function TourOverlay() {
         <Button size="sm" className="h-7 rounded-full text-xs" onClick={() => expectedPath && router.push(expectedPath)}>
           Resume
         </Button>
-        <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full" title="End tour" onClick={() => void completeOnboarding()}>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-7 rounded-full text-xs text-muted-foreground"
+          title="Skip the tour and remove the sample data"
+          disabled={skipping}
+          onClick={() => void skipTour()}
+        >
           <X className="h-3.5 w-3.5" />
+          Skip tour
         </Button>
       </div>
     );
@@ -309,11 +317,12 @@ export function TourOverlay() {
             {!isLast && (
               <button
                 type="button"
-                onClick={() => void completeOnboarding()}
-                className="-mr-1 -mt-1 rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer"
-                title="Skip tour"
-                aria-label="Skip tour"
+                onClick={() => void skipTour()}
+                disabled={skipping}
+                className="-mr-1.5 -mt-1 inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-[11px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50 cursor-pointer"
+                title="Skip the tour and remove the sample data"
               >
+                Skip tour
                 <X className="h-3.5 w-3.5" />
               </button>
             )}

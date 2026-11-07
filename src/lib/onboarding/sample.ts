@@ -114,33 +114,42 @@ export async function createSampleForUser(supabase: SupabaseClient, userId: stri
   return { ideaId };
 }
 
+/**
+ * Deletes a user's sample ideas (with their research and search vectors) and sample prompts.
+ * `expiredOnly` limits it to samples whose 2-day window has passed and were never used.
+ */
+async function deleteSamples(supabase: SupabaseClient, userId: string, expiredOnly: boolean): Promise<void> {
+  const now = new Date().toISOString();
+
+  let ideasQuery = supabase.from('ideas').select('id').eq('user_id', userId).eq('is_sample', true);
+  if (expiredOnly) ideasQuery = ideasQuery.lt('sample_expires_at', now);
+  const { data: ideas, error } = await ideasQuery;
+  if (error) throw error;
+
+  for (const row of ideas ?? []) {
+    // Research messages go first (they need the idea row for RLS), then the idea.
+    await deleteResearchForIdea(row.id);
+    await supabase.from('ideas').delete().eq('id', row.id).eq('user_id', userId);
+    await deleteIdeaVector(row.id).catch((err) =>
+      console.warn(`Failed to delete sample idea vector for ${row.id}:`, err)
+    );
+  }
+
+  let promptsQuery = supabase.from('prompts').delete().eq('user_id', userId).eq('is_sample', true);
+  if (expiredOnly) promptsQuery = promptsQuery.lt('sample_expires_at', now);
+  await promptsQuery;
+}
+
 /** Removes sample ideas and prompts the user never used once they expire. */
 export async function cleanupExpiredSamples(supabase: SupabaseClient, userId: string): Promise<void> {
-  const now = new Date().toISOString();
   try {
-    const { data: expired } = await supabase
-      .from('ideas')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('is_sample', true)
-      .lt('sample_expires_at', now);
-
-    for (const row of expired ?? []) {
-      // Research messages go first (they need the idea row for RLS), then the idea.
-      await deleteResearchForIdea(row.id);
-      await supabase.from('ideas').delete().eq('id', row.id).eq('user_id', userId);
-      await deleteIdeaVector(row.id).catch((err) =>
-        console.warn(`Failed to delete sample idea vector for ${row.id}:`, err)
-      );
-    }
-
-    await supabase
-      .from('prompts')
-      .delete()
-      .eq('user_id', userId)
-      .eq('is_sample', true)
-      .lt('sample_expires_at', now);
+    await deleteSamples(supabase, userId, true);
   } catch (error) {
     console.warn('Expired sample cleanup failed:', error);
   }
+}
+
+/** Removes all of a user's sample data right away (used when they skip the tour). */
+export async function deleteAllSamples(supabase: SupabaseClient, userId: string): Promise<void> {
+  await deleteSamples(supabase, userId, false);
 }

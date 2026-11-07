@@ -37,7 +37,7 @@ export function OnboardingGate({ ideasLoaded, ideaCount }: { ideasLoaded: boolea
       }}
       onDismiss={() => {
         setDone(true);
-        void completeOnboarding();
+        void completeOnboarding({ skipped: true });
       }}
     />
   );

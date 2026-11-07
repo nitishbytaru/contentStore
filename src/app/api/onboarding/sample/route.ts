@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { createSampleForUser } from '@/lib/onboarding/sample';
+import { createSampleForUser, deleteAllSamples } from '@/lib/onboarding/sample';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -19,6 +19,24 @@ export async function POST() {
   } catch (error: unknown) {
     console.error('Error creating onboarding sample:', error);
     const message = error instanceof Error ? error.message : 'Could not prepare the sample idea';
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+/** Removes the sample idea and prompt immediately, e.g. when the user skips the tour. */
+export async function DELETE() {
+  try {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized. Please sign in.' }, { status: 401 });
+    }
+
+    await deleteAllSamples(supabase, user.id);
+    return NextResponse.json({ success: true }, { status: 200 });
+  } catch (error: unknown) {
+    console.error('Error deleting onboarding sample:', error);
+    const message = error instanceof Error ? error.message : 'Could not remove the sample data';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

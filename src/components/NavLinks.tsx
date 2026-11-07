@@ -10,6 +10,7 @@ const links = [
   { href: '/ideas', label: 'Ideas' },
   { href: '/prompts', label: 'Prompts' },
   { href: '/analytics', label: 'Analytics' },
+  { href: '/profile', label: 'Profile' },
 ];
 
 import { createClient } from '@/lib/supabase/client';

@@ -65,7 +65,7 @@ export function WelcomeDialog({
 
         <DialogFooter className="gap-2 sm:justify-between">
           <Button type="button" variant="ghost" disabled={starting} onClick={onDismiss}>
-            I&apos;ll explore myself
+            Skip, I know my way around
           </Button>
           <Button type="button" disabled={starting} onClick={onStart}>
             {starting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
