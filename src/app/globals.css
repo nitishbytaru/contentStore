@@ -214,19 +214,71 @@ textarea {
   to { stroke-dashoffset: 0; }
 }
 
-/* Auth pages: purple dot travelling down the pipeline track. */
+/* Auth pages ------------------------------------------------------------- */
+/* Purple dot travels down the pipeline (0→80% of a 5s cycle, linear) and each
+   stage lights up as the dot reaches it (stage i: animation-delay i*1s). */
 @keyframes auth-trace {
   0% { top: 0%; opacity: 0; }
-  8% { opacity: 1; }
-  92% { opacity: 1; }
-  100% { top: 100%; opacity: 0; }
+  3% { opacity: 1; }
+  80% { top: 100%; opacity: 1; }
+  88%, 100% { top: 100%; opacity: 0; }
 }
 [data-auth-trace] {
-  animation: auth-trace 4.5s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  animation: auth-trace 5s linear infinite;
+}
+@keyframes auth-stage {
+  0%, 30%, 100% {
+    border-color: var(--border);
+    color: var(--foreground);
+    box-shadow: 0 0 0 0 rgb(191 0 255 / 0);
+    transform: scale(1);
+  }
+  5%, 15% {
+    border-color: rgb(191 0 255 / 0.8);
+    color: var(--highlight);
+    box-shadow: 0 0 0 4px rgb(191 0 255 / 0.14), 0 4px 18px -2px rgb(191 0 255 / 0.45);
+    transform: scale(1.08);
+  }
+}
+[data-auth-stage] {
+  animation: auth-stage 5s ease-in-out infinite both;
+}
+
+/* Entrance: rise + un-blur, staggered through direct children. */
+@keyframes auth-rise {
+  from { opacity: 0; transform: translateY(12px); filter: blur(6px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+[data-auth-rise],
+[data-auth-stagger] > * {
+  animation: auth-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+[data-auth-stagger] > :nth-child(2) { animation-delay: 60ms; }
+[data-auth-stagger] > :nth-child(3) { animation-delay: 120ms; }
+[data-auth-stagger] > :nth-child(4) { animation-delay: 180ms; }
+[data-auth-stagger] > :nth-child(5) { animation-delay: 240ms; }
+[data-auth-stagger] > :nth-child(6) { animation-delay: 300ms; }
+[data-auth-stagger] > :nth-child(7) { animation-delay: 360ms; }
+[data-auth-stagger] > :nth-child(n + 8) { animation-delay: 420ms; }
+
+/* Error message: short horizontal shake when it appears. */
+@keyframes auth-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
+}
+[data-auth-shake] {
+  animation: auth-shake 0.38s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
   [data-auth-trace] { animation: none; top: 0; }
+  [data-auth-stage],
+  [data-auth-rise],
+  [data-auth-stagger] > *,
+  [data-auth-shake] { animation: none !important; }
   [data-tour-anim] { animation-duration: 0s !important; animation-iteration-count: 1 !important; }
 }
 

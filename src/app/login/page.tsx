@@ -50,7 +50,7 @@ export default function LoginPage() {
 
   return (
     <AuthShell title="Welcome back" description="Log in to pick up your ideas where you left them.">
-      <div className="flex flex-col gap-5">
+      <div data-auth-stagger className="flex flex-col gap-5">
         <Suspense fallback={null}>
           <AuthUrlError />
         </Suspense>
@@ -58,7 +58,7 @@ export default function LoginPage() {
         <OrDivider label="or with email" />
         <form onSubmit={handleLogin} className="flex flex-col gap-4" noValidate>
           {error && (
-            <Alert variant="destructive" className="py-2.5">
+            <Alert key={error} data-auth-shake variant="destructive" className="py-2.5">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription className="text-xs">{error}</AlertDescription>
             </Alert>
@@ -93,7 +93,7 @@ export default function LoginPage() {
             />
           </div>
 
-          <Button type="submit" size="lg" className="mt-1 h-10 w-full font-semibold" disabled={loading}>
+          <Button type="submit" size="lg" className="mt-1 h-10 w-full font-semibold transition-[transform,box-shadow,background-color] duration-200 ease-out hover:-translate-y-px hover:shadow-[0_10px_24px_-10px_rgb(44_255_5/0.55)]" disabled={loading}>
             {loading ? <Loader2 data-icon="inline-start" className="animate-spin" /> : null}
             {loading ? 'Logging in…' : 'Log in'}
           </Button>
