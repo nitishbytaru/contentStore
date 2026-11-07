@@ -39,7 +39,7 @@ export function IdeaCard({
   const hasBaseArticle = Boolean(idea.baseArticle && idea.baseArticle.trim().length > 0);
 
   const cardClasses = cn(
-    'transition-all group border-l-4 rounded-xl hover:shadow-sm border-border/80',
+    'relative transition-all group border-l-4 rounded-xl hover:shadow-sm hover:border-primary/40 border-border/80',
     publishStatus.borderClass,
     publishStatus.bgClass
   );
@@ -86,7 +86,7 @@ export function IdeaCard({
               <div className="flex-1 min-w-0 space-y-1.5">
                 <Link
                   href={`/ideas/${idea.ideaId}`}
-                  className="text-sm sm:text-base font-medium leading-snug hover:underline cursor-pointer transition-colors hover:text-primary block line-clamp-2"
+                  className="text-sm sm:text-base font-medium leading-snug cursor-pointer transition-colors group-hover:text-primary block line-clamp-2 after:absolute after:inset-0 after:rounded-xl after:content-[''] focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring"
                   title={idea.idea}
                   data-tour={idea.isSample ? 'sample-idea-open' : undefined}
                 >
@@ -111,7 +111,7 @@ export function IdeaCard({
                   {!hasBaseArticle && (
                     <Link
                       href={`/ideas/${idea.ideaId}`}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25 hover:bg-amber-500/20 transition-colors"
+                      className="relative z-10 inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25 hover:bg-amber-500/20 transition-colors"
                     >
                       <FileText className="w-3 h-3 shrink-0 opacity-80" />
                       Needs Research
@@ -157,11 +157,11 @@ export function IdeaCard({
               </div>
 
               {isActionLoading ? (
-                <div className="flex items-center px-2 shrink-0">
+                <div className="relative z-10 flex items-center px-2 shrink-0">
                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                 </div>
               ) : (
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="relative z-10 flex items-center gap-1 shrink-0">
                   <Link
                     href={`/ideas/${idea.ideaId}`}
                     className="inline-flex items-center justify-center h-8 px-2.5 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"

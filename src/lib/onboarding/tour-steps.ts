@@ -59,9 +59,9 @@ export const TOUR_STEPS: TourStep[] = [
     route: 'ideas',
     target: 'sample-idea-open',
     title: 'Open the idea',
-    body: 'Click the idea title to open its workspace.',
+    body: 'Click the idea to open its workspace.',
     advance: 'click',
-    waitingHint: 'Click the highlighted title',
+    waitingHint: 'Click the highlighted idea',
   },
   {
     id: 'editor-header',
