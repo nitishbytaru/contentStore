@@ -24,6 +24,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   AlertDialog,
@@ -62,23 +64,25 @@ function formatDateTime(value: string | null) {
 
 function DetailRow({ icon: Icon, label, children }: { icon: typeof Mail; label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-start justify-between gap-3 py-2.5 border-b border-border/40 last:border-0">
+    <div className="flex flex-col gap-1 py-2.5 min-[400px]:flex-row min-[400px]:items-center min-[400px]:justify-between min-[400px]:gap-3">
       <span className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
         <Icon className="h-3.5 w-3.5" />
         {label}
       </span>
-      <span className="text-sm text-foreground text-right min-w-0 break-words">{children}</span>
+      <span className="min-w-0 break-all text-sm text-foreground min-[400px]:text-right">{children}</span>
     </div>
   );
 }
 
 function StatTile({ icon: Icon, label, value }: { icon: typeof Mail; label: string; value: number }) {
   return (
-    <div className="rounded-xl border border-border/70 bg-muted/20 p-3">
-      <Icon className="h-4 w-4 text-primary" />
-      <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight">{value}</p>
-      <p className="text-[11px] text-muted-foreground">{label}</p>
-    </div>
+    <Card size="sm" className="bg-muted/20">
+      <CardContent>
+        <Icon className="h-4 w-4 text-primary" />
+        <p className="mt-2 text-xl font-semibold tabular-nums tracking-tight sm:text-2xl">{value}</p>
+        <p className="text-[11px] leading-tight text-muted-foreground">{label}</p>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -144,7 +148,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto w-full">
+    <div className="mx-auto w-full max-w-3xl min-w-0 space-y-4 sm:space-y-6">
       <div className="flex items-center gap-3">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
           <UserRound className="h-5 w-5" />
@@ -181,6 +185,7 @@ export default function ProfilePage() {
             ) : profile ? (
               <div>
                 <DetailRow icon={Mail} label="Email">{profile.email}</DetailRow>
+                <Separator />
                 <DetailRow icon={BadgeCheck} label="Email status">
                   {profile.emailConfirmed ? (
                     <Badge variant="outline" className="border-emerald-500/30 text-emerald-600 dark:text-emerald-400">Verified</Badge>
@@ -188,13 +193,16 @@ export default function ProfilePage() {
                     <Badge variant="outline" className="border-amber-500/30 text-amber-600 dark:text-amber-400">Not verified</Badge>
                   )}
                 </DetailRow>
+                <Separator />
                 <DetailRow icon={CalendarDays} label="Member since">{formatDate(profile.createdAt)}</DetailRow>
+                <Separator />
                 <DetailRow icon={LogIn} label="Last sign-in">{formatDateTime(profile.lastSignInAt)}</DetailRow>
+                <Separator />
                 <DetailRow icon={Send} label="Telegram">
                   {profile.telegramLinked ? (
                     <Badge variant="outline" className="border-emerald-500/30 text-emerald-600 dark:text-emerald-400">Connected</Badge>
                   ) : (
-                    <span className="text-muted-foreground">Not connected</span>
+                    <Badge variant="outline" className="text-muted-foreground">Not connected</Badge>
                   )}
                 </DetailRow>
               </div>
@@ -211,7 +219,7 @@ export default function ProfilePage() {
             {!profile && !loadError ? (
               <div className="grid grid-cols-2 gap-2.5 py-1">
                 {[0, 1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-[92px] w-full rounded-xl" />
+                  <Skeleton key={i} className="h-[88px] w-full rounded-xl" />
                 ))}
               </div>
             ) : profile ? (
@@ -232,8 +240,8 @@ export default function ProfilePage() {
             <p className="text-sm font-medium">Product tour</p>
             <p className="text-xs text-muted-foreground">Walk through ContentStore again with a sample idea.</p>
           </div>
-          <Button variant="outline" size="sm" disabled={starting} onClick={() => void beginTour()} className="shrink-0">
-            <Compass className="h-3.5 w-3.5" />
+          <Button variant="outline" size="sm" disabled={starting} onClick={() => void beginTour()} className="w-full shrink-0 sm:w-auto">
+            <Compass data-icon="inline-start" />
             {starting ? 'Preparing…' : 'Replay tour'}
           </Button>
         </CardContent>
@@ -254,13 +262,14 @@ export default function ProfilePage() {
           <Button
             variant="destructive"
             size="sm"
+            className="w-full sm:w-auto"
             disabled={deleting || !profile}
             onClick={() => {
               setConfirmText('');
               setConfirmOpen(true);
             }}
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 data-icon="inline-start" />
             Delete account and all data
           </Button>
         </CardContent>
@@ -277,9 +286,9 @@ export default function ProfilePage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-1.5">
-            <label htmlFor="confirm-delete" className="text-xs text-muted-foreground">
+            <Label htmlFor="confirm-delete" className="block text-xs font-normal leading-normal text-muted-foreground">
               Type <span className="font-mono font-semibold text-foreground">{CONFIRM_PHRASE}</span> to confirm
-            </label>
+            </Label>
             <Input
               id="confirm-delete"
               value={confirmText}

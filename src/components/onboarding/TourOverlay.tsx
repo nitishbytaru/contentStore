@@ -6,13 +6,23 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Compass, PartyPopper, Plus, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { TOUR_STEPS, TOUR_STORAGE_KEY, TourStep } from '@/lib/onboarding/tour-steps';
 import { useDeleteIdeaMutation } from '@/store/api/ideasApi';
 import { hydrateTour, nextStep, prevStep } from '@/store/slices/tourSlice';
 import type { AppDispatch, RootState } from '@/store';
-import { cn } from 'cn';
 
 interface Rect {
   top: number;
@@ -23,7 +33,10 @@ interface Rect {
 
 const PAD = 6;
 const CARD_GAP = 12;
-const CARD_MAX_WIDTH = 340;
+const CARD_MAX_WIDTH = 360;
+/** Below this width the card becomes a full-width sheet pinned to the top or bottom edge. */
+const MOBILE_BREAKPOINT = 640;
+const EDGE = 12;
 /** How long to wait for a target before showing the step as a centred card. */
 const TARGET_TIMEOUT_MS = 1500;
 
@@ -224,51 +237,62 @@ export function TourOverlay() {
   if (!onRoute) {
     if (!showPaused) return null;
     return (
-      <div className="fixed bottom-4 left-4 z-[150] flex items-center gap-1 rounded-full border border-border bg-popover p-1 pl-3 shadow-lg animate-in fade-in-0 slide-in-from-bottom-2">
-        <Compass className="h-4 w-4 text-primary" />
-        <span className="text-xs font-medium px-1">Tour paused</span>
-        <Button size="sm" className="h-7 rounded-full text-xs" onClick={() => expectedPath && router.push(expectedPath)}>
+      <Card
+        size="sm"
+        className="fixed inset-x-3 bottom-3 z-[150] flex-row items-center gap-2 px-3 shadow-lg animate-in fade-in-0 slide-in-from-bottom-2 sm:inset-x-auto sm:left-4 sm:bottom-4"
+      >
+        <Compass className="h-4 w-4 shrink-0 text-primary" />
+        <span className="min-w-0 flex-1 truncate text-xs font-medium">Tour paused</span>
+        <Button size="sm" onClick={() => expectedPath && router.push(expectedPath)}>
           Resume
         </Button>
         <Button
           size="sm"
           variant="ghost"
-          className="h-7 rounded-full text-xs text-muted-foreground"
+          className="text-muted-foreground"
           title="Skip the tour and remove the sample data"
           disabled={skipping}
           onClick={() => void skipTour()}
         >
-          <X className="h-3.5 w-3.5" />
+          <X />
           Skip tour
         </Button>
-      </div>
+      </Card>
     );
   }
 
   const waiting = step.advance !== 'next';
-  const centred = !rect;
   // Show nothing for a moment while the target loads, to avoid a centred-card flash.
-  if (centred && !timedOut) return null;
+  if (!rect && !timedOut) return null;
 
-  // Card placement: below the target, else above, else pinned to the bottom of the screen.
   const vw = viewport.width || (typeof window !== 'undefined' ? window.innerWidth : 1024);
   const vh = viewport.height || (typeof window !== 'undefined' ? window.innerHeight : 768);
-  const cardWidth = Math.min(CARD_MAX_WIDTH, vw - 32);
-  const estimatedHeight = cardHeight || 200;
+  const isMobile = vw < MOBILE_BREAKPOINT;
+  const estimatedHeight = cardHeight || 220;
+
+  // Placement. Phones: full-width sheet on the edge away from the target.
+  // Larger screens: below the target, else above, else pinned to the bottom centre.
   let cardStyle: React.CSSProperties;
-  if (!rect) {
-    cardStyle = { left: (vw - cardWidth) / 2, top: Math.max(16, (vh - estimatedHeight) / 2), width: cardWidth };
+  if (isMobile) {
+    const targetInLowerHalf = rect ? rect.top + rect.height / 2 > vh / 2 : false;
+    cardStyle = targetInLowerHalf ? { left: EDGE, right: EDGE, top: EDGE } : { left: EDGE, right: EDGE, bottom: EDGE };
   } else {
-    const left = Math.min(Math.max(16, rect.left), vw - cardWidth - 16);
-    const below = rect.top + rect.height + PAD + CARD_GAP;
-    const above = rect.top - PAD - CARD_GAP - estimatedHeight;
-    if (below + estimatedHeight <= vh - 16) cardStyle = { left, top: below, width: cardWidth };
-    else if (above >= 16) cardStyle = { left, top: above, width: cardWidth };
-    else cardStyle = { left: (vw - cardWidth) / 2, bottom: 16, width: cardWidth };
+    const cardWidth = Math.min(CARD_MAX_WIDTH, vw - EDGE * 2);
+    if (!rect) {
+      cardStyle = { left: (vw - cardWidth) / 2, top: Math.max(EDGE, (vh - estimatedHeight) / 2), width: cardWidth };
+    } else {
+      const left = Math.min(Math.max(EDGE, rect.left), vw - cardWidth - EDGE);
+      const below = rect.top + rect.height + PAD + CARD_GAP;
+      const above = rect.top - PAD - CARD_GAP - estimatedHeight;
+      if (below + estimatedHeight <= vh - EDGE) cardStyle = { left, top: below, width: cardWidth };
+      else if (above >= EDGE) cardStyle = { left, top: above, width: cardWidth };
+      else cardStyle = { left: (vw - cardWidth) / 2, bottom: EDGE, width: cardWidth };
+    }
   }
 
   const prev = TOUR_STEPS[stepIndex - 1];
   const canGoBack = Boolean(prev && prev.advance === 'next' && !waiting);
+  const progress = ((stepIndex + 1) / TOUR_STEPS.length) * 100;
 
   return (
     <>
@@ -301,98 +325,92 @@ export function TourOverlay() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -4 }}
           transition={{ duration: 0.18 }}
-          className="fixed z-[151] rounded-xl border border-border bg-popover p-4 text-popover-foreground shadow-2xl"
+          className="fixed z-[151]"
           style={cardStyle}
         >
-          <div className="flex items-start gap-2">
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          <Card size="sm" className="max-h-[calc(100dvh-24px)] overflow-y-auto shadow-2xl">
+            <CardHeader>
+              <Badge variant="secondary" className="w-fit text-[10px] font-medium">
                 Step {stepIndex + 1} of {TOUR_STEPS.length}
-              </p>
-              <h2 className="mt-1 flex items-center gap-1.5 text-sm font-semibold">
-                {isLast && <PartyPopper className="h-4 w-4 text-primary" />}
+              </Badge>
+              <CardTitle className="mt-1 flex items-center gap-1.5">
+                {isLast && <PartyPopper className="h-4 w-4 shrink-0 text-primary" />}
                 {step.title}
-              </h2>
-            </div>
-            {!isLast && (
-              <button
-                type="button"
-                onClick={() => void skipTour()}
-                disabled={skipping}
-                className="-mr-1.5 -mt-1 inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-[11px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50 cursor-pointer"
-                title="Skip the tour and remove the sample data"
-              >
-                Skip tour
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
-
-          <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{step.body}</p>
-
-          {waiting && step.waitingHint && (
-            <p className="mt-2.5 flex items-center gap-2 text-[11px] font-medium text-primary">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
-              </span>
-              {step.waitingHint}
-            </p>
-          )}
-
-          <div className="mt-3 h-1 overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full rounded-full bg-primary transition-all duration-300"
-              style={{ width: `${((stepIndex + 1) / TOUR_STEPS.length) * 100}%` }}
-            />
-          </div>
-
-          {isLast ? (
-            <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-8 text-xs text-muted-foreground hover:text-destructive"
-                disabled={deleting}
-                onClick={() => void finish('delete-sample')}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Delete sample
-              </Button>
-              <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => void finish()}>
-                Done
-              </Button>
-              <Button size="sm" className="h-8 text-xs" onClick={() => void finish('new-idea')}>
-                <Plus className="h-3.5 w-3.5" />
-                New idea
-              </Button>
-            </div>
-          ) : (
-            <div className="mt-3 flex items-center justify-between gap-2">
-              {canGoBack ? (
-                <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={goBack}>
-                  <ArrowLeft className="h-3.5 w-3.5" />
-                  Back
-                </Button>
-              ) : (
-                <span />
+              </CardTitle>
+              {!isLast && (
+                <CardAction>
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    className="text-muted-foreground"
+                    title="Skip the tour and remove the sample data"
+                    disabled={skipping}
+                    onClick={() => void skipTour()}
+                  >
+                    Skip tour
+                    <X data-icon="inline-end" />
+                  </Button>
+                </CardAction>
               )}
-              {waiting ? (
-                <button
-                  type="button"
-                  onClick={goNext}
-                  className={cn('text-[11px] text-muted-foreground hover:text-foreground hover:underline cursor-pointer')}
+              <CardDescription className="text-xs leading-relaxed">{step.body}</CardDescription>
+            </CardHeader>
+
+            <CardContent className="space-y-2.5">
+              {waiting && step.waitingHint && (
+                <Badge variant="outline" className="h-auto max-w-full gap-2 whitespace-normal border-primary/30 py-1 text-[11px] font-medium text-primary">
+                  <span className="relative flex h-2 w-2 shrink-0">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+                  </span>
+                  {step.waitingHint}
+                </Badge>
+              )}
+              <Progress value={progress} aria-label="Tour progress" />
+            </CardContent>
+
+            {isLast ? (
+              <CardFooter className="flex-col-reverse items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-muted-foreground hover:text-destructive"
+                  disabled={deleting}
+                  onClick={() => void finish('delete-sample')}
                 >
-                  Skip this step
-                </button>
-              ) : (
-                <Button size="sm" className="h-8 text-xs" onClick={goNext}>
-                  Next
-                  <ArrowRight className="h-3.5 w-3.5" />
+                  <Trash2 data-icon="inline-start" />
+                  Delete sample
                 </Button>
-              )}
-            </div>
-          )}
+                <Button size="sm" variant="outline" onClick={() => void finish()}>
+                  Done
+                </Button>
+                <Button size="sm" onClick={() => void finish('new-idea')}>
+                  <Plus data-icon="inline-start" />
+                  New idea
+                </Button>
+              </CardFooter>
+            ) : (
+              <CardFooter className="justify-between gap-2">
+                {canGoBack ? (
+                  <Button size="sm" variant="ghost" onClick={goBack}>
+                    <ArrowLeft data-icon="inline-start" />
+                    Back
+                  </Button>
+                ) : (
+                  <span />
+                )}
+                {waiting ? (
+                  <Button size="sm" variant="link" className="text-muted-foreground" onClick={goNext}>
+                    Skip this step
+                  </Button>
+                ) : (
+                  <Button size="sm" onClick={goNext}>
+                    Next
+                    <ArrowRight data-icon="inline-end" />
+                  </Button>
+                )}
+              </CardFooter>
+            )}
+          </Card>
         </motion.div>
       </AnimatePresence>
     </>

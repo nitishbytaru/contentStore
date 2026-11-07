@@ -16,6 +16,7 @@ const links = [
 import { createClient } from '@/lib/supabase/client';
 import { TelegramConnect } from '@/components/TelegramConnect';
 import { useOnboarding } from '@/hooks/useOnboarding';
+import { Button } from '@/components/ui/button';
 
 export function NavLinks() {
   const pathname = usePathname();
@@ -62,7 +63,7 @@ export function NavLinks() {
       {!isAuthPage && (
         <>
           {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-1 text-sm font-medium ml-6">
+          <nav className="hidden lg:flex items-center gap-1 text-sm font-medium ml-6">
             {links.map(({ href, label }) => {
               const isActive = pathname.startsWith(href);
 
@@ -84,16 +85,18 @@ export function NavLinks() {
           </nav>
 
           {/* Desktop Sign out Button */}
-          <div className="hidden md:flex items-center gap-2 ml-auto">
-            <button
+          <div className="hidden lg:flex items-center gap-2 ml-auto">
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={handleTour}
               disabled={tourStarting}
               title="Take the product tour"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/70 border border-transparent hover:border-border/60 transition-all cursor-pointer disabled:opacity-50"
+              className="text-xs text-muted-foreground"
             >
-              <Compass className="w-3.5 h-3.5" />
-              <span>{tourStarting ? 'Preparing…' : 'Tour'}</span>
-            </button>
+              <Compass data-icon="inline-start" />
+              {tourStarting ? 'Preparing…' : 'Tour'}
+            </Button>
             <span data-tour="nav-telegram" className="inline-flex">
             <TelegramConnect className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/70 border border-transparent hover:border-border/60 transition-all cursor-pointer disabled:opacity-50" />
             </span>
@@ -109,7 +112,7 @@ export function NavLinks() {
           </div>
 
           {/* Mobile Right Controls: Sign out icon + Hamburger Toggle */}
-          <div className="flex md:hidden items-center gap-1 shrink-0">
+          <div className="flex lg:hidden items-center gap-1 shrink-0">
             <button
               onClick={handleLogout}
               disabled={isLoggingOut}
@@ -131,7 +134,7 @@ export function NavLinks() {
 
           {/* Mobile Dropdown Menu (Overlaid cleanly without expanding header width) */}
           {mobileMenuOpen && (
-            <div className="md:hidden absolute top-14 left-0 right-0 w-full bg-background/95 backdrop-blur-xl border-b border-border/60 shadow-xl px-4 py-3 z-50 animate-in slide-in-from-top-2 duration-150">
+            <div className="lg:hidden absolute top-14 left-0 right-0 w-full bg-background/95 backdrop-blur-xl border-b border-border/60 shadow-xl px-4 py-3 z-50 animate-in slide-in-from-top-2 duration-150">
               <div className="flex flex-col gap-1 max-w-6xl mx-auto w-full">
                 {links.map(({ href, label }) => {
                   const isActive = pathname.startsWith(href);
@@ -156,14 +159,15 @@ export function NavLinks() {
                 })}
 
                 <div className="pt-2 mt-1 border-t border-border/40 flex flex-col gap-1">
-                  <button
+                  <Button
+                    variant="ghost"
                     onClick={handleTour}
                     disabled={tourStarting}
-                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors disabled:opacity-50 text-left cursor-pointer"
+                    className="h-10 w-full justify-start gap-2 px-3 text-sm text-muted-foreground"
                   >
-                    <Compass className="w-4 h-4" />
-                    <span>{tourStarting ? 'Preparing…' : 'Take the tour'}</span>
-                  </button>
+                    <Compass data-icon="inline-start" />
+                    {tourStarting ? 'Preparing…' : 'Take the tour'}
+                  </Button>
                   <TelegramConnect
                     onDone={() => setMobileMenuOpen(false)}
                     className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors disabled:opacity-50 text-left cursor-pointer"

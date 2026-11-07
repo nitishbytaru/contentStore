@@ -2,6 +2,7 @@
 
 import { BookOpen, FileText, Lightbulb, Loader2, Sparkles, Tv } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -36,7 +37,7 @@ export function WelcomeDialog({
         if (!next && !starting) onDismiss();
       }}
     >
-      <DialogContent className="sm:max-w-md" showCloseButton={!starting}>
+      <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-md" showCloseButton={!starting}>
         <DialogHeader>
           <div className="mb-1 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <Sparkles className="h-5 w-5" />
@@ -48,27 +49,27 @@ export function WelcomeDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <ol className="grid grid-cols-4 gap-1.5">
+        <ol className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {PIPELINE.map(({ icon: Icon, label, hint }, index) => (
-            <li key={label} className="relative flex flex-col items-center gap-1 rounded-lg border border-border/70 bg-muted/30 px-1 py-2.5 text-center">
-              <Icon className="h-4 w-4 text-primary" />
-              <span className="text-[11px] font-semibold">{label}</span>
-              <span className="text-[10px] leading-tight text-muted-foreground">{hint}</span>
-              {index < PIPELINE.length - 1 && (
-                <span aria-hidden className="absolute -right-[7px] top-1/2 z-10 -translate-y-1/2 text-[10px] text-muted-foreground">
-                  ›
-                </span>
-              )}
+            <li key={label}>
+              <Card size="sm" className="h-full bg-muted/30">
+                <CardContent className="flex flex-col items-center gap-1 text-center">
+                  <span className="text-[10px] font-medium text-muted-foreground">{index + 1}</span>
+                  <Icon className="h-4 w-4 text-primary" />
+                  <span className="text-xs font-semibold">{label}</span>
+                  <span className="text-[10px] leading-tight text-muted-foreground">{hint}</span>
+                </CardContent>
+              </Card>
             </li>
           ))}
         </ol>
 
-        <DialogFooter className="gap-2 sm:justify-between">
+        <DialogFooter className="sm:justify-between">
           <Button type="button" variant="ghost" disabled={starting} onClick={onDismiss}>
             Skip, I know my way around
           </Button>
           <Button type="button" disabled={starting} onClick={onStart}>
-            {starting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            {starting ? <Loader2 data-icon="inline-start" className="animate-spin" /> : <Sparkles data-icon="inline-start" />}
             {starting ? 'Preparing your sample…' : 'Show me around (2 min)'}
           </Button>
         </DialogFooter>

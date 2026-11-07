@@ -303,15 +303,17 @@ export function ResearchChat({
         {suggestions && suggestions.length > 0 && (
           <div data-tour="research-suggestions" className="flex flex-wrap gap-1.5">
             {suggestions.map((question) => (
-              <button
+              <Button
                 key={question}
                 type="button"
+                variant="outline"
+                size="xs"
                 disabled={busy}
                 onClick={() => setDraft(question)}
-                className="rounded-full border border-primary/25 bg-primary/5 px-2.5 py-1 text-[11px] text-primary transition-colors hover:bg-primary/10 disabled:opacity-50 cursor-pointer"
+                className="h-auto min-h-6 max-w-full whitespace-normal rounded-full border-primary/25 bg-primary/5 py-1 text-left text-[11px] font-normal text-primary hover:bg-primary/10 hover:text-primary"
               >
                 {question}
-              </button>
+              </Button>
             ))}
           </div>
         )}

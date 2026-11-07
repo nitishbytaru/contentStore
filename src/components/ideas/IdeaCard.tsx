@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { 
   Clock, Trash2, Edit, Save, X, Copy, FileText, Video, Loader2, ExternalLink, Sparkles
 } from 'lucide-react';
@@ -98,13 +99,14 @@ export function IdeaCard({
                 )}
                 <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
                   {idea.isSample && (
-                    <span
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-primary/10 text-primary border border-primary/25"
+                    <Badge
+                      variant="outline"
+                      className="gap-1 border-primary/25 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary"
                       title="Created for the product tour. It is removed after 2 days unless you edit it."
                     >
                       <Sparkles className="w-3 h-3 shrink-0" />
                       Sample
-                    </span>
+                    </Badge>
                   )}
                   {!hasBaseArticle && (
                     <Link
