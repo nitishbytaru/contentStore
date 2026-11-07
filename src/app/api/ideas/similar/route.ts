@@ -20,7 +20,8 @@ export async function POST(request: Request) {
     }
 
     await backfillIdeaIndex(catalog);
-    const matches = await searchSimilarIdeas(query, 3);
+    // The catalog comes from Supabase under RLS, so it holds only the signed-in user's ideas.
+    const matches = await searchSimilarIdeas(query, catalog.map((entry) => entry.ideaId), 3);
 
     return NextResponse.json({ data: matches, firstIdea: false }, { status: 200 });
   } catch (error: unknown) {

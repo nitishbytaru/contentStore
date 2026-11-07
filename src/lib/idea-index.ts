@@ -145,13 +145,22 @@ export async function backfillIdeaIndex(entries: IdeaCatalogEntry[]): Promise<vo
   }
 }
 
-export async function searchSimilarIdeas(text: string, limit = 3): Promise<SimilarIdea[]> {
+/**
+ * Finds the ideas most similar to `text`, searching ONLY the given idea ids (the caller's own
+ * ideas). The collection holds every user's vectors, so an unfiltered search would leak
+ * other users' idea titles.
+ */
+export async function searchSimilarIdeas(text: string, ideaIds: string[], limit = 3): Promise<SimilarIdea[]> {
+  if (ideaIds.length === 0) return [];
   await ensureCollection();
   const vector = await embedIdeaText(text.trim());
   const result = await client().query(COLLECTION, {
     query: vector,
     limit,
     with_payload: true,
+    filter: {
+      must: [{ key: 'ideaId', match: { any: ideaIds } }],
+    },
   });
 
   return result.points
