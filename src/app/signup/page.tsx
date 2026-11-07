@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -9,6 +9,10 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Label } from '@/components/ui/label';
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
+import { AuthUrlError } from '@/components/auth/AuthUrlError';
+import { OrDivider } from '@/components/auth/OrDivider';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -77,7 +81,12 @@ export default function SignupPage() {
             Get started managing your ideas and content
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          <Suspense fallback={null}>
+            <AuthUrlError />
+          </Suspense>
+          <GoogleSignInButton label="Sign up with Google" disabled={loading} />
+          <OrDivider label="or with email" />
           <form onSubmit={handleSignup} className="space-y-4">
             {error && (
               <Alert variant="destructive" className="py-2.5">
@@ -94,9 +103,9 @@ export default function SignupPage() {
             )}
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-foreground" htmlFor="email">
+              <Label className="text-xs" htmlFor="email">
                 Email address
-              </label>
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -110,9 +119,9 @@ export default function SignupPage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-foreground" htmlFor="password">
+              <Label className="text-xs" htmlFor="password">
                 Password
-              </label>
+              </Label>
               <Input
                 id="password"
                 type="password"
@@ -126,9 +135,9 @@ export default function SignupPage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-foreground" htmlFor="confirmPassword">
+              <Label className="text-xs" htmlFor="confirmPassword">
                 Confirm Password
-              </label>
+              </Label>
               <Input
                 id="confirmPassword"
                 type="password"

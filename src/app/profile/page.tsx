@@ -16,10 +16,12 @@ import {
   Send,
   Sparkles,
   Trash2,
+  KeyRound,
   UserRound,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -60,6 +62,13 @@ function formatDateTime(value: string | null) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '—';
   return date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+const PROVIDER_LABELS: Record<string, string> = { google: 'Google', email: 'Email & password' };
+
+/** First letter of the email, used as the avatar when there is no Google photo. */
+function initialOf(email: string | undefined) {
+  return (email?.trim()[0] ?? '?').toUpperCase();
 }
 
 function DetailRow({ icon: Icon, label, children }: { icon: typeof Mail; label: string; children: React.ReactNode }) {
@@ -149,12 +158,30 @@ export default function ProfilePage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl min-w-0 space-y-4 sm:space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <UserRound className="h-5 w-5" />
-        </div>
+      <div className="flex items-center gap-3 sm:gap-4">
+        {profile ? (
+          <Avatar className="size-14 sm:size-16">
+            {/* Google photos only; email accounts always show their initial. */}
+            {profile.avatarUrl && (
+              <AvatarImage src={profile.avatarUrl} alt={profile.fullName ?? profile.email} referrerPolicy="no-referrer" />
+            )}
+            <AvatarFallback className="bg-primary/10 text-xl font-semibold text-primary sm:text-2xl">
+              {initialOf(profile.email)}
+            </AvatarFallback>
+          </Avatar>
+        ) : loadError ? (
+          <Avatar className="size-14 sm:size-16">
+            <AvatarFallback className="bg-primary/10 text-primary">
+              <UserRound className="h-6 w-6" />
+            </AvatarFallback>
+          </Avatar>
+        ) : (
+          <Skeleton className="size-14 shrink-0 rounded-full sm:size-16" />
+        )}
         <div className="min-w-0">
-          <h1 className="text-xl font-semibold tracking-tight">Profile</h1>
+          <h1 className="truncate text-lg font-semibold tracking-tight sm:text-xl">
+            {profile?.fullName ?? 'Profile'}
+          </h1>
           <p className="text-xs text-muted-foreground truncate">
             {profile ? profile.email : 'Your account details and data'}
           </p>
@@ -178,13 +205,29 @@ export default function ProfilePage() {
           <CardContent>
             {!profile && !loadError ? (
               <div className="space-y-3 py-1">
-                {[0, 1, 2, 3].map((i) => (
+                {[0, 1, 2, 3, 4].map((i) => (
                   <Skeleton key={i} className="h-5 w-full" />
                 ))}
               </div>
             ) : profile ? (
               <div>
+                {profile.fullName && (
+                  <>
+                    <DetailRow icon={UserRound} label="Name">{profile.fullName}</DetailRow>
+                    <Separator />
+                  </>
+                )}
                 <DetailRow icon={Mail} label="Email">{profile.email}</DetailRow>
+                <Separator />
+                <DetailRow icon={KeyRound} label="Sign-in method">
+                  <span className="inline-flex flex-wrap gap-1 min-[400px]:justify-end">
+                    {(profile.providers.length ? profile.providers : ['email']).map((provider) => (
+                      <Badge key={provider} variant="outline">
+                        {PROVIDER_LABELS[provider] ?? provider}
+                      </Badge>
+                    ))}
+                  </span>
+                </DetailRow>
                 <Separator />
                 <DetailRow icon={BadgeCheck} label="Email status">
                   {profile.emailConfirmed ? (

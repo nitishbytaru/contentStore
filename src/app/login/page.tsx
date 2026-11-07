@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -9,6 +9,10 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Sparkles, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Label } from '@/components/ui/label';
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
+import { AuthUrlError } from '@/components/auth/AuthUrlError';
+import { OrDivider } from '@/components/auth/OrDivider';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -55,7 +59,12 @@ export default function LoginPage() {
             Sign in to access your content store and ideas
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          <Suspense fallback={null}>
+            <AuthUrlError />
+          </Suspense>
+          <GoogleSignInButton label="Continue with Google" disabled={loading} />
+          <OrDivider label="or with email" />
           <form onSubmit={handleLogin} className="space-y-4">
             {error && (
               <Alert variant="destructive" className="py-2.5">
@@ -65,9 +74,9 @@ export default function LoginPage() {
             )}
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-foreground" htmlFor="email">
+              <Label className="text-xs" htmlFor="email">
                 Email address
-              </label>
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -82,9 +91,9 @@ export default function LoginPage() {
 
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-foreground" htmlFor="password">
+                <Label className="text-xs" htmlFor="password">
                   Password
-                </label>
+                </Label>
               </div>
               <Input
                 id="password"
