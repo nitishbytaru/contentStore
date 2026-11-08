@@ -20,6 +20,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://store24.vercel.app"),
   title: "ContentStore",
   description: "Manage your multi-platform content ideas.",
 };
